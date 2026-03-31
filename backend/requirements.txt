@@ -1,4 +1,4 @@
-# Production Requirements for Drug Repurposing Platform
+# Production Requirements for TwinTrial Analytics / LiveDRP Pipeline
 # All packages are open-source and free to use
 
 # Web Framework
@@ -25,13 +25,22 @@ sqlalchemy==2.0.23
 numpy==1.26.4
 scipy>=1.14.1
 scikit-learn==1.8.0
-rdkit
+
+# Cheminformatics (optional but improves similarity scoring)
+# Uncomment if rdkit available in your environment:
+# rdkit
 
 # Anthropic API (for AI explanations)
 anthropic==0.40.0
 
 # Rate Limiting & Retry Logic
 tenacity==8.2.3
+
+# EFO Ontology Expansion
+# The efo_ontology module is bundled with this codebase (backend/pipeline/efo_ontology.py).
+# It queries the OpenTargets GraphQL API directly — no extra PyPI package needed.
+# If you want to use the standalone EFO Python library as an alternative:
+# efo-ontology>=1.0.0   # pip install efo-ontology (optional)
 
 # Testing
 pytest==7.4.4

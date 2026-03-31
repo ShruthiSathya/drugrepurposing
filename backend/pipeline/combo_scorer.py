@@ -1,449 +1,697 @@
 """
-combo_worker.py — Parallel Combination Scoring Engine
-======================================================
-Implements the "Combination Loop" using multiprocessing to score thousands
-of drug pairs efficiently. Integrates:
+combo_scorer.py — Drug Combination Scorer
+==========================================
+Scores drug pairs and triples using mechanism synergy/antagonism rules,
+gene coverage bonuses, and redundancy penalties.
 
-  1. Combination enumeration via itertools.combinations
-  2. Bliss Independence + Loewe Additivity synergy models (SynergyEngine)
-  3. CYP450 metabolic overlap check (CYP450Checker — cached static table)
-  4. Toxicity Ω penalty (ToxicityEngine — curated table, no async in worker)
-  5. Existing combo_scorer mechanism synergy/antagonism table
+Provides:
+  CombinationScorer      — scores pairs and triples, used by ComboWorkerPool
+  classify_mechanism     — maps a drug mechanism string to a class string
+  rank_combinations      — ranks a pre-scored combo list (used in treatment plan)
 
 Architecture
 ------------
-  ComboWorkerPool: spawns N worker processes
-  Each worker: receives a batch of (drug_a, drug_b, disease_genes) tuples
-               returns a scored SimulationProof dict per pair
+  ComboWorkerPool (combo_worker.py) calls CombinationScorer.score_pair()
+  inside subprocess workers. All I/O is done BEFORE workers are spawned;
+  workers only use in-memory data and this module's static tables.
 
-  Main process: collects results, sorts by final_score, writes JSON report
+  score_pair()  → mechanism synergy/antagonism + gene coverage + redundancy
+  score_triple() → three-way extension of score_pair()
+  rank_combinations() → post-hoc ranking of pre-scored combos for treatment plan
 
-Why multiprocessing vs asyncio
--------------------------------
-  asyncio is ideal for I/O bound work (API calls).
-  Combination scoring is CPU-bound (thousands of math operations).
-  multiprocessing.Pool distributes CPU work across physical cores.
-  I/O (openFDA, STRING) is done BEFORE launching workers — workers use
-  only in-memory data and the curated static tables.
-
-Usage
------
-    from backend.pipeline.combo_worker import ComboWorkerPool
-
-    pool = ComboWorkerPool(n_workers=4)
-    proofs = pool.run(
-        candidates=scored_drugs,
-        disease_genes=disease_data["genes"],
-        disease_name="pulmonary arterial hypertension",
-        max_pairs=5000,
-    )
-    # proofs: list of SimulationProof dicts, sorted by final_score desc
-    pool.write_report(proofs, output_path="simulation_proof.json")
+Mechanism classes
+-----------------
+  kinase_inhibitor, endothelin_antagonist, pde5_inhibitor, prostacyclin,
+  sgc_stimulator, beta_blocker, ace_inhibitor, arb, statin, biguanide,
+  immunomodulator, corticosteroid, anti_tnf, anti_il6, jak_inhibitor,
+  dmard, anti_cd20, parp_inhibitor, checkpoint_inhibitor, alkylating_agent,
+  antimetabolite, taxane, vinca_alkaloid, hdac_inhibitor, proteasome_inhibitor,
+  imid, anti_vegf, aromatase_inhibitor, serm, anticonvulsant, dopamine_agonist,
+  maob_inhibitor, nmda_antagonist, acetylcholinesterase_inhibitor,
+  alpha2_agonist, opioid_antagonist, nsaid, cox2_inhibitor, colchicine,
+  anti_uric_acid, diuretic, potassium_channel, microtubule_inhibitor,
+  mtor_inhibitor, cftr_modulator, complement_inhibitor, other
 """
 
 import itertools
-import json
 import logging
 import math
-import multiprocessing as mp
-import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
-# ── Worker-side imports are done inside worker functions to avoid fork issues ──
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Mechanism classification
+# ─────────────────────────────────────────────────────────────────────────────
+
+MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
+    # Pulmonary / Vascular
+    ("pde5",                    "pde5_inhibitor"),
+    ("phosphodiesterase-5",     "pde5_inhibitor"),
+    ("phosphodiesterase 5",     "pde5_inhibitor"),
+    ("endothelin",              "endothelin_antagonist"),
+    ("prostacyclin",            "prostacyclin"),
+    ("iloprost",                "prostacyclin"),
+    ("treprostinil",            "prostacyclin"),
+    ("epoprostenol",            "prostacyclin"),
+    ("soluble guanylate",       "sgc_stimulator"),
+    ("riociguat",               "sgc_stimulator"),
+    # Cardiovascular
+    ("beta.adrenergic blocker", "beta_blocker"),
+    ("beta blocker",            "beta_blocker"),
+    ("beta-blocker",            "beta_blocker"),
+    ("propranolol",             "beta_blocker"),
+    ("metoprolol",              "beta_blocker"),
+    ("ace inhibitor",           "ace_inhibitor"),
+    ("angiotensin.converting",  "ace_inhibitor"),
+    ("angiotensin receptor",    "arb"),
+    ("arb",                     "arb"),
+    ("losartan",                "arb"),
+    ("statin",                  "statin"),
+    ("hmgcr",                   "statin"),
+    ("hmg-coa",                 "statin"),
+    # Metabolic
+    ("biguanide",               "biguanide"),
+    ("metformin",               "biguanide"),
+    ("ampk",                    "biguanide"),
+    ("thiazolidinedione",       "thiazolidinedione"),
+    ("ppar.gamma",              "thiazolidinedione"),
+    ("sglt2",                   "sglt2_inhibitor"),
+    ("glp-1",                   "glp1_agonist"),
+    ("glucagon-like",           "glp1_agonist"),
+    # Immunology / Inflammation
+    ("immunomodulat",           "immunomodulator"),
+    ("thalidomide",             "imid"),
+    ("lenalidomide",            "imid"),
+    ("cereblon",                "imid"),
+    ("crbn",                    "imid"),
+    ("corticosteroid",          "corticosteroid"),
+    ("glucocorticoid",          "corticosteroid"),
+    ("dexamethasone",           "corticosteroid"),
+    ("prednisone",              "corticosteroid"),
+    ("anti-tnf",                "anti_tnf"),
+    ("tumor necrosis factor",   "anti_tnf"),
+    ("infliximab",              "anti_tnf"),
+    ("adalimumab",              "anti_tnf"),
+    ("anti-il",                 "anti_il6"),
+    ("interleukin",             "anti_il6"),
+    ("tocilizumab",             "anti_il6"),
+    ("jak inhibitor",           "jak_inhibitor"),
+    ("jak-stat",                "jak_inhibitor"),
+    ("janus kinase",            "jak_inhibitor"),
+    ("dmard",                   "dmard"),
+    ("methotrexate",            "dmard"),
+    ("hydroxychloroquine",      "dmard"),
+    ("anti-cd20",               "anti_cd20"),
+    ("cd20",                    "anti_cd20"),
+    ("rituximab",               "anti_cd20"),
+    # Oncology
+    ("parp",                    "parp_inhibitor"),
+    ("pd-1",                    "checkpoint_inhibitor"),
+    ("pd-l1",                   "checkpoint_inhibitor"),
+    ("ctla-4",                  "checkpoint_inhibitor"),
+    ("checkpoint",              "checkpoint_inhibitor"),
+    ("alkylat",                 "alkylating_agent"),
+    ("cyclophosphamide",        "alkylating_agent"),
+    ("melphalan",               "alkylating_agent"),
+    ("antimetabolite",          "antimetabolite"),
+    ("gemcitabine",             "antimetabolite"),
+    ("capecitabine",            "antimetabolite"),
+    ("taxane",                  "taxane"),
+    ("paclitaxel",              "taxane"),
+    ("docetaxel",               "taxane"),
+    ("vinca",                   "vinca_alkaloid"),
+    ("vincristine",             "vinca_alkaloid"),
+    ("hdac",                    "hdac_inhibitor"),
+    ("histone deacetylase",     "hdac_inhibitor"),
+    ("proteasome",              "proteasome_inhibitor"),
+    ("bortezomib",              "proteasome_inhibitor"),
+    ("anti-vegf",               "anti_vegf"),
+    ("vegf",                    "anti_vegf"),
+    ("bevacizumab",             "anti_vegf"),
+    ("aromatase",               "aromatase_inhibitor"),
+    ("letrozole",               "aromatase_inhibitor"),
+    ("anastrozole",             "aromatase_inhibitor"),
+    ("serm",                    "serm"),
+    ("tamoxifen",               "serm"),
+    ("raloxifene",              "serm"),
+    ("kinase inhibitor",        "kinase_inhibitor"),
+    ("tyrosine kinase",         "kinase_inhibitor"),
+    ("imatinib",                "kinase_inhibitor"),
+    ("mtor",                    "mtor_inhibitor"),
+    ("sirolimus",               "mtor_inhibitor"),
+    ("everolimus",              "mtor_inhibitor"),
+    # Neurology
+    ("anticonvulsant",          "anticonvulsant"),
+    ("antiepileptic",           "anticonvulsant"),
+    ("sodium channel",          "anticonvulsant"),
+    ("dopamine agonist",        "dopamine_agonist"),
+    ("dopaminergic",            "dopamine_agonist"),
+    ("levodopa",                "dopamine_precursor"),
+    ("carbidopa",               "dopamine_precursor"),
+    ("mao-b",                   "maob_inhibitor"),
+    ("monoamine oxidase",       "maob_inhibitor"),
+    ("rasagiline",              "maob_inhibitor"),
+    ("nmda",                    "nmda_antagonist"),
+    ("memantine",               "nmda_antagonist"),
+    ("acetylcholinesterase",    "acetylcholinesterase_inhibitor"),
+    ("cholinesterase",          "acetylcholinesterase_inhibitor"),
+    ("donepezil",               "acetylcholinesterase_inhibitor"),
+    ("alpha-2",                 "alpha2_agonist"),
+    ("alpha2",                  "alpha2_agonist"),
+    ("clonidine",               "alpha2_agonist"),
+    # Pain / Analgesia
+    ("opioid antagonist",       "opioid_antagonist"),
+    ("naltrexone",              "opioid_antagonist"),
+    ("nsaid",                   "nsaid"),
+    ("cox-2",                   "cox2_inhibitor"),
+    ("cyclooxygenase-2",        "cox2_inhibitor"),
+    ("celecoxib",               "cox2_inhibitor"),
+    ("aspirin",                 "nsaid"),
+    ("ibuprofen",               "nsaid"),
+    # Rare / other
+    ("colchicine",              "colchicine"),
+    ("microtubule",             "microtubule_inhibitor"),
+    ("tubulin",                 "microtubule_inhibitor"),
+    ("xanthine oxidase",        "anti_uric_acid"),
+    ("allopurinol",             "anti_uric_acid"),
+    ("febuxostat",              "anti_uric_acid"),
+    ("diuretic",                "diuretic"),
+    ("furosemide",              "diuretic"),
+    ("spironolactone",          "diuretic"),
+    ("potassium channel",       "potassium_channel"),
+    ("minoxidil",               "potassium_channel"),
+    ("cftr",                    "cftr_modulator"),
+    ("ivacaftor",               "cftr_modulator"),
+    ("complement",              "complement_inhibitor"),
+    ("eculizumab",              "complement_inhibitor"),
+]
 
 
-def _score_pair_worker(args: Tuple) -> Optional[Dict]:
+def classify_mechanism(mechanism: str) -> str:
     """
-    Worker function executed in a subprocess.
-    Receives a serialisable args tuple; returns a SimulationProof dict or None.
-
-    args = (drug_a_dict, drug_b_dict, disease_genes, disease_name)
+    Map a free-text mechanism string to a standardised mechanism class.
+    Returns "other" if no match found.
     """
-    # Deferred imports: safe inside subprocess
-    from backend.pipeline.synergy_engine import SynergyEngine
-    from backend.pipeline.toxicity_engine import ToxicityEngine
-    from backend.pipeline.cyp450_checker import CYP450Checker
-    from backend.pipeline.combo_scorer import CombinationScorer, classify_mechanism
-
-    drug_a, drug_b, disease_genes, disease_name = args
-
-    name_a = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
-    name_b = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
-
-    try:
-        # ── 1. Mechanism synergy/antagonism (fast, no I/O) ────────────────
-        scorer = CombinationScorer(disease_name=disease_name)
-        pair_result = scorer.score_pair(drug_a, drug_b, disease_genes)
-
-        # Skip antagonistic pairs immediately
-        if pair_result.get("is_antagonistic"):
-            return None
-
-        # ── 2. CYP450 check (static table, synchronous) ───────────────────
-        cyp_checker = CYP450Checker()
-        cyp_result = cyp_checker._check_pair_static(name_a, name_b)
-
-        # Skip CRITICAL CYP450 interactions
-        if cyp_result.severity == "CRITICAL":
-            return None
-
-        # ── 3. Toxicity Ω penalty (curated table, synchronous) ────────────
-        tox_engine = ToxicityEngine()
-        tox_result = tox_engine.assess_combination_sync([name_a, name_b])
-
-        # Skip CRITICAL toxicity combos
-        if tox_result.is_critical:
-            return None
-
-        # ── 4. Bliss + Loewe synergy ──────────────────────────────────────
-        syn_engine = SynergyEngine()
-        syn_result = syn_engine.compute_synergy(drug_a, drug_b, disease_genes)
-
-        # ── 5. Final score composition ────────────────────────────────────
-        base_score       = pair_result.get("combo_score", 0.0)
-        synergy_bonus    = syn_result.aggregate_synergy_score * 0.15
-        cyp_penalty      = cyp_result.omega_penalty   # in [-0.40, 0]
-        tox_penalty      = tox_result.omega_penalty if tox_result.omega_penalty != float("-inf") else -1.0
-        cumulative_penalty = cyp_penalty + tox_penalty
-
-        final_score = max(
-            min(base_score + synergy_bonus + cumulative_penalty, 1.0),
-            0.0
-        )
-
-        # ── 6. Assemble SimulationProof ───────────────────────────────────
-        proof = _build_simulation_proof(
-            drug_a=drug_a,
-            drug_b=drug_b,
-            disease_name=disease_name,
-            disease_genes=disease_genes,
-            pair_result=pair_result,
-            syn_engine=syn_engine,
-            syn_result=syn_result,
-            cyp_result=cyp_result,
-            tox_result=tox_result,
-            final_score=final_score,
-            synergy_bonus=synergy_bonus,
-            cyp_penalty=cyp_penalty,
-            tox_penalty=tox_penalty,
-        )
-        return proof
-
-    except Exception as e:
-        logger.warning(f"Worker failed for {name_a} + {name_b}: {e}")
-        return None
-
-
-def _build_simulation_proof(
-    drug_a: Dict,
-    drug_b: Dict,
-    disease_name: str,
-    disease_genes: List[str],
-    pair_result: Dict,
-    syn_engine: Any,
-    syn_result: Any,
-    cyp_result: Any,
-    tox_result: Any,
-    final_score: float,
-    synergy_bonus: float,
-    cyp_penalty: float,
-    tox_penalty: float,
-) -> Dict:
-    """Assemble the structured SimulationProof JSON for a drug pair."""
-    from backend.pipeline.synergy_engine import SynergyEngine
-    from backend.pipeline.cyp450_checker import CYP450Checker
-    from backend.pipeline.toxicity_engine import ToxicityEngine
-
-    name_a = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
-    name_b = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
-
-    targets_a = set(t.upper() for t in drug_a.get("target_genes", []) or drug_a.get("targets", []))
-    targets_b = set(t.upper() for t in drug_b.get("target_genes", []) or drug_b.get("targets", []))
-    disease_set = set(g.upper() for g in disease_genes)
-    combined_targets = (targets_a | targets_b) & disease_set
-
-    return {
-        # ── Identity ──────────────────────────────────────────────────────
-        "regimen":      f"{name_a} + {name_b}",
-        "drug_a":       name_a,
-        "drug_b":       name_b,
-        "disease":      disease_name,
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "model_version": "TwinTrial v1.1 (Bliss+Loewe+Ω)",
-
-        # ── Final score ───────────────────────────────────────────────────
-        "final_score":  round(final_score, 4),
-        "score_breakdown": {
-            "mechanism_combo_score": round(pair_result.get("combo_score", 0), 4),
-            "bliss_loewe_synergy_bonus": round(synergy_bonus, 4),
-            "cyp450_omega_penalty": round(cyp_penalty, 4),
-            "toxicity_omega_penalty": round(tox_penalty, 4),
-            "final_score": round(final_score, 4),
-        },
-
-        # ── Target pathway nodes ──────────────────────────────────────────
-        "target_pathway_nodes": {
-            "combined_disease_targets": sorted(combined_targets),
-            "targets_drug_a_only": sorted(targets_a - targets_b - disease_set),
-            "targets_drug_b_only": sorted(targets_b - targets_a - disease_set),
-            "targets_shared_with_disease": sorted(combined_targets),
-            "shared_pathways": pair_result.get("shared_genes", [])[:10],
-            "total_disease_coverage": f"{len(combined_targets)}/{len(disease_set)} disease genes",
-        },
-
-        # ── Synergy models ─────────────────────────────────────────────────
-        "synergy_analysis": {
-            "synergy_call":              syn_result.synergy_call,
-            "synergy_confidence":        syn_result.synergy_confidence,
-            "aggregate_synergy_score":   syn_result.aggregate_synergy_score,
-            "bliss_independence": {
-                "drug_a_effect_proxy":  syn_result.effect_a,
-                "drug_b_effect_proxy":  syn_result.effect_b,
-                "expected_combined":    syn_result.bliss_expected,
-                "estimated_combined":   syn_result.effect_combo,
-                "bliss_score":          syn_result.bliss_score,
-                "interpretation": (
-                    "Synergistic — combined effect exceeds Bliss prediction"
-                    if syn_result.bliss_score > 0.10
-                    else "Antagonistic" if syn_result.bliss_score < -0.10
-                    else "Additive"
-                ),
-            },
-            "loewe_additivity": {
-                "combination_index": syn_result.ci,
-                "interpretation": (
-                    "Synergistic (CI < 1.0)"
-                    if syn_result.ci < 0.90
-                    else "Antagonistic (CI > 1.0)" if syn_result.ci > 1.10
-                    else "Additive (CI ≈ 1.0)"
-                ),
-            },
-            "highest_single_agent": {
-                "hsa_reference": syn_result.hsa_reference,
-                "delta_above_hsa": syn_result.hsa_delta,
-            },
-        },
-
-        # ── Mechanistic rationale ──────────────────────────────────────────
-        "mechanistic_rationale": {
-            "summary": syn_result.mechanistic_rationale,
-            "mechanism_a":    drug_a.get("mechanism", ""),
-            "mechanism_b":    drug_b.get("mechanism", ""),
-            "mechanism_class_a": pair_result.get("mechanism_a", ""),
-            "mechanism_class_b": pair_result.get("mechanism_b", ""),
-            "is_known_synergistic_pair": pair_result.get("is_synergistic", False),
-            "complementary_pathways": syn_result.complementary_pathways,
-            "gene_coverage_bonus": pair_result.get("coverage_bonus", 0),
-            "redundancy_penalty": pair_result.get("redundancy_penalty", 0),
-        },
-
-        # ── Safety: CYP450 ─────────────────────────────────────────────────
-        "metabolic_safety": {
-            "cyp450_severity":      cyp_result.severity,
-            "omega_penalty_cyp":    cyp_result.omega_penalty,
-            "enzymes_affected":     cyp_result.enzymes_affected,
-            "risk_description":     cyp_result.risk_description,
-            "recommendation":       cyp_result.recommendation,
-            "interactions": cyp_result.interactions,
-        },
-
-        # ── Safety: Adverse Events + Ω ─────────────────────────────────────
-        "adverse_event_safety": {
-            "is_critical":          tox_result.is_critical,
-            "omega_penalty_ae":     (
-                tox_result.omega_penalty
-                if tox_result.omega_penalty != float("-inf")
-                else "NEGATIVE_INFINITY"
-            ),
-            "critical_flags":       tox_result.critical_flags,
-            "cumulative_burden":    tox_result.cumulative_burden,
-            "safety_margin":        tox_result.safety_margin,
-            "shared_ae_categories": tox_result.shared_ae_categories,
-            "per_drug_profiles":    tox_result.per_drug_profiles,
-            "recommendation":       tox_result.recommendation,
-            "ae_data_source":       tox_result.ae_source,
-        },
-
-        # ── Overall safety margin (0-1) ────────────────────────────────────
-        "safety_margin": round(
-            tox_result.safety_margin * (1.0 - abs(min(cyp_penalty, 0))),
-            4
-        ),
-
-        # ── Disclaimers ────────────────────────────────────────────────────
-        "limitations": [
-            "All synergy scores are in-silico estimates using pipeline composite "
-            "scores as proxy effect sizes. Bliss/Loewe require wet-lab dose-response "
-            "curves for validation.",
-            "CYP450 interaction data derived from curated table + openFDA labels. "
-            "Not a substitute for full PK/PD modelling.",
-            "Adverse event profiles from openFDA FAERS and OFFSIDES curated dataset. "
-            "FAERS data is not randomised — causality not established.",
-            "This output is a research tool, not medical advice.",
-        ],
-    }
+    if not mechanism:
+        return "other"
+    mech_lower = mechanism.lower()
+    for keyword, cls in MECHANISM_KEYWORD_MAP:
+        if keyword in mech_lower:
+            return cls
+    return "other"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Main pool orchestrator
+# 2. Known synergistic and antagonistic pairs (mechanism class level)
 # ─────────────────────────────────────────────────────────────────────────────
 
-class ComboWorkerPool:
+# Pairs of mechanism classes that are clinically validated as synergistic.
+# Order-independent: (A, B) == (B, A).
+SYNERGISTIC_PAIRS: Set[frozenset] = {
+    # PAH triple therapy
+    frozenset({"pde5_inhibitor",         "endothelin_antagonist"}),
+    frozenset({"pde5_inhibitor",         "prostacyclin"}),
+    frozenset({"endothelin_antagonist",  "prostacyclin"}),
+    frozenset({"pde5_inhibitor",         "sgc_stimulator"}),
+    # Myeloma
+    frozenset({"imid",                   "proteasome_inhibitor"}),
+    frozenset({"imid",                   "corticosteroid"}),
+    frozenset({"proteasome_inhibitor",   "corticosteroid"}),
+    frozenset({"imid",                   "anti_cd20"}),
+    # RA
+    frozenset({"dmard",                  "anti_tnf"}),
+    frozenset({"dmard",                  "anti_il6"}),
+    frozenset({"dmard",                  "jak_inhibitor"}),
+    # Oncology
+    frozenset({"parp_inhibitor",         "alkylating_agent"}),
+    frozenset({"checkpoint_inhibitor",   "anti_vegf"}),
+    frozenset({"kinase_inhibitor",       "mtor_inhibitor"}),
+    frozenset({"aromatase_inhibitor",    "serm"}),
+    frozenset({"taxane",                 "alkylating_agent"}),
+    frozenset({"anti_vegf",              "alkylating_agent"}),
+    frozenset({"hdac_inhibitor",         "imid"}),
+    frozenset({"hdac_inhibitor",         "proteasome_inhibitor"}),
+    # CV
+    frozenset({"beta_blocker",           "ace_inhibitor"}),
+    frozenset({"beta_blocker",           "arb"}),
+    frozenset({"ace_inhibitor",          "arb"}),
+    frozenset({"statin",                 "biguanide"}),
+    # Metabolic
+    frozenset({"biguanide",              "thiazolidinedione"}),
+    frozenset({"biguanide",              "sglt2_inhibitor"}),
+    # Neurology
+    frozenset({"dopamine_agonist",       "maob_inhibitor"}),
+    frozenset({"dopamine_precursor",     "maob_inhibitor"}),
+    frozenset({"dopamine_precursor",     "nmda_antagonist"}),
+    frozenset({"acetylcholinesterase_inhibitor", "nmda_antagonist"}),
+    # Gout
+    frozenset({"anti_uric_acid",         "colchicine"}),
+    frozenset({"nsaid",                  "colchicine"}),
+    frozenset({"cox2_inhibitor",         "colchicine"}),
+}
+
+# Pairs that are clinically antagonistic or dangerous.
+ANTAGONISTIC_PAIRS: Set[frozenset] = {
+    # Hypotension risk
+    frozenset({"pde5_inhibitor",     "nsaid"}),       # renal / CV risk
+    frozenset({"beta_blocker",       "dopamine_agonist"}),  # PD — worsens motor
+    frozenset({"beta_blocker",       "dopamine_precursor"}),
+    # Myelosuppression stacking
+    frozenset({"alkylating_agent",   "antimetabolite"}),  # additive myelosuppression
+    # RA
+    frozenset({"anti_tnf",           "jak_inhibitor"}),   # immunosuppression risk
+    frozenset({"anti_tnf",           "anti_il6"}),        # dual biologics
+    # Renal
+    frozenset({"nsaid",              "ace_inhibitor"}),   # AKI triad
+    frozenset({"nsaid",              "diuretic"}),
+    frozenset({"nsaid",              "arb"}),
+}
+
+# Mechanism classes that target the same pathway — penalise for redundancy
+REDUNDANT_CLASS_GROUPS: List[Set[str]] = [
+    {"ace_inhibitor", "arb"},                                  # both RAAS
+    {"pde5_inhibitor", "sgc_stimulator"},                      # both cGMP
+    {"anti_tnf", "anti_il6", "jak_inhibitor"},                 # all immunosuppressive
+    {"aromatase_inhibitor", "serm"},                           # both ER-related
+    {"proteasome_inhibitor", "imid"},                          # both myeloma (keep together for synergy check)
+    {"alkylating_agent", "antimetabolite"},                    # same DNA-damage pathway
+    {"acetylcholinesterase_inhibitor", "nmda_antagonist"},     # both AD (synergistic exception)
+    {"dopamine_agonist", "dopamine_precursor", "maob_inhibitor"},  # all dopaminergic
+    {"hdac_inhibitor", "dnmt_inhibitor"},                      # both epigenetic
+    {"statin", "statin"},                                      # same class (always redundant)
+]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. CombinationScorer
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CombinationScorer:
     """
-    Parallel combination scoring engine.
-    Enumerates drug pairs via itertools.combinations and distributes
-    scoring across multiple CPU cores using multiprocessing.Pool.
+    Scores drug pairs and triples for combination potential.
+
+    Scoring formula (pair)
+    ----------------------
+        base_score = mean(score_a, score_b)
+        + synergy_bonus     (+0.20 if known synergistic pair)
+        + coverage_bonus    (+0–0.15 based on unique gene coverage)
+        - antagonism_penalty (−0.40 if known antagonistic pair)
+        - redundancy_penalty (−0.05–0.10 for same-class drugs)
+        combo_score = clip(result, 0, 1)
+
+    Parameters
+    ----------
+    disease_name : str
+        Used for disease-specific scoring context (future extension).
+    synergy_bonus : float
+        Score boost for known synergistic mechanism pairs.
+    antagonism_penalty : float
+        Score reduction for known antagonistic pairs.
+    coverage_bonus_max : float
+        Maximum bonus for complementary gene coverage.
+    redundancy_penalty : float
+        Penalty per degree of mechanism redundancy.
     """
 
-    def __init__(self, n_workers: Optional[int] = None):
-        self.n_workers = n_workers or max(1, mp.cpu_count() - 1)
-        logger.info(f"ComboWorkerPool: {self.n_workers} workers")
-
-    def run(
+    def __init__(
         self,
-        candidates: List[Dict],
+        disease_name:         str   = "",
+        synergy_bonus:        float = 0.20,
+        antagonism_penalty:   float = 0.40,
+        coverage_bonus_max:   float = 0.15,
+        redundancy_penalty:   float = 0.08,
+    ):
+        self.disease_name       = disease_name.lower().strip()
+        self.synergy_bonus      = synergy_bonus
+        self.antagonism_penalty = antagonism_penalty
+        self.coverage_bonus_max = coverage_bonus_max
+        self.redundancy_penalty = redundancy_penalty
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _gene_coverage_bonus(
+        self,
+        targets_a: Set[str],
+        targets_b: Set[str],
         disease_genes: List[str],
-        disease_name: str,
-        max_pairs: int = 5000,
-        top_n_singles: int = 30,
-        include_triples: bool = False,
-    ) -> List[Dict]:
+    ) -> float:
         """
-        Run parallel combination scoring.
-
-        Parameters
-        ----------
-        candidates : list of dict
-            Single-drug scored candidates from generate_candidates().
-        disease_genes : list of str
-        disease_name : str
-        max_pairs : int
-            Cap on total pairs to evaluate (default 5000).
-        top_n_singles : int
-            Restrict combinations to top-N singles by score (default 30 → 435 pairs).
-        include_triples : bool
-            Include 3-drug combinations (expensive).
-
-        Returns
-        -------
-        list of SimulationProof dicts, sorted by final_score descending.
-        Non-scoring pairs (antagonistic, critical toxicity) are excluded.
+        Bonus for covering more unique disease genes together than either alone.
         """
-        top = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)
-        top = top[:top_n_singles]
-
-        # Build argument tuples (serialisable for multiprocessing)
-        pair_args = [
-            (drug_a, drug_b, disease_genes, disease_name)
-            for drug_a, drug_b in itertools.combinations(top, 2)
-        ][:max_pairs]
-
-        if include_triples and len(top) >= 3:
-            triple_cap = min(max_pairs // 2, 500)
-            triple_args = [
-                (drug_a, drug_b, drug_c, disease_genes, disease_name)
-                for drug_a, drug_b, drug_c in itertools.combinations(top[:15], 3)
-            ][:triple_cap]
-        else:
-            triple_args = []
-
-        n_total = len(pair_args) + len(triple_args)
-        logger.info(
-            f"Combination loop: {len(pair_args)} pairs + {len(triple_args)} triples "
-            f"= {n_total} evaluations on {self.n_workers} workers"
+        if not disease_genes:
+            return 0.0
+        disease_set    = set(g.upper() for g in disease_genes)
+        combined       = (targets_a | targets_b) & disease_set
+        max_individual = max(
+            len(targets_a & disease_set),
+            len(targets_b & disease_set),
         )
+        extra = len(combined) - max_individual
+        if extra <= 0 or len(disease_set) == 0:
+            return 0.0
+        return min(extra / len(disease_set) * 2.0, self.coverage_bonus_max)
 
-        t0 = time.time()
-        results: List[Dict] = []
-
-        # Pairs via Pool
-        if pair_args:
-            with mp.Pool(processes=self.n_workers) as pool:
-                raw = pool.map(_score_pair_worker, pair_args, chunksize=20)
-            results = [r for r in raw if r is not None]
-
-        logger.info(
-            f"Pairs: {len(results)}/{len(pair_args)} passed filters "
-            f"in {time.time() - t0:.1f}s"
-        )
-
-        # Triples: run sequentially to avoid excessive memory (O(n³))
-        if triple_args:
-            from backend.pipeline.combo_scorer import CombinationScorer
-            from backend.pipeline.synergy_engine import SynergyEngine
-            from backend.pipeline.toxicity_engine import ToxicityEngine
-            t_scorer = CombinationScorer(disease_name=disease_name)
-            t_synergy = SynergyEngine()
-            t_tox = ToxicityEngine()
-
-            for triple_arg in triple_args:
-                drug_a, drug_b, drug_c = triple_arg[0], triple_arg[1], triple_arg[2]
-                triple_r = t_scorer.score_triple(drug_a, drug_b, drug_c, disease_genes)
-                if triple_r.get("is_antagonistic"):
-                    continue
-                tox_r = t_tox.assess_combination_sync([
-                    drug_a.get("drug_name", ""),
-                    drug_b.get("drug_name", ""),
-                    drug_c.get("drug_name", ""),
-                ])
-                if tox_r.is_critical:
-                    continue
-                triple_r["final_score"] = max(
-                    triple_r.get("combo_score", 0) + tox_r.omega_penalty, 0.0
-                )
-                triple_r["safety_margin"] = tox_r.safety_margin
-                triple_r["tox_result"] = t_tox.to_dict(tox_r)
-                results.append(triple_r)
-
-        results.sort(key=lambda r: r.get("final_score", 0), reverse=True)
-        logger.info(
-            f"Combination loop complete: {len(results)} viable combinations "
-            f"in {time.time() - t0:.1f}s total"
-        )
-        return results
-
-    def write_report(
+    def _redundancy_penalty(
         self,
-        proofs: List[Dict],
-        output_path: str = "simulation_proof.json",
-        top_n: int = 20,
-    ) -> Path:
+        class_a: str,
+        class_b: str,
+    ) -> float:
         """
-        Write structured SimulationProof JSON report.
+        Penalty when two drugs are in the same mechanism class or class group.
+        """
+        if class_a == class_b and class_a != "other":
+            return self.redundancy_penalty
+
+        for group in REDUNDANT_CLASS_GROUPS:
+            if class_a in group and class_b in group:
+                # Check it's not a known synergistic pair first
+                if frozenset({class_a, class_b}) in SYNERGISTIC_PAIRS:
+                    return 0.0
+                return self.redundancy_penalty * 0.5
+
+        return 0.0
+
+    # ── Public API ────────────────────────────────────────────────────────────
+
+    def score_pair(
+        self,
+        drug_a: Dict,
+        drug_b: Dict,
+        disease_genes: List[str],
+    ) -> Dict:
+        """
+        Score a drug pair for combination potential.
 
         Parameters
         ----------
-        proofs : list of SimulationProof dicts
-        output_path : str
-        top_n : int
-            Include only top N results in the report.
+        drug_a, drug_b : dict
+            Drug candidate dicts. Required keys: drug_name (or name), score.
+            Optional: target_genes (or targets), mechanism, pathways.
+        disease_genes : list of str
 
         Returns
         -------
-        Path to the written file.
+        dict with:
+            combo_score, combo_name, is_synergistic, is_antagonistic,
+            mechanism_a, mechanism_b, synergy_bonus, antagonism_penalty,
+            coverage_bonus, redundancy_penalty, shared_genes,
+            combined_gene_coverage, score_breakdown
         """
-        report = {
-            "report_type": "TwinTrial SimulationProof",
-            "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "model": "Bliss Independence + Loewe Additivity + CYP450-Ω + AE-Ω",
-            "n_combinations_evaluated": len(proofs),
-            "top_n_shown": top_n,
-            "summary": {
-                "top_regimen":          proofs[0]["regimen"] if proofs else None,
-                "top_final_score":      proofs[0].get("final_score", 0) if proofs else 0,
-                "top_safety_margin":    proofs[0].get("safety_margin", 0) if proofs else 0,
-                "n_synergistic":        sum(
-                    1 for p in proofs
-                    if p.get("synergy_analysis", {}).get("synergy_call") == "SYNERGISTIC"
-                ),
+        name_a    = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
+        name_b    = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
+        score_a   = float(drug_a.get("score", 0.0))
+        score_b   = float(drug_b.get("score", 0.0))
+        mech_a    = drug_a.get("mechanism", "")
+        mech_b    = drug_b.get("mechanism", "")
+        class_a   = classify_mechanism(mech_a)
+        class_b   = classify_mechanism(mech_b)
+
+        # Gene sets
+        targets_a = set(
+            t.upper() for t in (drug_a.get("target_genes") or drug_a.get("targets") or [])
+        )
+        targets_b = set(
+            t.upper() for t in (drug_b.get("target_genes") or drug_b.get("targets") or [])
+        )
+        disease_set = set(g.upper() for g in disease_genes)
+
+        # Shared genes
+        shared_genes = list((targets_a | targets_b) & disease_set)
+
+        # Synergy / antagonism
+        pair_key        = frozenset({class_a, class_b})
+        is_synergistic  = pair_key in SYNERGISTIC_PAIRS
+        is_antagonistic = pair_key in ANTAGONISTIC_PAIRS
+
+        # Score components
+        base_score      = (score_a + score_b) / 2.0
+        syn_bonus       = self.synergy_bonus if is_synergistic else 0.0
+        ant_penalty     = self.antagonism_penalty if is_antagonistic else 0.0
+        cov_bonus       = self._gene_coverage_bonus(targets_a, targets_b, disease_genes)
+        red_penalty     = self._redundancy_penalty(class_a, class_b)
+
+        combo_score = max(0.0, min(1.0,
+            base_score + syn_bonus + cov_bonus - ant_penalty - red_penalty
+        ))
+
+        combined_coverage = len((targets_a | targets_b) & disease_set)
+
+        return {
+            "combo_name":             f"{name_a} + {name_b}",
+            "drug_a":                 name_a,
+            "drug_b":                 name_b,
+            "n_drugs":                2,
+            "combo_score":            round(combo_score, 4),
+            "base_score":             round(base_score, 4),
+            "is_synergistic":         is_synergistic,
+            "is_antagonistic":        is_antagonistic,
+            "mechanism_a":            class_a,
+            "mechanism_b":            class_b,
+            "synergy_bonus":          round(syn_bonus, 4),
+            "antagonism_penalty":     round(ant_penalty, 4),
+            "coverage_bonus":         round(cov_bonus, 4),
+            "redundancy_penalty":     round(red_penalty, 4),
+            "shared_genes":           shared_genes[:10],
+            "combined_gene_coverage": combined_coverage,
+            "wet_lab_targets":        shared_genes[:5],
+            "score_breakdown": {
+                "base_score":          round(base_score, 4),
+                "synergy_bonus":       round(syn_bonus, 4),
+                "antagonism_penalty":  round(ant_penalty, 4),
+                "coverage_bonus":      round(cov_bonus, 4),
+                "redundancy_penalty":  round(red_penalty, 4),
             },
-            "top_combinations": proofs[:top_n],
         }
 
-        out = Path(output_path)
-        out.write_text(json.dumps(report, indent=2, default=str))
-        logger.info(f"SimulationProof written: {out.resolve()}")
-        return out
+    def score_triple(
+        self,
+        drug_a: Dict,
+        drug_b: Dict,
+        drug_c: Dict,
+        disease_genes: List[str],
+    ) -> Dict:
+        """
+        Score a 3-drug combination.
+
+        Approach: score all three pairs, take the weighted geometric mean,
+        apply an additional coverage bonus for the third drug, and penalise
+        if any pair is antagonistic.
+        """
+        name_a = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
+        name_b = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
+        name_c = drug_c.get("drug_name", drug_c.get("name", "DrugC"))
+
+        pair_ab = self.score_pair(drug_a, drug_b, disease_genes)
+        pair_ac = self.score_pair(drug_a, drug_c, disease_genes)
+        pair_bc = self.score_pair(drug_b, drug_c, disease_genes)
+
+        any_antagonistic = (
+            pair_ab["is_antagonistic"] or
+            pair_ac["is_antagonistic"] or
+            pair_bc["is_antagonistic"]
+        )
+        n_synergistic = sum([
+            pair_ab["is_synergistic"],
+            pair_ac["is_synergistic"],
+            pair_bc["is_synergistic"],
+        ])
+
+        # Geometric mean of pair scores
+        s_ab = pair_ab["combo_score"]
+        s_ac = pair_ac["combo_score"]
+        s_bc = pair_bc["combo_score"]
+        geo_mean = (s_ab * s_ac * s_bc) ** (1 / 3)
+
+        # Triple coverage bonus
+        targets_a = set(t.upper() for t in (drug_a.get("target_genes") or drug_a.get("targets") or []))
+        targets_b = set(t.upper() for t in (drug_b.get("target_genes") or drug_b.get("targets") or []))
+        targets_c = set(t.upper() for t in (drug_c.get("target_genes") or drug_c.get("targets") or []))
+        disease_set = set(g.upper() for g in disease_genes)
+
+        combined_all  = (targets_a | targets_b | targets_c) & disease_set
+        combined_best = max(
+            len(targets_a & disease_set),
+            len(targets_b & disease_set),
+            len(targets_c & disease_set),
+        )
+        extra = len(combined_all) - combined_best
+        triple_bonus = min(extra / max(len(disease_set), 1) * 1.5, 0.12)
+
+        combo_score = max(0.0, min(1.0, geo_mean + triple_bonus))
+        if any_antagonistic:
+            combo_score *= 0.3  # heavy penalty but don't discard here (worker will)
+
+        shared_genes = list(combined_all)
+
+        return {
+            "combo_name":             f"{name_a} + {name_b} + {name_c}",
+            "drug_a":                 name_a,
+            "drug_b":                 name_b,
+            "drug_c":                 name_c,
+            "n_drugs":                3,
+            "combo_score":            round(combo_score, 4),
+            "is_synergistic":         n_synergistic >= 2,
+            "is_antagonistic":        any_antagonistic,
+            "n_synergistic_pairs":    n_synergistic,
+            "mechanism_a":            pair_ab["mechanism_a"],
+            "mechanism_b":            pair_ab["mechanism_b"],
+            "mechanism_c":            classify_mechanism(drug_c.get("mechanism", "")),
+            "synergy_bonus":          round(n_synergistic * 0.10, 4),
+            "antagonism_penalty":     0.0 if not any_antagonistic else round(self.antagonism_penalty, 4),
+            "coverage_bonus":         round(triple_bonus, 4),
+            "redundancy_penalty":     0.0,
+            "shared_genes":           shared_genes[:10],
+            "combined_gene_coverage": len(combined_all),
+            "wet_lab_targets":        shared_genes[:5],
+            "score_breakdown": {
+                "geometric_mean_of_pairs": round(geo_mean, 4),
+                "triple_coverage_bonus":   round(triple_bonus, 4),
+                "n_synergistic_pairs":     n_synergistic,
+            },
+            "pair_scores": {
+                f"{name_a}+{name_b}": s_ab,
+                f"{name_a}+{name_c}": s_ac,
+                f"{name_b}+{name_c}": s_bc,
+            },
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. ComboWorkerPool (re-export from combo_worker — avoids circular import)
+# ─────────────────────────────────────────────────────────────────────────────
+# combo_worker.py imports CombinationScorer from this module.
+# production_pipeline.py imports ComboWorkerPool from combo_worker.
+# We re-expose ComboWorkerPool here for convenience so callers only need one import.
+
+try:
+    from .combo_worker import ComboWorkerPool  # noqa: F401
+except ImportError:
+    # If combo_worker isn't available (e.g. test environment) expose a minimal stub
+    class ComboWorkerPool:  # type: ignore
+        """
+        Minimal fallback ComboWorkerPool.
+        Used when multiprocessing workers are not available (tests, notebook).
+        Runs combination scoring synchronously in the main process.
+        """
+
+        def __init__(self, n_workers: Optional[int] = None):
+            self.n_workers = n_workers or 1
+            logger.warning(
+                "ComboWorkerPool: running in single-process fallback mode "
+                "(combo_worker.py not importable)."
+            )
+
+        def run(
+            self,
+            candidates: List[Dict],
+            disease_genes: List[str],
+            disease_name: str,
+            max_pairs: int = 5000,
+            top_n_singles: int = 30,
+            include_triples: bool = False,
+        ) -> List[Dict]:
+            scorer = CombinationScorer(disease_name=disease_name)
+            top = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)[:top_n_singles]
+            results = []
+            for drug_a, drug_b in itertools.islice(itertools.combinations(top, 2), max_pairs):
+                result = scorer.score_pair(drug_a, drug_b, disease_genes)
+                if not result.get("is_antagonistic"):
+                    result["final_score"] = result["combo_score"]
+                    result["safety_margin"] = 1.0
+                    results.append(result)
+            if include_triples:
+                for drug_a, drug_b, drug_c in itertools.islice(
+                    itertools.combinations(top[:15], 3), 500
+                ):
+                    result = scorer.score_triple(drug_a, drug_b, drug_c, disease_genes)
+                    if not result.get("is_antagonistic"):
+                        result["final_score"] = result["combo_score"]
+                        result["safety_margin"] = 1.0
+                        results.append(result)
+            results.sort(key=lambda r: r.get("final_score", 0), reverse=True)
+            return results
+
+        def write_report(self, proofs, output_path="simulation_proof.json", top_n=20):
+            import json
+            from pathlib import Path
+            out = Path(output_path)
+            out.write_text(json.dumps({"top_combinations": proofs[:top_n]}, indent=2))
+            return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. rank_combinations — used by TreatmentPlanAssembler
+# ─────────────────────────────────────────────────────────────────────────────
+
+def rank_combinations(
+    candidates:    List[Dict],
+    disease_genes: List[str],
+    disease_name:  str = "",
+    max_pairs:     int = 5000,
+    top_n_singles: int = 30,
+    include_triples: bool = True,
+    min_combo_score: float = 0.0,
+) -> List[Dict]:
+    """
+    Score and rank all drug combinations from a candidate list.
+
+    Used by the treatment plan assembler when the full ComboWorkerPool is
+    not available or when a lighter-weight in-process scorer is preferred.
+
+    Parameters
+    ----------
+    candidates : list of dict
+        Single-drug scored candidates (must have 'score', 'drug_name' or 'name').
+    disease_genes : list of str
+    disease_name : str
+    max_pairs : int
+        Maximum number of pairs to evaluate.
+    top_n_singles : int
+        Only combine the top N singles by score (limits combinatorial explosion).
+    include_triples : bool
+        Whether to include 3-drug combinations.
+    min_combo_score : float
+        Minimum combo_score to include in results.
+
+    Returns
+    -------
+    list of combo dicts sorted by combo_score descending.
+    """
+    scorer = CombinationScorer(disease_name=disease_name)
+
+    top = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)
+    top = top[:top_n_singles]
+
+    results = []
+
+    # Pairs
+    for drug_a, drug_b in itertools.islice(itertools.combinations(top, 2), max_pairs):
+        result = scorer.score_pair(drug_a, drug_b, disease_genes)
+        if not result["is_antagonistic"] and result["combo_score"] >= min_combo_score:
+            results.append(result)
+
+    # Triples
+    if include_triples and len(top) >= 3:
+        for drug_a, drug_b, drug_c in itertools.islice(
+            itertools.combinations(top[:15], 3), 500
+        ):
+            result = scorer.score_triple(drug_a, drug_b, drug_c, disease_genes)
+            if not result["is_antagonistic"] and result["combo_score"] >= min_combo_score:
+                results.append(result)
+
+    results.sort(key=lambda r: r["combo_score"], reverse=True)
+
+    n_syn = sum(1 for r in results if r["is_synergistic"])
+    logger.info(
+        "rank_combinations: %d pairs/triples scored, %d synergistic, "
+        "top=%s (%.3f) for disease='%s'",
+        len(results),
+        n_syn,
+        results[0]["combo_name"] if results else "none",
+        results[0]["combo_score"] if results else 0.0,
+        disease_name,
+    )
+
+    return results

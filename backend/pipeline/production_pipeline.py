@@ -3,20 +3,12 @@ production_pipeline.py — TwinTrial Analytics Production Pipeline
 ================================================================
 Main pipeline orchestrator. Entry point is generate_treatment_plan().
 
-Pipeline flow
--------------
-  1. Fetch disease data from OpenTargets
-  2. Fetch approved drugs from ChEMBL
-  3. Filter to off-patent generics only (GenericDrugFilter)
-  4. EFO ontology expansion
-  5. Score singles (gene, pathway, PPI, similarity, tissue, polypharmacology)
-  6. Safety filter (DrugSafetyFilter)
-  7. Score combinations (CombinationScorer)
-  8. Virtual Phase 2 trials on top combos (InSilicoTrialSimulator)
-  9. Assemble treatment plan (TreatmentPlanAssembler)
-
-The old analyze_disease() method is kept as a thin wrapper around
-generate_treatment_plan() for backward compatibility with run_validation.py.
+Changes from original
+---------------------
+  FIX 1: combo_eligible variable defined after safety filter, before combo scoring.
+  FIX 2: fetch_generic_drugs() integrates PurpleBookFilter for biologics.
+  FIX 3: ComboWorkerPool import has in-process fallback via rank_combinations().
+  FIX 4: Purple Book stats surfaced in pipeline_stats output.
 """
 
 import asyncio
@@ -32,7 +24,7 @@ from .ppi_network import PPINetworkScorer, batch_ppi_scores
 from .drug_similarity import DrugSimilarityScorer, build_reference_smiles, batch_similarity_scores
 from .scorer import ProductionScorer
 from .generic_filter import GenericDrugFilter
-from .combo_scorer import CombinationScorer
+from .combo_scorer import CombinationScorer, rank_combinations
 from .treatment_plan import TreatmentPlanAssembler
 
 logging.basicConfig(level=logging.INFO)
@@ -105,17 +97,55 @@ class ProductionPipeline:
         return self.drugs_cache
 
     async def fetch_generic_drugs(self, limit: int = 3000) -> tuple:
+        """
+        Fetch all drugs and filter to generics + biosimilar-eligible biologics.
+
+        Integrates three filter layers:
+          1. GenericDrugFilter  — static lists + approval year heuristic
+          2. OrangeBookFilter   — dynamic FDA NDA/ANDA check for small molecules
+          3. PurpleBookFilter   — dynamic FDA BLA/biosimilar check for biologics
+        """
         if self._generic_cache is not None:
             return self._generic_cache, [], self.generic_filter.get_stats()
 
         all_drugs = await self.fetch_approved_drugs(limit=limit)
+
+        # Step 1: GenericDrugFilter (static + heuristic)
         generic_drugs, excluded = self.generic_filter.filter_to_generics(all_drugs)
-        
-        from .orange_book_filter import OrangeBookFilter
-        ob_filter = OrangeBookFilter()
-        upgraded = ob_filter.upgrade_generic_filter((generic_drugs, excluded))
-        generic_drugs = upgraded["confirmed_generics"]
-        
+
+        # Step 2: OrangeBookFilter (dynamic NDA/ANDA check for grey zone small molecules)
+        try:
+            from .orange_book_filter import OrangeBookFilter
+            ob_filter = OrangeBookFilter()
+            upgraded  = ob_filter.upgrade_generic_filter((generic_drugs, excluded))
+            generic_drugs = upgraded["confirmed_generics"]
+            logger.info(
+                f"OrangeBookFilter: verified {upgraded['verify_resolved']} grey-zone drugs"
+            )
+        except Exception as e:
+            logger.warning(f"OrangeBookFilter failed (non-fatal): {e}")
+
+        # Step 3: PurpleBookFilter (biosimilar check for biologics)
+        try:
+            from .purple_book_filter import PurpleBookFilter
+            pb_filter      = PurpleBookFilter()
+            biologics      = [d for d in generic_drugs if pb_filter._is_biologic(d.get("name", "").lower())]
+            small_molecules = [d for d in generic_drugs if not pb_filter._is_biologic(d.get("name", "").lower())]
+
+            if biologics:
+                pb_eligible, pb_excluded, _pb_stats = await pb_filter.filter_to_biosimilar_eligible(
+                    biologics, max_concurrent=6
+                )
+                for d in pb_excluded:
+                    d["excluded_by"] = "purple_book"
+                generic_drugs = small_molecules + pb_eligible
+                logger.info(
+                    f"PurpleBookFilter: {len(pb_eligible)}/{len(biologics)} biologics eligible "
+                    f"({len(pb_excluded)} excluded)"
+                )
+        except Exception as e:
+            logger.warning(f"PurpleBookFilter failed (non-fatal): {e}")
+
         self._generic_cache = generic_drugs
         stats = self.generic_filter.get_stats()
         return generic_drugs, excluded, stats
@@ -136,8 +166,6 @@ class ProductionPipeline:
     ) -> List[Dict]:
         """
         Score all drugs against a disease and return candidate dicts.
-        Identical to the original pipeline — used for single-drug scoring
-        before the combination stage.
         """
         disease_name = disease_data["name"]
 
@@ -145,7 +173,7 @@ class ProductionPipeline:
         expander = None
         if use_efo:
             try:
-                from efo_ontology import EFOOntologyExpander
+                from .efo_ontology import EFOOntologyExpander
                 expander = EFOOntologyExpander(session=self.data_fetcher.session)
                 disease_data = await expander.expand_disease_genes(disease_data)
                 stats = disease_data.get("efo_expansion_stats", {})
@@ -253,32 +281,34 @@ class ProductionPipeline:
                 similarity_score=sim_score,
             )
 
-            # Tissue expression blended at 15% (not additive — avoids score inflation)
+            # Tissue expression blended at 15%
             if tissue_score > 0:
                 score = min(1.0, score * 0.85 + tissue_score * 0.15)
 
             if score >= min_score:
                 candidates.append({
-                    "name":                   drug_name,
-                    "drug_name":              drug_name,
-                    "drug_id":                drug.get("id", ""),
-                    "score":                  score,
-                    "confidence":             evidence["confidence"],
-                    "shared_genes":           evidence["shared_genes"],
-                    "shared_pathways":        evidence["shared_pathways"],
-                    "explanation":            evidence["explanation"],
-                    "indication":             drug.get("indication", ""),
-                    "mechanism":              drug.get("mechanism", ""),
-                    "gene_score":             evidence["gene_score"],
-                    "pathway_score":          evidence["pathway_score"],
-                    "ppi_score":              evidence["ppi_score"],
-                    "similarity_score":       evidence["similarity_score"],
-                    "mechanism_score":        evidence["mechanism_score"],
-                    "literature_score":       evidence["literature_score"],
+                    "name":                    drug_name,
+                    "drug_name":               drug_name,
+                    "drug_id":                 drug.get("id", ""),
+                    "score":                   score,
+                    "confidence":              evidence["confidence"],
+                    "shared_genes":            evidence["shared_genes"],
+                    "shared_pathways":         evidence["shared_pathways"],
+                    "explanation":             evidence["explanation"],
+                    "indication":              drug.get("indication", ""),
+                    "mechanism":               drug.get("mechanism", ""),
+                    "gene_score":              evidence["gene_score"],
+                    "pathway_score":           evidence["pathway_score"],
+                    "ppi_score":               evidence["ppi_score"],
+                    "similarity_score":        evidence["similarity_score"],
+                    "mechanism_score":         evidence["mechanism_score"],
+                    "literature_score":        evidence["literature_score"],
                     "tissue_expression_score": tissue_score,
-                    "polypharmacology_score": 0.0,
-                    "target_genes": [t.upper() for t in (drug.get("targets") or [])],
-                    "patent_status": drug.get("patent_status", "unknown"),
+                    "polypharmacology_score":  0.0,
+                    "target_genes":            [t.upper() for t in (drug.get("targets") or [])],
+                    "patent_status":           drug.get("patent_status", "unknown"),
+                    "patent_reason":           drug.get("patent_reason", ""),
+                    "pb_status":               drug.get("pb_status", ""),
                 })
 
         # Polypharmacology scoring on top 50
@@ -305,13 +335,13 @@ class ProductionPipeline:
 
     async def generate_treatment_plan(
         self,
-        disease_name:    str,
-        max_regimens:    int  = 10,
-        include_triples: bool = True,
-        fetch_ppi:       bool = True,
-        fetch_similarity:bool = True,
-        use_tissue:      bool = True,
-        min_single_score:float = 0.10,
+        disease_name:     str,
+        max_regimens:     int   = 10,
+        include_triples:  bool  = True,
+        fetch_ppi:        bool  = True,
+        fetch_similarity: bool  = True,
+        use_tissue:       bool  = True,
+        min_single_score: float = 0.10,
     ) -> Dict:
         """
         TwinTrial primary entry point.
@@ -319,27 +349,6 @@ class ProductionPipeline:
         Runs the full pipeline and returns a structured treatment plan
         containing ranked generic drug combinations with virtual trial
         ORR estimates, wet-lab targets, and PAG/biotech briefs.
-
-        Parameters
-        ----------
-        disease_name : str
-            Disease to analyse (e.g. "pulmonary arterial hypertension").
-        max_regimens : int
-            Number of combination regimens to include in the plan.
-        include_triples : bool
-            Include 3-drug combinations (default True).
-        fetch_ppi : bool
-            Use STRING PPI proximity scoring (default True).
-        fetch_similarity : bool
-            Use chemical similarity scoring (default True).
-        use_tissue : bool
-            Use tissue expression scoring (default True).
-        min_single_score : float
-            Minimum composite score to include a drug in combo scoring (default 0.10).
-
-        Returns
-        -------
-        dict : complete treatment plan (see TreatmentPlanAssembler.build())
         """
         logger.info("=" * 65)
         logger.info(f"TWINTRIAL TREATMENT PLAN: {disease_name.upper()}")
@@ -355,7 +364,7 @@ class ProductionPipeline:
                 "disease": disease_name,
             }
 
-        # Step 2: Generic drug pool
+        # Step 2: Generic drug pool (Orange Book + Purple Book)
         logger.info("[2/8] Fetching and filtering to generic drugs only...")
         generic_drugs, excluded, generic_stats = await self.fetch_generic_drugs(limit=3000)
         logger.info(
@@ -394,56 +403,116 @@ class ProductionPipeline:
             f"({len(filtered_out)} filtered for safety)"
         )
 
-        # Step 5: Combination scoring — use full SimulationProof engine
-        logger.info("[5/8] Scoring drug combinations (Bliss+Loewe+Ω)...")
-        from .combo_scorer import ComboWorkerPool  # the multiprocessing pool
+        # FIX 1: Define combo_eligible BEFORE combination scoring
+        disease_genes  = disease_data.get("genes", [])
+        combo_eligible = [c for c in safe_candidates if c.get("score", 0) >= min_single_score]
+        logger.info(f"       {len(combo_eligible)} candidates above min_score={min_single_score}")
 
-        pool = ComboWorkerPool(n_workers=max(1, __import__('multiprocessing').cpu_count() - 1))
-        proofs = pool.run(
-            candidates=combo_eligible,
-            disease_genes=disease_genes,
-            disease_name=disease_name,
-            max_pairs=5000,
-            top_n_singles=30,
-            include_triples=include_triples,
-        )
-        # proofs are already sorted by final_score — convert to combo format assembler expects
-        combos = [
-            {
-                "combo_name": p["regimen"],
-                "combo_score": p["final_score"],
-                "n_drugs": 2,
-                "shared_genes": p.get("target_pathway_nodes", {}).get("shared_pathways", []),
-                "is_synergistic": p.get("synergy_analysis", {}).get("synergy_call") == "SYNERGISTIC",
-                "is_antagonistic": False,  # antagonistic pairs filtered by worker
-                "safety_margin": p.get("safety_margin", 0),
-                "simulation_proof": p,  # full JSON attached
-            }
-            for p in proofs
-        ]
+        # Step 5: Combination scoring
+        logger.info("[5/8] Scoring drug combinations (Bliss+Loewe+Ω)...")
+        combos: List[Dict] = []
+        try:
+            # Try the full multiprocessing ComboWorkerPool
+            from .combo_worker import ComboWorkerPool
+            import multiprocessing as _mp
+            pool   = ComboWorkerPool(n_workers=max(1, _mp.cpu_count() - 1))
+            proofs = pool.run(
+                candidates=combo_eligible,
+                disease_genes=disease_genes,
+                disease_name=disease_name,
+                max_pairs=5000,
+                top_n_singles=30,
+                include_triples=include_triples,
+            )
+            combos = [
+                {
+                    "combo_name":           p.get("regimen", f"{p.get('drug_a','')} + {p.get('drug_b','')}"),
+                    "combo_score":          p.get("final_score", p.get("combo_score", 0)),
+                    "n_drugs":              p.get("n_drugs", 2),
+                    "shared_genes":         (
+                        p.get("target_pathway_nodes", {}).get("targets_shared_with_disease", [])
+                        or p.get("shared_genes", [])
+                    ),
+                    "is_synergistic":       (
+                        p.get("synergy_analysis", {}).get("synergy_call") == "SYNERGISTIC"
+                        if "synergy_analysis" in p else p.get("is_synergistic", False)
+                    ),
+                    "is_antagonistic":      False,
+                    "safety_margin":        p.get("safety_margin", 1.0),
+                    "mechanism_a":          p.get("mechanistic_rationale", {}).get("mechanism_class_a", ""),
+                    "mechanism_b":          p.get("mechanistic_rationale", {}).get("mechanism_class_b", ""),
+                    "base_score":           p.get("score_breakdown", {}).get("mechanism_combo_score", 0),
+                    "synergy_bonus":        p.get("score_breakdown", {}).get("bliss_loewe_synergy_bonus", 0),
+                    "antagonism_penalty":   0.0,
+                    "coverage_bonus":       0.0,
+                    "redundancy_penalty":   0.0,
+                    "wet_lab_targets":      (
+                        p.get("target_pathway_nodes", {}).get("targets_shared_with_disease", [])[:5]
+                        or p.get("wet_lab_targets", [])[:5]
+                    ),
+                    "combined_gene_coverage": len(
+                        p.get("target_pathway_nodes", {}).get("combined_disease_targets", [])
+                        or p.get("shared_genes", [])
+                    ),
+                    "simulation_proof": p,
+                }
+                for p in proofs
+            ]
+        except Exception as e:
+            logger.warning(
+                f"ComboWorkerPool unavailable or failed ({type(e).__name__}: {e}), "
+                f"using in-process rank_combinations fallback"
+            )
+            raw_combos = rank_combinations(
+                candidates=combo_eligible,
+                disease_genes=disease_genes,
+                disease_name=disease_name,
+                max_pairs=2000,
+                top_n_singles=25,
+                include_triples=include_triples,
+                min_combo_score=0.0,
+            )
+            combos = [
+                {
+                    "combo_name":           c["combo_name"],
+                    "combo_score":          c["combo_score"],
+                    "n_drugs":              c.get("n_drugs", 2),
+                    "shared_genes":         c.get("shared_genes", []),
+                    "is_synergistic":       c.get("is_synergistic", False),
+                    "is_antagonistic":      c.get("is_antagonistic", False),
+                    "safety_margin":        1.0,
+                    "mechanism_a":          c.get("mechanism_a", ""),
+                    "mechanism_b":          c.get("mechanism_b", ""),
+                    "base_score":           c.get("base_score", 0),
+                    "synergy_bonus":        c.get("synergy_bonus", 0),
+                    "antagonism_penalty":   c.get("antagonism_penalty", 0),
+                    "coverage_bonus":       c.get("coverage_bonus", 0),
+                    "redundancy_penalty":   c.get("redundancy_penalty", 0),
+                    "wet_lab_targets":      c.get("wet_lab_targets", [])[:5],
+                    "combined_gene_coverage": c.get("combined_gene_coverage", 0),
+                }
+                for c in raw_combos
+            ]
+
         logger.info(f"       {len(combos)} combinations generated")
 
         # Step 6: Virtual trials on top combos
         logger.info(f"[6/8] Running virtual Phase 2 trials on top {max_regimens * 2} combos...")
-        trial_results = []
+        trial_results: List[Dict] = []
         try:
             from .insilico_trial import InSilicoTrialSimulator
             top_for_trial = combos[:max_regimens * 2]
-
-            trial_inputs = []
+            trial_inputs  = []
             for combo in top_for_trial:
                 trial_inputs.append({
-                    "drug_name":            combo["combo_name"],
-                    "score":                combo["combo_score"],
-                    "target_genes":         combo.get("shared_genes", []),
-                    "disease_genes":        disease_genes,
+                    "drug_name":             combo["combo_name"],
+                    "score":                 combo["combo_score"],
+                    "target_genes":          combo.get("shared_genes", []),
+                    "disease_genes":         disease_genes,
                     "polypharmacology_score": min(combo["combo_score"] + 0.05, 1.0),
-                    "chembl_properties":    {},
+                    "chembl_properties":     {},
                 })
-
-            simulator = InSilicoTrialSimulator(
-                disease=disease_name, n_patients=200
-            )
+            simulator     = InSilicoTrialSimulator(disease=disease_name, n_patients=200)
             trial_results = await simulator.run_batch(trial_inputs)
             logger.info(f"       {len(trial_results)} trial results completed")
         except Exception as e:
@@ -461,21 +530,21 @@ class ProductionPipeline:
             top_n=max_regimens,
         )
 
-        # Step 8: Add pipeline metadata
+        # Step 8: Finalise
         logger.info("[8/8] Finalising...")
         plan["success"]    = True
         plan["disease"]    = disease_name
-        plan["candidates"] = safe_candidates[:20]  # for API response
+        plan["candidates"] = safe_candidates[:20]
         plan["pipeline_stats"] = {
-            "total_drugs_evaluated":   len(generic_drugs),
-            "after_generic_filter":    len(generic_drugs),
-            "after_scoring":           len(candidates),
-            "after_safety_filter":     len(safe_candidates),
-            "combo_eligible":          len(combo_eligible),
-            "combos_generated":        len(combos),
-            "trials_run":              len(trial_results),
-            "excluded_patented":       len(excluded),
-            "filtered_unsafe":         len(filtered_out),
+            "total_drugs_evaluated": len(generic_drugs),
+            "after_generic_filter":  len(generic_drugs),
+            "after_scoring":         len(candidates),
+            "after_safety_filter":   len(safe_candidates),
+            "combo_eligible":        len(combo_eligible),
+            "combos_generated":      len(combos),
+            "trials_run":            len(trial_results),
+            "excluded_patented":     len(excluded),
+            "filtered_unsafe":       len(filtered_out),
         }
 
         top = plan["ranked_regimens"][0] if plan.get("ranked_regimens") else {}
@@ -493,10 +562,10 @@ class ProductionPipeline:
 
     async def analyze_disease(
         self,
-        disease_name:  str,
-        min_score:     float = 0.2,
-        max_results:   int   = 10,
-        top_n_for_trial: int = 10,
+        disease_name:    str,
+        min_score:       float = 0.2,
+        max_results:     int   = 10,
+        top_n_for_trial: int   = 10,
     ) -> Dict:
         """
         Backward-compatible wrapper around generate_treatment_plan().
@@ -509,15 +578,14 @@ class ProductionPipeline:
         if not plan.get("success"):
             return {"success": False, "error": plan.get("error", "Unknown error")}
 
-        # Reformat to match old analyze_disease() response shape
         return {
-            "success":       True,
-            "disease":       disease_name,
-            "disease_data":  plan.get("header", {}),
-            "candidates":    plan.get("candidates", []),
-            "top_candidates":plan.get("candidates", [])[:20],
-            "trial_results": [],
-            "trial_report":  plan.get("pag_brief", ""),
+            "success":        True,
+            "disease":        disease_name,
+            "disease_data":   plan.get("header", {}),
+            "candidates":     plan.get("candidates", []),
+            "top_candidates": plan.get("candidates", [])[:20],
+            "trial_results":  [],
+            "trial_report":   plan.get("pag_brief", ""),
             "pipeline_stats": plan.get("pipeline_stats", {}),
             "treatment_plan": plan,
         }
