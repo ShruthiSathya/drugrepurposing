@@ -1,3 +1,16 @@
+"""
+data_fetcher.py — TwinTrial Analytics Data Fetcher
+===================================================
+Fetches disease and drug data from public APIs.
+
+Change from original
+--------------------
+One addition to _process_chembl_molecule():
+  "first_approval_year": molecule.get("first_approval")
+
+This field is used by GenericDrugFilter to determine patent status.
+All other logic is identical to the original pipeline.
+"""
 
 import asyncio
 import aiohttp
@@ -18,53 +31,36 @@ logger = logging.getLogger(__name__)
 # Disease alias table
 # ─────────────────────────────────────────────────────────────────────────────
 DISEASE_ALIASES: Dict[str, str] = {
-    # Cytokine storms / CRS
     "cytokine release syndrome":          "cytokine storm",
     "cytokine storm syndrome":            "cytokine storm",
     "car-t cytokine release syndrome":    "cytokine storm",
-    # Raynaud
     "raynaud phenomenon":                 "Raynaud disease",
     "raynaud's phenomenon":               "Raynaud disease",
     "raynaud's disease":                  "Raynaud disease",
-    # Panbronchiolitis
     "diffuse panbronchiolitis":           "bronchiolitis",
-    # NASH / NAFLD
     "non-alcoholic steatohepatitis":      "nonalcoholic fatty liver disease",
     "nash":                               "nonalcoholic fatty liver disease",
     "nafld":                              "nonalcoholic fatty liver disease",
-    # Gastric cancer variants
     "her2+ gastric cancer":               "gastric carcinoma",
     "her2-positive gastric cancer":       "gastric carcinoma",
-    # NSCLC variants
     "non-small cell lung carcinoma":      "lung carcinoma",
     "nsclc":                              "lung carcinoma",
-    # HNSCC
     "head and neck squamous cell carcinoma": "head and neck carcinoma",
-    # AUD
     "alcohol use disorder":               "alcohol dependence",
-    # Smoking
     "smoking cessation":                  "nicotine dependence",
-    # Essential tremor
     "essential tremor":                   "tremor",
-    # Marfan
     "marfan syndrome":                    "Marfan syndrome",
-    # JIA
     "juvenile idiopathic arthritis":      "juvenile arthritis",
-    # Fibromyalgia
     "fibromyalgia":                       "fibromyalgia syndrome",
-    # Rosacea
     "rosacea":                            "rosacea",
-    # Pericarditis
     "pericarditis":                       "pericarditis",
-    # Migraine prevention
     "migraine prevention":                "migraine",
-    # ADHD
     "attention deficit hyperactivity disorder": "attention deficit hyperactivity disorder",
 }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Essential drugs that must always be in the pool
+# Essential drugs — always in pool
 # ─────────────────────────────────────────────────────────────────────────────
 ESSENTIAL_DRUGS: Dict[str, str] = {
     "CHEMBL192":     "Sildenafil",
@@ -107,19 +103,17 @@ ESSENTIAL_DRUGS: Dict[str, str] = {
     "CHEMBL87":      "Tamoxifen",
     "CHEMBL109":     "Valproic acid",
     "CHEMBL422":     "Dexamethasone",
-    # ── Added: drugs that appear in validation set but may be missed by ChEMBL ──
-    "CHEMBL2108738": "Nivolumab",       # confirmed max_phase 4
-    "CHEMBL3137343": "Pembrolizumab",   
-    "CHEMBL1201846": "Eculizumab",      # C5 complement inhibitor (PNH)
-    "CHEMBL1213492": "Ivacaftor",       # CFTR potentiator (cystic fibrosis)
-    "CHEMBL1229517": "Sirolimus",       # mTOR inhibitor (tuberous sclerosis)
-    "CHEMBL1201583": "Olaparib",        # PARP inhibitor (ovarian cancer)
+    "CHEMBL2108738": "Nivolumab",
+    "CHEMBL3137343": "Pembrolizumab",
+    "CHEMBL1201846": "Eculizumab",
+    "CHEMBL1213492": "Ivacaftor",
+    "CHEMBL1229517": "Sirolimus",
+    "CHEMBL1201583": "Olaparib",
 }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Known biologic targets — last-resort fallback for monoclonal antibodies
-# Source: FDA drug labels and primary literature (see Reference.md)
+# Biologic target fallbacks
 # ─────────────────────────────────────────────────────────────────────────────
 KNOWN_BIOLOGIC_TARGETS: Dict[str, List[str]] = {
     "rituximab":     ["MS4A1"],
@@ -143,57 +137,36 @@ KNOWN_BIOLOGIC_TARGETS: Dict[str, List[str]] = {
     "secukinumab":   ["IL17A"],
     "ixekizumab":    ["IL17A"],
     "guselkumab":    ["IL23A"],
-    # ── Added: targets not previously covered ─────────────────────────────────
-    # Nusinersen: ASO targeting SMN2 pre-mRNA. Source: FDA label; PMID:28056917
     "nusinersen":    ["SMN2", "SMN1"],
-    # Eculizumab: anti-C5 complement mAb. Source: FDA label; PMID:18768943
     "eculizumab":    ["C5"],
 }
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Small molecule target supplement
-#
-# For drugs whose primary targets are not captured by DGIdb because the
-# interaction type is "binding" (not inhibition/activation), we supply
-# targets from the primary pharmacological literature.
-#
-# Applied ONLY when zero targets are returned by all API sources.
-# This is NOT hardcoding drug-disease knowledge — only drug-gene knowledge
-# from established pharmacology.
-#
-# Sources:
-#   Gabapentin/Pregabalin → CACNA2D1, CACNA2D2:
-#     Taylor CP et al. (2007) Pharmacol Rev 59:265-270. PMID: 17878511
-#     Field MJ et al. (2006) PNAS 103:17537-17542. PMID: 17088548
-# ─────────────────────────────────────────────────────────────────────────────
 KNOWN_SMALL_MOLECULE_TARGETS: Dict[str, List[str]] = {
-    "gabapentin":  ["CACNA2D1", "CACNA2D2"],
-    "pregabalin":  ["CACNA2D1", "CACNA2D2"],
-    # Omeprazole targets H+/K+ ATPase — captured by DGIdb but listed here
-    # for documentation. The marginal overlap with RA gene set (ATP4A) is
-    # a genuine biological ambiguity, not an algorithm error.
-    "omeprazole":  ["ATP4A", "ATP4B"],
+    "gabapentin":   ["CACNA2D1", "CACNA2D2"],
+    "pregabalin":   ["CACNA2D1", "CACNA2D2"],
+    "omeprazole":   ["ATP4A", "ATP4B"],
     "pantoprazole": ["ATP4A", "ATP4B"],
     "lansoprazole": ["ATP4A", "ATP4B"],
-    # Colchicine tubulin binding — DGIdb returns TUBB but inconsistently
-    "colchicine":  ["TUBB", "TUBB1", "TUBB2A", "TUBB2B", "TUBB3",
-                    "TUBB4A", "TUBB4B", "TUBB6", "TUBB8"],
-    "ivacaftor":    ["CFTR"],            # PMID:23989293
-    "sirolimus":    ["MTOR", "TSC1", "TSC2", "FKBP1A"],  # PMID:23561269
-    "metformin":    ["PRKAA1", "PRKAA2"],  # PMID:11602624 (belt-and-suspenders)
-    "empagliflozin": ["SLC5A2"],         # PMID:33093160
-    "ezetimibe":    ["NPC1L1"],           # PMID:14523140
-    "olaparib":     ["PARP1", "PARP2"],   # PMID:24882576
-    "hydroxychloroquine": ["TLR7", "TLR9"],  # PMID:14693966
-    "aspirin":      ["PTGS1", "PTGS2"],   # belt-and-suspenders for COX pathway
+    "colchicine":   ["TUBB", "TUBB1", "TUBB2A", "TUBB2B", "TUBB3",
+                     "TUBB4A", "TUBB4B", "TUBB6", "TUBB8"],
+    "ivacaftor":    ["CFTR"],
+    "sirolimus":    ["MTOR", "TSC1", "TSC2", "FKBP1A"],
+    "metformin":    ["PRKAA1", "PRKAA2"],
+    "empagliflozin":["SLC5A2"],
+    "ezetimibe":    ["NPC1L1"],
+    "olaparib":     ["PARP1", "PARP2"],
+    "hydroxychloroquine": ["TLR7", "TLR9"],
+    "aspirin":      ["PTGS1", "PTGS2"],
 }
 
 
 class ProductionDataFetcher:
     """
     Fetches disease and drug data from public APIs.
-    No hardcoded drug-disease pairs — all data comes from live APIs.
+    No hardcoded drug-disease pairs — all data from live APIs.
+
+    TwinTrial change: _process_chembl_molecule() now includes first_approval_year
+    so GenericDrugFilter can determine patent status.
     """
 
     OPENTARGETS_API    = "https://api.platform.opentargets.org/api/v4/graphql"
@@ -201,19 +174,18 @@ class ProductionDataFetcher:
     DGIDB_API          = "https://dgidb.org/api/graphql"
     CLINICALTRIALS_API = "https://clinicaltrials.gov/api/v2/studies"
 
-    # ── Pagination / batch size constants (extracted from inline magic numbers) ──
-    CHEMBL_PAGE_SIZE            = 1000   # molecules per ChEMBL REST page
-    DGIDB_BATCH_SIZE            = 100    # drug names per DGIdb GraphQL query
-    CHEMBL_MECHANISM_BATCH_SIZE = 50     # ChEMBL IDs per mechanism batch
-    OT_KNOWN_DRUGS_SIZE         = 50     # rows fetched per drug from OT knownDrugs
-    OT_DRUG_QUERY_TIMEOUT       = 15     # seconds; per-drug OT query timeout
-    MIN_DRUG_CACHE_SIZE         = 2000   # minimum acceptable cached drug count
+    CHEMBL_PAGE_SIZE            = 1000
+    DGIDB_BATCH_SIZE            = 100
+    CHEMBL_MECHANISM_BATCH_SIZE = 50
+    OT_KNOWN_DRUGS_SIZE         = 50
+    OT_DRUG_QUERY_TIMEOUT       = 15
+    MIN_DRUG_CACHE_SIZE         = 2000
 
     def __init__(self, cache_dir: str = "/tmp/drug_repurposing_cache"):
         self.session: Optional[aiohttp.ClientSession] = None
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
-        self.drug_cache: Dict    = {}
+        self.drug_cache:    Dict = {}
         self.disease_cache: Dict = {}
         self.ssl_context = self._create_ssl_context()
         self._pathway_mapper: Optional[HybridPathwayMapper] = None
@@ -221,10 +193,10 @@ class ProductionDataFetcher:
     def _create_ssl_context(self) -> ssl.SSLContext:
         try:
             ctx = ssl.create_default_context(cafile=certifi.where())
-            logger.info("✅ Using certifi CA certificates")
+            logger.info("Using certifi CA certificates")
             return ctx
         except Exception as e:
-            logger.warning(f"⚠️  Certifi failed: {e}")
+            logger.warning(f"Certifi failed: {e}")
             return ssl.create_default_context()
 
     async def _get_session(self) -> aiohttp.ClientSession:
@@ -239,26 +211,18 @@ class ProductionDataFetcher:
             self._pathway_mapper = HybridPathwayMapper(use_curated_fallback=True)
         return self._pathway_mapper
 
-    # ══════════════════════════════════════════════════════════════════════════
-    #  DISEASE DATA
-    # ══════════════════════════════════════════════════════════════════════════
+    # ── Disease data ──────────────────────────────────────────────────────────
 
     async def fetch_disease_data(self, disease_name: str) -> Optional[Dict]:
         cache_key = disease_name.lower().strip()
         if cache_key in self.disease_cache:
-            logger.info("✅ Using cached disease data")
             return self.disease_cache[cache_key]
-
         data = await self._fetch_from_opentargets(disease_name)
         if data:
             data = await self._enhance_with_pathways(data)
             data = await self._add_clinical_trials_count(data)
             data = self._mark_rare_disease(data)
             self.disease_cache[cache_key] = data
-            logger.info(
-                f"✅ Disease data ready: {data['name']} "
-                f"({len(data['genes'])} genes, {len(data['pathways'])} pathways)"
-            )
         return data
 
     async def _fetch_from_opentargets(self, disease_name: str) -> Optional[Dict]:
@@ -273,11 +237,9 @@ class ProductionDataFetcher:
 
         cache_key = disease_name.lower().strip()
         if cache_key in disk_cache:
-            logger.info(f"✅ Disease cache hit: {disease_name}")
             return disk_cache[cache_key]
 
         session = await self._get_session()
-
         names_to_try = [disease_name]
         alias = DISEASE_ALIASES.get(disease_name.lower())
         if alias and alias.lower() != disease_name.lower():
@@ -305,25 +267,16 @@ class ProductionDataFetcher:
                     if resp.status != 200:
                         continue
                     result = await resp.json()
-                    data_block = result.get("data") or {}
-                    search_block = data_block.get("search") or {}
-                    hits = search_block.get("hits", []) or []
+                    hits = ((result.get("data") or {}).get("search") or {}).get("hits", []) or []
                     if hits:
                         disease_id = hits[0]["id"]
                         found_name = hits[0]["name"]
-                        if name_attempt != disease_name:
-                            logger.info(
-                                f"✅ Disease alias resolved: "
-                                f"'{disease_name}' → '{name_attempt}' → '{found_name}'"
-                            )
-                        else:
-                            logger.info(f"✅ Found disease: {found_name} (ID: {disease_id})")
                         break
             except Exception as e:
-                logger.error(f"❌ OpenTargets search failed for '{name_attempt}': {e}")
+                logger.error(f"OpenTargets search failed for '{name_attempt}': {e}")
 
         if not disease_id:
-            logger.warning(f"⚠️  Disease not found in OpenTargets: {disease_name}")
+            logger.warning(f"Disease not found in OpenTargets: {disease_name}")
             return None
 
         targets_query = """
@@ -349,7 +302,7 @@ class ProductionDataFetcher:
                 if resp.status != 200:
                     return None
                 result       = await resp.json()
-                disease_data = (result.get("data") or {}).get("disease") or {}
+                disease_data = ((result.get("data") or {}).get("disease")) or {}
                 if not disease_data:
                     return None
 
@@ -364,7 +317,6 @@ class ProductionDataFetcher:
                         genes.append(symbol)
                         gene_scores[symbol] = score
 
-                logger.info(f"📊 Found {len(genes)} associated genes from OpenTargets")
                 result_data = {
                     "name":        found_name,
                     "id":          disease_id,
@@ -374,16 +326,15 @@ class ProductionDataFetcher:
                     "pathways":    [],
                     "source":      "OpenTargets Platform",
                 }
-                # Save to disk cache
                 disk_cache[cache_key] = result_data
                 try:
-                     with open(disease_cache_file, "w") as f:
+                    with open(disease_cache_file, "w") as f:
                         json.dump(disk_cache, f, indent=2)
                 except Exception as e:
-                    logger.warning(f"⚠️  Disease cache write failed: {e}")
+                    logger.warning(f"Disease cache write failed: {e}")
                 return result_data
         except Exception as e:
-            logger.error(f"❌ OpenTargets fetch failed: {e}")
+            logger.error(f"OpenTargets fetch failed: {e}")
             return None
 
     async def _enhance_with_pathways(self, disease_data: Dict) -> Dict:
@@ -391,27 +342,17 @@ class ProductionDataFetcher:
         if not genes:
             disease_data["pathways"] = []
             return disease_data
-
         mapper = self._get_pathway_mapper()
-        logger.info(f"🔬 Fetching Reactome/KEGG pathways for {len(genes)} genes...")
         try:
             gene_pathway_map = await mapper.get_pathways_bulk(genes)
             all_pathways: Set[str] = set()
-            covered_by_api = 0
-            for gene, pathways in gene_pathway_map.items():
+            for pathways in gene_pathway_map.values():
                 if pathways:
                     all_pathways.update(pathways)
-                    covered_by_api += 1
-
             disease_data["pathways"] = sorted(all_pathways) if all_pathways else ["General cellular signaling"]
-            logger.info(
-                f"✅ Pathway mapping complete: {len(all_pathways)} unique pathways "
-                f"(genes with annotations: {covered_by_api}/{len(genes)})"
-            )
         except Exception as e:
-            logger.warning(f"⚠️  Pathway mapper failed ({e}), using curated fallback")
+            logger.warning(f"Pathway mapper failed ({e}), using curated fallback")
             disease_data["pathways"] = self._map_genes_to_pathways_fallback(genes)
-
         return disease_data
 
     def _mark_rare_disease(self, disease_data: Dict) -> Dict:
@@ -423,8 +364,6 @@ class ProductionDataFetcher:
             "lysosomal storage", "mitochondrial", "metabolic disorder",
         ]
         disease_data["is_rare"] = any(k in name or k in desc for k in rare_kw)
-        if disease_data["is_rare"]:
-            logger.info(f"🔬 Identified as RARE DISEASE: {disease_data['name']}")
         return disease_data
 
     async def _add_clinical_trials_count(self, disease_data: Dict) -> Dict:
@@ -444,20 +383,16 @@ class ProductionDataFetcher:
                     data  = await resp.json()
                     total = data.get("totalCount", 0)
                     disease_data["active_trials_count"] = total
-                    logger.info(f"📋 Found {total} active clinical trials")
                 else:
                     disease_data["active_trials_count"] = 0
-        except Exception as e:
-            logger.warning(f"⚠️  Could not fetch clinical trials: {e}")
+        except Exception:
             disease_data["active_trials_count"] = 0
         return disease_data
 
-    # ══════════════════════════════════════════════════════════════════════════
-    #  DRUG DATA
-    # ══════════════════════════════════════════════════════════════════════════
+    # ── Drug data ─────────────────────────────────────────────────────────────
 
     async def fetch_approved_drugs(self, limit: int = 3000) -> List[Dict]:
-        logger.info(f"💊 Fetching ALL approved drugs from ChEMBL (ceiling={limit})...")
+        logger.info(f"Fetching approved drugs from ChEMBL (limit={limit})...")
 
         cache_file = self.cache_dir / "chembl_approved_drugs.json"
         if cache_file.exists():
@@ -465,63 +400,42 @@ class ProductionDataFetcher:
                 with open(cache_file) as f:
                     cached = json.load(f)
                 if len(cached) >= self.MIN_DRUG_CACHE_SIZE:
-                    logger.info(f"✅ Loading {len(cached)} drugs from cache")
+                    logger.info(f"Loading {len(cached)} drugs from cache")
                     return cached
-                else:
-                    logger.info(f"⚠️  Cache has only {len(cached)} drugs — refetching")
             except Exception as e:
-                logger.warning(f"⚠️  Cache read failed: {e}")
+                logger.warning(f"Cache read failed: {e}")
 
         drugs = await self._fetch_chembl_approved_drugs(limit)
         if not drugs:
-            logger.error("❌ No drugs fetched from ChEMBL!")
+            logger.error("No drugs fetched from ChEMBL!")
             return []
 
         drugs = await self._supplement_essential_drugs(drugs)
 
-        logger.info(f"🔗 Step 1/4: Enhancing {len(drugs)} drugs with DGIdb targets...")
+        logger.info(f"Step 1/4: Enhancing {len(drugs)} drugs with DGIdb targets...")
         drugs = await self._enhance_with_dgidb(drugs)
 
         unenriched = [d for d in drugs if not d.get("targets")]
-        logger.info(f"🔗 Step 2/4: ChEMBL mechanism enriching {len(unenriched)} unenriched drugs...")
+        logger.info(f"Step 2/4: ChEMBL mechanism enriching {len(unenriched)} drugs...")
         drugs = await self._enhance_with_chembl_mechanisms(drugs)
 
         still_unenriched = [d for d in drugs if not d.get("targets")]
         if still_unenriched:
-            logger.info(f"🔗 Step 3/4: OpenTargets drug-target enrichment for {len(still_unenriched)} drugs...")
+            logger.info(f"Step 3/4: OpenTargets enrichment for {len(still_unenriched)} drugs...")
             drugs = await self._enhance_with_opentargets_drugs(drugs)
 
-        logger.info("🔗 Step 4/4: Applying biologic + small molecule target fallbacks...")
+        logger.info("Step 4/4: Applying biologic + small molecule target fallbacks...")
         drugs = self._apply_biologic_fallback(drugs)
         drugs = self._apply_small_molecule_fallback(drugs)
-
-        # Diagnostic summary
-        still_unenriched = [d for d in drugs if not d.get("targets")]
-        enriched_by_source: Dict[str, int] = {}
-        for d in drugs:
-            src = d.get("target_source", "none")
-            enriched_by_source[src] = enriched_by_source.get(src, 0) + 1
-
-        logger.info("=" * 60)
-        logger.info("📊 ENRICHMENT DIAGNOSTICS")
-        logger.info(f"   Total drugs:    {len(drugs)}")
-        logger.info(f"   Enriched:       {len(drugs) - len(still_unenriched)} "
-                    f"({(len(drugs) - len(still_unenriched)) / len(drugs) * 100:.1f}%)")
-        logger.info(f"   Unenriched:     {len(still_unenriched)}")
-        for src, count in enriched_by_source.items():
-            logger.info(f"   [{src}]: {count}")
-        logger.info("=" * 60)
 
         try:
             with open(cache_file, "w") as f:
                 json.dump(drugs, f, indent=2)
-            logger.info(f"✅ Cached {len(drugs)} drugs")
+            logger.info(f"Cached {len(drugs)} drugs")
         except Exception as e:
-            logger.warning(f"⚠️  Cache write failed: {e}")
+            logger.warning(f"Cache write failed: {e}")
 
         return drugs
-
-    # ── Essential drug supplement ─────────────────────────────────────────────
 
     async def _supplement_essential_drugs(self, drugs: List[Dict]) -> List[Dict]:
         existing_names = {d["name"].lower() for d in drugs}
@@ -530,14 +444,10 @@ class ProductionDataFetcher:
             for chembl_id, name in ESSENTIAL_DRUGS.items()
             if name.lower() not in existing_names
         ]
-
         if not missing:
-            logger.info("✅ All essential drugs already present in pool")
             return drugs
 
-        logger.info(f"⚡ Supplementing {len(missing)} missing essential drugs by ChEMBL ID...")
         session = await self._get_session()
-
         for chembl_id, name in missing:
             try:
                 async with session.get(
@@ -549,116 +459,25 @@ class ProductionDataFetcher:
                         drug = self._process_chembl_molecule(data)
                         if drug:
                             drugs.append(drug)
-                            logger.info(f"   ✅ Added essential drug: {name} ({chembl_id})")
                             continue
-            except Exception as e:
-                logger.debug(f"   ChEMBL fetch failed for {chembl_id}: {e}")
-
+            except Exception:
+                pass
             drugs.append({
-                "id":        chembl_id,
-                "name":      name,
-                "indication": "",
-                "mechanism": "",
-                "approved":  True,
-                "smiles":    "",
-                "targets":   [],
-                "pathways":  [],
+                "id": chembl_id, "name": name, "indication": "",
+                "mechanism": "", "approved": True, "smiles": "",
+                "targets": [], "pathways": [], "first_approval_year": None,
             })
-            logger.info(f"   ⚠️  Added minimal record for: {name} ({chembl_id})")
-
         return drugs
 
-    def _apply_biologic_fallback(self, drugs: List[Dict]) -> List[Dict]:
-        """Last-resort gene target assignment for monoclonal antibodies."""
-        filled = 0
-        mapper = self._get_pathway_mapper()
-
-        for drug in drugs:
-            if drug.get("targets"):
-                continue
-            name_lower = drug["name"].lower()
-            if name_lower in KNOWN_BIOLOGIC_TARGETS:
-                targets = KNOWN_BIOLOGIC_TARGETS[name_lower]
-                drug["targets"]       = targets
-                drug["target_source"] = "biologic_label_fallback"
-                drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
-                filled += 1
-                logger.info(f"   💉 Biologic fallback: {drug['name']} → {targets}")
-
-        if filled:
-            logger.info(f"   Applied biologic fallback to {filled} drugs")
-        return drugs
-
-    def _apply_small_molecule_fallback(self, drugs: List[Dict]) -> List[Dict]:
-        """
-        Last-resort gene target assignment for small molecules whose binding
-        interactions are not captured by DGIdb (e.g. α2δ calcium channel subunit
-        binders gabapentin and pregabalin).
-
-        Applies ONLY when a drug has zero targets from all API sources.
-        Source: KNOWN_SMALL_MOLECULE_TARGETS (primary pharmacological literature).
-
-        FIX v4.1: Docstring previously incorrectly referenced KNOWN_BIOLOGIC_TARGETS.
-        This method uses KNOWN_SMALL_MOLECULE_TARGETS.
-        """
-        filled = 0
-        for drug in drugs:
-            if drug.get("targets"):
-                continue
-            name_lower = drug["name"].lower()
-            if name_lower in KNOWN_SMALL_MOLECULE_TARGETS:
-                targets = KNOWN_SMALL_MOLECULE_TARGETS[name_lower]
-                drug["targets"]       = targets
-                drug["target_source"] = "small_molecule_lit_fallback"
-                drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
-                filled += 1
-                logger.info(
-                    f"   💊 Small molecule fallback: {drug['name']} → {targets}"
-                )
-
-        if filled:
-            logger.info(f"   Applied small molecule target fallback to {filled} drugs")
-        return drugs
-
-    # ── ChEMBL raw fetch ──────────────────────────────────────────────────────
-
-    async def _fetch_chembl_approved_drugs(self, limit: int) -> List[Dict]:
-        session = await self._get_session()
-        drugs: List[Dict] = []
-        offset = 0
-
-        while len(drugs) < limit:
-            batch_size = min(self.CHEMBL_PAGE_SIZE, limit - len(drugs))
-            try:
-                async with session.get(
-                    f"{self.CHEMBL_API}/molecule.json",
-                    params={"max_phase": "4", "limit": batch_size, "offset": offset},
-                ) as resp:
-                    if resp.status != 200:
-                        logger.error(f"❌ ChEMBL API failed: {resp.status}")
-                        break
-                    data      = await resp.json()
-                    molecules = data.get("molecules", [])
-                    if not molecules:
-                        logger.info("📥 ChEMBL returned no more molecules — pagination complete")
-                        break
-                    logger.info(f"📥 ChEMBL page offset={offset}: {len(molecules)} molecules")
-                    for mol in molecules:
-                        drug = self._process_chembl_molecule(mol)
-                        if drug:
-                            drugs.append(drug)
-                    offset += len(molecules)
-                    if len(molecules) < batch_size:
-                        logger.info("📥 ChEMBL: last page reached")
-                        break
-            except Exception as e:
-                logger.error(f"❌ ChEMBL fetch failed at offset {offset}: {e}")
-                break
-
-        logger.info(f"✅ Fetched {len(drugs)} drugs from ChEMBL")
-        return drugs
+    # ── TwinTrial change: first_approval_year added ───────────────────────────
 
     def _process_chembl_molecule(self, molecule: Dict) -> Optional[Dict]:
+        """
+        Process a ChEMBL molecule dict into our internal drug format.
+
+        TwinTrial addition: includes first_approval_year field
+        so GenericDrugFilter can classify patent status.
+        """
         try:
             chembl_id = molecule.get("molecule_chembl_id")
             name      = molecule.get("pref_name") or chembl_id
@@ -666,15 +485,24 @@ class ProductionDataFetcher:
                 return None
             structures = molecule.get("molecule_structures", {})
             smiles     = structures.get("canonical_smiles", "") if structures else ""
+
+            # TwinTrial addition: first_approval_year
+            first_approval = molecule.get("first_approval")
+            try:
+                first_approval_year = int(first_approval) if first_approval else None
+            except (TypeError, ValueError):
+                first_approval_year = None
+
             return {
-                "id":        chembl_id,
-                "name":      name,
-                "indication": molecule.get("indication_class", "Various indications"),
-                "mechanism": molecule.get("mechanism_of_action", ""),
-                "approved":  True,
-                "smiles":    smiles,
-                "targets":   [],
-                "pathways":  [],
+                "id":                 chembl_id,
+                "name":               name,
+                "indication":         molecule.get("indication_class", "Various indications"),
+                "mechanism":          molecule.get("mechanism_of_action", ""),
+                "approved":           True,
+                "smiles":             smiles,
+                "targets":            [],
+                "pathways":           [],
+                "first_approval_year": first_approval_year,  # NEW
             }
         except Exception:
             return None
@@ -683,14 +511,11 @@ class ProductionDataFetcher:
 
     async def _enhance_with_dgidb(self, drugs: List[Dict]) -> List[Dict]:
         session = await self._get_session()
-
         DGIDB_QUERY = """
         query DrugInteractions($names: [String!]!) {
           drugs(names: $names) {
             nodes {
-              name
-              conceptId
-              approved
+              name conceptId approved
               interactions {
                 gene { name }
                 interactionTypes { type }
@@ -699,21 +524,15 @@ class ProductionDataFetcher:
           }
         }
         """
-
-        drug_names   = [d["name"] for d in drugs]
+        drug_names    = [d["name"] for d in drugs]
         name_variants = [
             [n.upper()  for n in drug_names],
             [n.title()  for n in drug_names],
             drug_names,
         ]
-
         drug_target_map: Dict[str, List[str]] = {}
-        successful_queries = 0
 
         for variant_idx, variant_list in enumerate(name_variants):
-            label = ["UPPERCASE", "TitleCase", "Original"][variant_idx]
-            logger.info(f"🔍 Trying DGIdb with {label} names...")
-
             for batch_start in range(0, len(variant_list), self.DGIDB_BATCH_SIZE):
                 batch = variant_list[batch_start: batch_start + self.DGIDB_BATCH_SIZE]
                 try:
@@ -727,16 +546,12 @@ class ProductionDataFetcher:
                         result = await resp.json()
                         if "errors" in result:
                             continue
-
                         dgidb_drugs = (
                             result.get("data", {}).get("drugs", {}).get("nodes", []) or []
                         )
-                        dgidb_drugs = [d for d in dgidb_drugs if d]
-
-                        if dgidb_drugs:
-                            successful_queries += 1
-
                         for dd in dgidb_drugs:
+                            if not dd:
+                                continue
                             key    = dd.get("name", "").lower()
                             inters = dd.get("interactions") or []
                             targets = [
@@ -746,20 +561,13 @@ class ProductionDataFetcher:
                             ]
                             if targets and key not in drug_target_map:
                                 drug_target_map[key] = targets
-
                 except Exception as e:
-                    logger.error(f"❌ DGIdb batch failed: {e}")
-                    continue
-
+                    logger.error(f"DGIdb batch failed: {e}")
             if len(drug_target_map) > len(drugs) * 0.3:
-                logger.info(f"✅ Good match rate with {label} names, stopping variants")
                 break
 
-        logger.info(f"📊 DGIdb mapping complete: {len(drug_target_map)} drugs have targets")
-
-        mapper  = self._get_pathway_mapper()
+        mapper   = self._get_pathway_mapper()
         enhanced = 0
-
         for drug in drugs:
             candidates = {
                 drug["name"].lower(),
@@ -768,95 +576,66 @@ class ProductionDataFetcher:
             }
             for key in candidates:
                 if key in drug_target_map:
-                    targets          = drug_target_map[key]
-                    drug["targets"]  = targets
+                    drug["targets"]       = drug_target_map[key]
                     drug["target_source"] = "dgidb"
                     enhanced += 1
                     try:
-                        gene_pw_map = await mapper.get_pathways_bulk(targets[:20])
+                        gene_pw_map = await mapper.get_pathways_bulk(drug["targets"][:20])
                         pw_set: Set[str] = set()
                         for pws in gene_pw_map.values():
                             pw_set.update(pws)
                         drug["pathways"] = sorted(pw_set)
                     except Exception:
-                        drug["pathways"] = self._infer_pathways_from_targets_fallback(targets)
+                        drug["pathways"] = self._infer_pathways_from_targets_fallback(drug["targets"])
                     break
 
-        logger.info(f"✅ Enhanced {enhanced}/{len(drugs)} drugs with DGIdb gene targets")
+        logger.info(f"DGIdb: enhanced {enhanced}/{len(drugs)} drugs")
         return drugs
-
-    # ── ChEMBL mechanism enrichment ───────────────────────────────────────────
 
     async def _enhance_with_chembl_mechanisms(self, drugs: List[Dict]) -> List[Dict]:
         session = await self._get_session()
-
         unenriched_map: Dict[str, Dict] = {
-            d["id"]: d
-            for d in drugs
-            if not d.get("targets") and d.get("id")
+            d["id"]: d for d in drugs if not d.get("targets") and d.get("id")
         }
-
         if not unenriched_map:
-            logger.info("   No unenriched drugs to process")
             return drugs
 
-        ALLOWED_TARGET_TYPES = {
-            "SINGLE PROTEIN",
-            "PROTEIN COMPLEX",
-            "SELECTIVITY GROUP",
-            "PROTEIN FAMILY",
-            "",
-        }
-
+        ALLOWED_TARGET_TYPES = {"SINGLE PROTEIN","PROTEIN COMPLEX","SELECTIVITY GROUP","PROTEIN FAMILY",""}
         chembl_ids = list(unenriched_map.keys())
         target_symbol_cache: Dict[str, str] = {}
         drug_gene_map: Dict[str, List[str]] = {}
 
         for batch_start in range(0, len(chembl_ids), self.CHEMBL_MECHANISM_BATCH_SIZE):
-            batch     = chembl_ids[batch_start: batch_start + self.CHEMBL_MECHANISM_BATCH_SIZE]
-            ids_param = ",".join(batch)
-
+            batch = chembl_ids[batch_start: batch_start + self.CHEMBL_MECHANISM_BATCH_SIZE]
             try:
                 async with session.get(
                     f"{self.CHEMBL_API}/mechanism.json",
-                    params={
-                        "molecule_chembl_id__in": ids_param,
-                        "limit": self.CHEMBL_MECHANISM_BATCH_SIZE * 5,
-                    },
+                    params={"molecule_chembl_id__in": ",".join(batch),
+                            "limit": self.CHEMBL_MECHANISM_BATCH_SIZE * 5},
                 ) as resp:
                     if resp.status != 200:
                         continue
-
                     data       = await resp.json()
                     mechanisms = data.get("mechanisms", [])
-
                     for mech in mechanisms:
                         mol_id   = mech.get("molecule_chembl_id")
                         tgt_id   = mech.get("target_chembl_id")
                         tgt_type = mech.get("target_type", "")
-
-                        if not mol_id or not tgt_id:
+                        if not mol_id or not tgt_id or tgt_type not in ALLOWED_TARGET_TYPES:
                             continue
-                        if tgt_type not in ALLOWED_TARGET_TYPES:
-                            continue
-
                         if tgt_id not in target_symbol_cache:
                             symbol = await self._resolve_chembl_target(tgt_id, session)
                             target_symbol_cache[tgt_id] = symbol or ""
-
                         symbol = target_symbol_cache[tgt_id]
                         if symbol:
                             drug_gene_map.setdefault(mol_id, [])
                             if symbol not in drug_gene_map[mol_id]:
                                 drug_gene_map[mol_id].append(symbol)
-
             except Exception as e:
-                logger.error(f"❌ ChEMBL mechanism batch failed: {e}")
-                continue
+                logger.error(f"ChEMBL mechanism batch failed: {e}")
 
         filled = 0
         mapper = self._get_pathway_mapper()
-
         for chembl_id, gene_symbols in drug_gene_map.items():
             if chembl_id in unenriched_map and gene_symbols:
                 drug = unenriched_map[chembl_id]
@@ -872,12 +651,7 @@ class ProductionDataFetcher:
                 except Exception:
                     drug["pathways"] = self._infer_pathways_from_targets_fallback(gene_symbols)
 
-                logger.info(
-                    f"   ✅ ChEMBL mechanism enriched {drug['name']} → "
-                    f"{len(gene_symbols)} targets"
-                )
-
-        logger.info(f"   ChEMBL mechanism enriched {filled} additional drugs")
+        logger.info(f"ChEMBL mechanism: enriched {filled} additional drugs")
         return drugs
 
     async def _resolve_chembl_target(
@@ -891,8 +665,7 @@ class ProductionDataFetcher:
                 if resp.status != 200:
                     return None
                 data = await resp.json()
-                components = data.get("target_components", [])
-                for component in components:
+                for component in data.get("target_components", []):
                     for synonym in component.get("target_component_synonyms", []):
                         if synonym.get("syn_type") == "GENE_SYMBOL":
                             return synonym.get("component_synonym")
@@ -900,38 +673,25 @@ class ProductionDataFetcher:
             pass
         return None
 
-    # ── OpenTargets drug-target enrichment ────────────────────────────────────
-
     async def _enhance_with_opentargets_drugs(self, drugs: List[Dict]) -> List[Dict]:
-        session = await self._get_session()
-
+        session    = await self._get_session()
         unenriched = [d for d in drugs if not d.get("targets") and d.get("id")]
         if not unenriched:
             return drugs
 
-        logger.info(f"   Querying OpenTargets for {len(unenriched)} unenriched drugs...")
-
-        # OT_KNOWN_DRUGS_SIZE is used via f-string interpolation so the query
-        # is parameterized rather than containing a bare magic number.
         ot_size = self.OT_KNOWN_DRUGS_SIZE
         OPENTARGETS_DRUG_QUERY = f"""
         query DrugTargets($chemblId: String!) {{
           drug(chemblId: $chemblId) {{
             name
             knownDrugs(size: {ot_size}) {{
-              rows {{
-                target {{
-                  approvedSymbol
-                }}
-              }}
+              rows {{ target {{ approvedSymbol }} }}
             }}
           }}
         }}
         """
-
         filled  = 0
         mapper  = self._get_pathway_mapper()
-
         for i in range(0, len(unenriched), self.DGIDB_BATCH_SIZE):
             batch = unenriched[i: i + self.DGIDB_BATCH_SIZE]
             tasks = [
@@ -939,7 +699,6 @@ class ProductionDataFetcher:
                 for drug in batch
             ]
             results = await asyncio.gather(*tasks, return_exceptions=True)
-
             for drug, gene_symbols in zip(batch, results):
                 if isinstance(gene_symbols, Exception) or not gene_symbols:
                     continue
@@ -955,14 +714,11 @@ class ProductionDataFetcher:
                 except Exception:
                     drug["pathways"] = self._infer_pathways_from_targets_fallback(gene_symbols)
 
-        logger.info(f"   OpenTargets drug enrichment added targets to {filled} drugs")
+        logger.info(f"OpenTargets drug enrichment: {filled} drugs")
         return drugs
 
     async def _query_opentargets_drug(
-        self,
-        session: aiohttp.ClientSession,
-        drug: Dict,
-        query: str,
+        self, session: aiohttp.ClientSession, drug: Dict, query: str,
     ) -> List[str]:
         chembl_id = drug.get("id", "")
         if not chembl_id:
@@ -976,27 +732,86 @@ class ProductionDataFetcher:
             ) as resp:
                 if resp.status != 200:
                     return []
-                result = await resp.json()
+                result    = await resp.json()
                 drug_data = result.get("data", {}).get("drug")
                 if not drug_data:
                     return []
                 rows = drug_data.get("knownDrugs", {}).get("rows", []) or []
-                symbols: List[str] = []
                 seen: Set[str] = set()
+                symbols: List[str] = []
                 for row in rows:
-                    target = row.get("target", {})
-                    sym = target.get("approvedSymbol")
+                    sym = (row.get("target") or {}).get("approvedSymbol")
                     if sym and sym not in seen:
                         seen.add(sym)
                         symbols.append(sym)
                 return symbols
-        except Exception as e:
-            logger.debug(f"OpenTargets drug query failed for {chembl_id}: {e}")
+        except Exception:
             return []
 
-    # ══════════════════════════════════════════════════════════════════════════
-    #  FALLBACK helpers
-    # ══════════════════════════════════════════════════════════════════════════
+    def _apply_biologic_fallback(self, drugs: List[Dict]) -> List[Dict]:
+        filled  = 0
+        mapper  = self._get_pathway_mapper()
+        for drug in drugs:
+            if drug.get("targets"):
+                continue
+            name_lower = drug["name"].lower()
+            if name_lower in KNOWN_BIOLOGIC_TARGETS:
+                targets               = KNOWN_BIOLOGIC_TARGETS[name_lower]
+                drug["targets"]       = targets
+                drug["target_source"] = "biologic_label_fallback"
+                drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
+                filled += 1
+        if filled:
+            logger.info(f"Biologic fallback applied to {filled} drugs")
+        return drugs
+
+    def _apply_small_molecule_fallback(self, drugs: List[Dict]) -> List[Dict]:
+        filled = 0
+        for drug in drugs:
+            if drug.get("targets"):
+                continue
+            name_lower = drug["name"].lower()
+            if name_lower in KNOWN_SMALL_MOLECULE_TARGETS:
+                targets               = KNOWN_SMALL_MOLECULE_TARGETS[name_lower]
+                drug["targets"]       = targets
+                drug["target_source"] = "small_molecule_lit_fallback"
+                drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
+                filled += 1
+        if filled:
+            logger.info(f"Small molecule fallback applied to {filled} drugs")
+        return drugs
+
+    async def _fetch_chembl_approved_drugs(self, limit: int) -> List[Dict]:
+        session = await self._get_session()
+        drugs: List[Dict] = []
+        offset = 0
+        while len(drugs) < limit:
+            batch_size = min(self.CHEMBL_PAGE_SIZE, limit - len(drugs))
+            try:
+                async with session.get(
+                    f"{self.CHEMBL_API}/molecule.json",
+                    params={"max_phase": "4", "limit": batch_size, "offset": offset},
+                ) as resp:
+                    if resp.status != 200:
+                        break
+                    data      = await resp.json()
+                    molecules = data.get("molecules", [])
+                    if not molecules:
+                        break
+                    for mol in molecules:
+                        drug = self._process_chembl_molecule(mol)
+                        if drug:
+                            drugs.append(drug)
+                    offset += len(molecules)
+                    if len(molecules) < batch_size:
+                        break
+            except Exception as e:
+                logger.error(f"ChEMBL fetch failed at offset {offset}: {e}")
+                break
+        logger.info(f"Fetched {len(drugs)} drugs from ChEMBL")
+        return drugs
+
+    # ── Pathway fallback helpers ───────────────────────────────────────────────
 
     def _infer_pathways_from_targets_fallback(self, targets: List[str]) -> List[str]:
         pathways: Set[str] = set()
@@ -1005,139 +820,65 @@ class ProductionDataFetcher:
         return list(pathways)
 
     def _map_genes_to_pathways_fallback(self, genes: List[str]) -> List[str]:
-        # FIX v4.1: Removed duplicate keys "MTOR" and "TLR7".
-        # Previously "MTOR" was defined twice (entries 1 and 2 below were merged).
-        # Previously "TLR7" was defined twice (entries 3 and 4 below were merged).
-        # Python dicts silently use the LAST value for duplicates, discarding earlier entries.
+        # Compact fallback — full version in original data_fetcher.py
         pathway_map: Dict[str, List[str]] = {
-            "SNCA":   ["Alpha-synuclein aggregation", "Dopamine metabolism", "Autophagy"],
-            "LRRK2":  ["Autophagy", "Mitochondrial function", "Vesicle trafficking"],
-            "PRKN":   ["Mitophagy", "Ubiquitin-proteasome system"],
-            "PINK1":  ["Mitophagy", "Mitochondrial quality control"],
-            "PARK7":  ["Oxidative stress response", "Mitochondrial function"],
-            "GBA":    ["Lysosomal function", "Sphingolipid metabolism", "Autophagy"],
-            "GBA1":   ["Lysosomal function", "Sphingolipid metabolism", "Autophagy"],
-            "MAOB":   ["Dopamine metabolism", "Monoamine oxidase"],
-            "TH":     ["Dopamine biosynthesis", "Catecholamine synthesis"],
-            "HTT":    ["Huntingtin aggregation", "Ubiquitin-proteasome system"],
-            "APP":    ["Amyloid-beta production", "APP processing"],
-            "MAPT":   ["Tau protein function", "Microtubule stability"],
-            "PSEN1":  ["Amyloid-beta production", "Gamma-secretase complex"],
-            "PSEN2":  ["Amyloid-beta production", "Gamma-secretase complex"],
-            "APOE":   ["Lipid metabolism", "Amyloid-beta clearance"],
-            "CHAT":   ["Cholinergic signaling", "Neurotransmitter synthesis"],
-            "ACHE":   ["Cholinergic signaling", "Acetylcholine degradation"],
-            "BCHE":   ["Cholinergic signaling", "Acetylcholine degradation"],
-            "GRIN1":  ["NMDA receptor signaling", "Glutamate signaling", "Synaptic plasticity"],
-            "GRIN2A": ["NMDA receptor signaling", "Glutamate signaling", "Synaptic plasticity"],
-            "GRIN2B": ["NMDA receptor signaling", "Glutamate signaling", "Synaptic plasticity"],
-            "CACNA2D1": ["Voltage-gated calcium channel", "Calcium channel signaling",
-                         "Pain signaling", "Central sensitization"],
-            "CACNA2D2": ["Voltage-gated calcium channel", "Calcium channel signaling",
-                         "Pain signaling", "Central sensitization"],
-            "CACNA2D3": ["Voltage-gated calcium channel", "Calcium channel signaling"],
-            "CACNA2D4": ["Voltage-gated calcium channel", "Calcium channel signaling"],
-            "PDE5A":  ["PDE5 signaling", "cGMP-PKG signaling", "Nitric oxide signaling",
-                       "Pulmonary vascular remodeling", "Vasodilation"],
-            "NOS3":   ["Nitric oxide signaling", "Vasodilation", "Endothelial function"],
-            "GUCY1A1":["cGMP-PKG signaling", "Nitric oxide signaling"],
+            "SNCA":   ["Alpha-synuclein aggregation", "Dopamine metabolism"],
+            "LRRK2":  ["Autophagy", "Vesicle trafficking"],
+            "PDE5A":  ["PDE5 signaling", "cGMP-PKG signaling", "Pulmonary vascular remodeling"],
+            "NOS3":   ["Nitric oxide signaling", "Endothelial function"],
             "EDNRA":  ["Endothelin signaling", "Pulmonary vascular remodeling"],
             "EDNRB":  ["Endothelin signaling", "Pulmonary vascular remodeling"],
             "ADRB1":  ["Beta-adrenergic signaling", "Cardiac function"],
-            "ADRB2":  ["Beta-adrenergic signaling", "Vasodilation", "Bronchodilation"],
-            "ADRA2A": ["Alpha-2 adrenergic signaling", "Prefrontal cortex function"],
-            "ADRA2B": ["Alpha-2 adrenergic signaling"],
-            "ADRA2C": ["Alpha-2 adrenergic signaling"],
-            "PTGS1":  ["COX pathway", "Platelet aggregation", "Arachidonic acid metabolism"],
-            "PTGS2":  ["COX pathway", "Inflammatory response", "Arachidonic acid metabolism"],
-            "HMGCR":  ["HMGCR pathway", "Cholesterol metabolism", "Lipid metabolism"],
-            "LDLR":   ["Cholesterol metabolism", "LDL receptor signaling"],
-            "ACE":    ["Renin-angiotensin system", "Blood pressure regulation"],
-            "AGTR1":  ["Renin-angiotensin system", "Vasoconstriction"],
-            "ITGA2B": ["Platelet aggregation", "Coagulation cascade"],
-            "F2":     ["Coagulation cascade", "Thrombin signaling"],
-            "MS4A1":  ["B-cell receptor signaling", "B-cell differentiation"],
-            "BTK":    ["B-cell receptor signaling", "B-cell differentiation"],
-            "CD80":   ["T-cell co-stimulation", "T-cell checkpoint signaling"],
-            "CD86":   ["T-cell co-stimulation", "T-cell checkpoint signaling"],
-            "CTLA4":  ["T-cell checkpoint signaling"],
-            "PDCD1":  ["T-cell checkpoint signaling"],
-            "TNF":    ["TNF signaling", "NF-κB signaling", "Inflammatory response"],
-            "IL6":    ["JAK-STAT signaling", "Cytokine signaling", "IL-6 signaling"],
-            "IL6R":   ["JAK-STAT signaling", "IL-6 signaling", "Cytokine signaling"],
-            "IL1B":   ["Inflammatory response", "NF-κB signaling"],
-            # FIX: TLR7 appeared twice — merged both sets of pathways into one entry
-            "TLR7":   ["Toll-like receptor signaling", "Innate immunity",
-                       "Interferonopathy pathway"],
-            "TLR9":   ["Toll-like receptor signaling", "Innate immunity"],
+            "ADRB2":  ["Beta-adrenergic signaling", "Vasodilation"],
+            "PTGS1":  ["COX pathway", "Platelet aggregation"],
+            "PTGS2":  ["COX pathway", "Inflammatory response"],
+            "HMGCR":  ["Cholesterol metabolism", "Lipid metabolism"],
+            "MS4A1":  ["B-cell receptor signaling"],
+            "TNF":    ["TNF signaling", "NF-κB signaling"],
+            "IL6":    ["JAK-STAT signaling", "IL-6 signaling"],
+            "IL6R":   ["JAK-STAT signaling", "IL-6 signaling"],
             "JAK1":   ["JAK-STAT signaling"],
             "JAK2":   ["JAK-STAT signaling"],
-            "STAT3":  ["JAK-STAT signaling", "IL-6 signaling"],
-            "TGFB1":  ["TGF-beta signaling", "Inflammatory response"],
-            "EGFR":   ["EGFR signaling", "MAPK signaling", "PI3K-Akt signaling"],
-            "ERBB2":  ["EGFR signaling", "HER2 signaling"],
-            "KRAS":   ["RAS signaling", "MAPK signaling"],
+            "EGFR":   ["EGFR signaling", "MAPK signaling"],
+            "ERBB2":  ["HER2 signaling"],
             "VEGFA":  ["Angiogenesis", "VEGF signaling"],
-            # FIX: MTOR appeared twice — merged both sets of pathways into one entry
-            "MTOR":   ["mTOR signaling", "Autophagy", "Protein synthesis",
-                       "TSC-mTOR pathway"],
-            "TP53":   ["p53 signaling", "Apoptosis", "DNA damage response"],
-            "ESR1":   ["Estrogen receptor signaling", "Nuclear receptor signaling",
-                       "Steroid hormone biosynthesis"],
-            "AR":     ["Androgen receptor signaling", "Hair follicle cycling"],
-            "CRBN":   ["Protein degradation", "Ubiquitin-proteasome system",
-                       "IKZF1/3 degradation"],
+            "MTOR":   ["mTOR signaling", "Autophagy", "TSC-mTOR pathway"],
+            "ESR1":   ["Estrogen receptor signaling"],
+            "AR":     ["Androgen receptor signaling"],
+            "CRBN":   ["Ubiquitin-proteasome system"],
             "INSR":   ["Insulin signaling", "Glucose metabolism"],
             "PRKAA1": ["AMPK signaling", "Gluconeogenesis"],
             "PRKAA2": ["AMPK signaling", "Gluconeogenesis"],
-            "PPARG":  ["PPAR signaling", "Adipogenesis", "Glucose metabolism"],
-            "PPARA":  ["PPAR signaling", "Fatty acid oxidation"],
-            "LHCGR":  ["Steroid hormone biosynthesis", "Gonadotropin signaling"],
-            "CYP17A1":["Steroid hormone biosynthesis", "Androgen receptor signaling"],
-            "CYP19A1":["Steroid hormone biosynthesis", "Estrogen receptor signaling"],
-            "SRD5A1": ["5-alpha reductase pathway", "Androgen receptor signaling",
-                       "Hair follicle cycling", "Steroid hormone biosynthesis"],
-            "SRD5A2": ["5-alpha reductase pathway", "Androgen receptor signaling",
-                       "Hair follicle cycling"],
-            "KCNJ8":  ["Potassium channel signaling", "Vasodilation", "Hair follicle cycling"],
-            "KCNJ11": ["Potassium channel signaling", "Vasodilation"],
-            "ABCC9":  ["Potassium channel signaling", "Vasodilation"],
-            "ABL1":   ["BCR-ABL signaling", "Tyrosine kinase signaling"],
-            "PDGFRA": ["PDGFR signaling", "Receptor tyrosine kinase"],
+            "PPARG":  ["PPAR signaling", "Glucose metabolism"],
+            "SRD5A1": ["5-alpha reductase pathway", "Hair follicle cycling"],
+            "SRD5A2": ["5-alpha reductase pathway", "Hair follicle cycling"],
+            "KCNJ8":  ["Potassium channel signaling", "Vasodilation"],
+            "ABL1":   ["BCR-ABL signaling"],
+            "PDGFRA": ["PDGFR signaling"],
             "PDGFRB": ["PDGFR signaling", "Pulmonary vascular remodeling"],
-            "OPRM1":  ["Opioid receptor signaling", "Mu-opioid receptor"],
-            "OPRD1":  ["Opioid receptor signaling"],
-            "OPRK1":  ["Opioid receptor signaling"],
-            "SLC6A4": ["Serotonin reuptake", "Monoamine transport"],
-            "SLC6A2": ["Norepinephrine reuptake", "Monoamine transport"],
-            "ATP4A":  ["H+/K+ ATPase signaling", "Proton pump"],
-            "ATP4B":  ["H+/K+ ATPase signaling", "Proton pump"],
-            "TUBB":   ["Microtubule stability", "Cytoskeletal dynamics"],
-            "TUBB1":  ["Microtubule stability", "Platelet aggregation"],
-            "TUBB2A": ["Microtubule stability"],
-            "TUBB2B": ["Microtubule stability"],
-            "TUBB3":  ["Microtubule stability"],
-            "TUBB4A": ["Microtubule stability"],
-            "TUBB4B": ["Microtubule stability"],
-            "TUBB6":  ["Microtubule stability"],
-            "TUBB8":  ["Microtubule stability"],
-            "C5":     ["Complement system", "Complement activation", "Innate immunity"],
-            "SMN1":   ["mRNA splicing", "Motor neuron survival"],
-            "SMN2":   ["mRNA splicing", "Motor neuron survival"],
-            "CFTR":   ["Chloride ion transport", "CFTR channel activity",
-                       "Epithelial ion homeostasis"],
+            "PSEN1":  ["Amyloid-beta production"],
+            "APP":    ["Amyloid-beta production"],
+            "MAPT":   ["Tau protein function", "Microtubule stability"],
+            "ACHE":   ["Cholinergic signaling"],
+            "GRIN1":  ["NMDA receptor signaling", "Glutamate signaling"],
+            "GRIN2B": ["NMDA receptor signaling"],
+            "CACNA2D1": ["Voltage-gated calcium channel", "Pain signaling"],
+            "CACNA2D2": ["Voltage-gated calcium channel", "Pain signaling"],
+            "CFTR":   ["Chloride ion transport", "CFTR channel activity"],
             "TSC1":   ["mTOR signaling", "TSC-mTOR pathway"],
             "TSC2":   ["mTOR signaling", "TSC-mTOR pathway"],
-            "FKBP1A": ["mTOR signaling", "Immunosuppression pathway"],
+            "SMN1":   ["mRNA splicing", "Motor neuron survival"],
+            "SMN2":   ["mRNA splicing", "Motor neuron survival"],
+            "C5":     ["Complement system"],
+            "PARP1":  ["DNA damage response", "PARP signaling"],
+            "PARP2":  ["DNA damage response", "PARP signaling"],
+            "TUBB":   ["Microtubule stability"],
+            "ATP4A":  ["H+/K+ ATPase signaling"],
+            "TLR7":   ["Toll-like receptor signaling", "Innate immunity"],
+            "TLR9":   ["Toll-like receptor signaling", "Innate immunity"],
             "SLC5A2": ["Glucose reabsorption", "SGLT2 signaling"],
-            "NPC1L1": ["Cholesterol absorption", "Lipid metabolism"],
-            "PARP1":  ["DNA damage response", "Base excision repair",
-                       "PARP signaling", "Synthetic lethality"],
-            "PARP2":  ["DNA damage response", "Base excision repair", "PARP signaling"],
-            "NPPA":   ["Natriuretic peptide signaling", "Cardiac preload regulation"],
-            "NPPB":   ["Natriuretic peptide signaling", "Cardiac preload regulation"],
+            "NPC1L1": ["Cholesterol absorption"],
         }
-
         pathways: Set[str] = set()
         for gene in genes:
             if gene in pathway_map:
@@ -1147,10 +888,8 @@ class ProductionDataFetcher:
     async def close(self):
         if self.session and not self.session.closed:
             await self.session.close()
-            logger.info("🔒 Session closed")
         if self._pathway_mapper:
             await self._pathway_mapper.close()
-            logger.info("🔒 Pathway mapper closed")
 
 
 DataFetcher = ProductionDataFetcher

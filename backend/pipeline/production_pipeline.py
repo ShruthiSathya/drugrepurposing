@@ -1,3 +1,24 @@
+"""
+production_pipeline.py — TwinTrial Analytics Production Pipeline
+================================================================
+Main pipeline orchestrator. Entry point is generate_treatment_plan().
+
+Pipeline flow
+-------------
+  1. Fetch disease data from OpenTargets
+  2. Fetch approved drugs from ChEMBL
+  3. Filter to off-patent generics only (GenericDrugFilter)
+  4. EFO ontology expansion
+  5. Score singles (gene, pathway, PPI, similarity, tissue, polypharmacology)
+  6. Safety filter (DrugSafetyFilter)
+  7. Score combinations (CombinationScorer)
+  8. Virtual Phase 2 trials on top combos (InSilicoTrialSimulator)
+  9. Assemble treatment plan (TreatmentPlanAssembler)
+
+The old analyze_disease() method is kept as a thin wrapper around
+generate_treatment_plan() for backward compatibility with run_validation.py.
+"""
+
 import asyncio
 import aiohttp
 import logging
@@ -10,6 +31,9 @@ from .graph_builder import ProductionGraphBuilder
 from .ppi_network import PPINetworkScorer, batch_ppi_scores
 from .drug_similarity import DrugSimilarityScorer, build_reference_smiles, batch_similarity_scores
 from .scorer import ProductionScorer
+from .generic_filter import GenericDrugFilter
+from .combo_scorer import CombinationScorer
+from .treatment_plan import TreatmentPlanAssembler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,27 +43,31 @@ PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
 class ProductionPipeline:
     """
-    Main pipeline for drug repurposing analysis.
-    All scoring is based on live API data — no hardcoded drug-disease knowledge.
+    TwinTrial Analytics production pipeline.
+
+    Primary entry point: generate_treatment_plan()
+    Secondary (validation/research): generate_candidates()
     """
 
     def __init__(self):
-        self.data_fetcher  = ProductionDataFetcher()
-        self.graph_builder = ProductionGraphBuilder()
-        self.scorer:  Optional[ProductionScorer] = None
-        self.disease_cache: Dict = {}
-        self._ppi_scorer = None
-        self._sim_scorer = None
-        self.drugs_cache:   Optional[List[Dict]] = None
-        self._pubmed_cache: Dict[str, float] = {}
+        self.data_fetcher    = ProductionDataFetcher()
+        self.graph_builder   = ProductionGraphBuilder()
+        self.generic_filter  = GenericDrugFilter()
+        self.scorer: Optional[ProductionScorer] = None
+        self.disease_cache:  Dict = {}
+        self._ppi_scorer     = None
+        self._sim_scorer     = None
+        self.drugs_cache:    Optional[List[Dict]] = None
+        self._generic_cache: Optional[List[Dict]] = None
+        self._pubmed_cache:  Dict[str, float] = {}
         self._pubmed_session: Optional[aiohttp.ClientSession] = None
 
     # ── PubMed helper ─────────────────────────────────────────────────────────
+
     async def _fetch_pubmed_score(self, drug_name: str, disease_name: str) -> float:
         key = f"{drug_name.lower()}|{disease_name.lower()}"
         if key in self._pubmed_cache:
             return self._pubmed_cache[key]
-
         try:
             if self._pubmed_session is None or self._pubmed_session.closed:
                 self._pubmed_session = aiohttp.ClientSession(
@@ -65,24 +93,39 @@ class ProductionPipeline:
         score = math.log10(count + 1) / math.log10(201)
         score = min(score, 1.0)
         self._pubmed_cache[key] = score
-
-        if score > 0.05:
-            logger.info(
-                f"📚 PubMed: {drug_name} ↔ {disease_name} — "
-                f"{count} hits → lit_score={score:.3f}"
-            )
         return score
 
-    # ── Public drug fetcher ───────────────────────────────────────────────────
+    # ── Drug fetching ─────────────────────────────────────────────────────────
+
     async def fetch_approved_drugs(self, limit: int = 3000) -> List[Dict]:
+        """Fetch all max-phase-4 drugs from ChEMBL (cached)."""
         if self.drugs_cache is None:
             self.drugs_cache = await self.data_fetcher.fetch_approved_drugs(limit=limit)
-            logger.info(f"✅ Fetched {len(self.drugs_cache)} approved drugs (cached on pipeline)")
-        else:
-            logger.info(f"✅ Using cached drug data ({len(self.drugs_cache)} drugs)")
+            logger.info(f"Fetched {len(self.drugs_cache)} approved drugs")
         return self.drugs_cache
 
-    # ── generate_candidates() — callable by benchmark/validation scripts ──────
+    async def fetch_generic_drugs(self, limit: int = 3000) -> tuple:
+        """
+        Fetch and filter to off-patent generics only.
+        Returns (generic_drugs, excluded_drugs, stats).
+        """
+        if self._generic_cache is not None:
+            return self._generic_cache, [], self.generic_filter.get_stats()
+
+        all_drugs = await self.fetch_approved_drugs(limit=limit)
+        generic_drugs, excluded = self.generic_filter.filter_to_generics(all_drugs)
+        self._generic_cache = generic_drugs
+
+        stats = self.generic_filter.get_stats()
+        logger.info(
+            f"Generic filter: {stats['total_input']} → "
+            f"{stats['generic_pool_size']} generics "
+            f"({stats['excluded']} excluded as patented)"
+        )
+        return generic_drugs, excluded, stats
+
+    # ── Core scoring pipeline ─────────────────────────────────────────────────
+
     async def generate_candidates(
         self,
         disease_data:     Dict,
@@ -97,14 +140,12 @@ class ProductionPipeline:
     ) -> List[Dict]:
         """
         Score all drugs against a disease and return candidate dicts.
-
-        v6.1: FIX — tissue expression now blended at 15% weight instead of
-        additive, preventing score inflation (everything → 1.0) for diseases
-        where most genes are ubiquitously expressed (e.g. bone marrow in MM).
+        Identical to the original pipeline — used for single-drug scoring
+        before the combination stage.
         """
         disease_name = disease_data["name"]
 
-        # ── MODULE 1: EFO Ontology Expansion ──────────────────────────────────
+        # EFO Ontology Expansion
         expander = None
         if use_efo:
             try:
@@ -113,9 +154,8 @@ class ProductionPipeline:
                 disease_data = await expander.expand_disease_genes(disease_data)
                 stats = disease_data.get("efo_expansion_stats", {})
                 logger.info(
-                    f"🌳 EFO: {stats.get('original_gene_count')} → "
-                    f"{stats.get('total_gene_count')} genes "
-                    f"(+{stats.get('new_genes_added')} from ontology tree)"
+                    f"EFO: {stats.get('original_gene_count')} → "
+                    f"{stats.get('total_gene_count')} genes"
                 )
             except Exception as e:
                 logger.warning(f"EFO expansion failed (non-fatal): {e}")
@@ -128,11 +168,11 @@ class ProductionPipeline:
 
         disease_genes = disease_data.get("genes", [])
 
-        # ── Build graph & scorer ──────────────────────────────────────────────
+        # Build graph & scorer
         graph  = self.graph_builder.build_graph(disease_data, drugs_data)
         scorer = ProductionScorer(graph)
 
-        # ── PubMed scores ─────────────────────────────────────────────────────
+        # PubMed scores (optional, slow)
         pubmed_score_map: Dict[str, float] = {}
         if fetch_pubmed:
             drugs_with_targets = [d for d in drugs_data if d.get("targets")]
@@ -146,27 +186,22 @@ class ProductionPipeline:
                 for d, s in zip(drugs_with_targets, scores_list)
             }
 
-        # ── PPI network proximity ─────────────────────────────────────────────
+        # PPI network proximity
         ppi_score_map: Dict[str, float] = {}
         if fetch_ppi and disease_genes:
             if self._ppi_scorer is None:
                 self._ppi_scorer = PPINetworkScorer()
             try:
-                logger.info(f"🔗 Fetching STRING PPI scores for {disease_name}...")
                 ppi_results = await batch_ppi_scores(
                     drugs_data=drugs_data,
                     disease_genes=disease_genes,
                     scorer=self._ppi_scorer,
                 )
                 ppi_score_map = {name: score for name, (score, _) in ppi_results.items()}
-                n_nonzero = sum(1 for s in ppi_score_map.values() if s > 0)
-                logger.info(f"✅ PPI scores: {n_nonzero}/{len(drugs_data)} drugs with network proximity")
             except Exception as e:
-                logger.warning(f"PPI scoring failed (continuing without it): {e}")
-        elif fetch_ppi and not disease_genes:
-            logger.warning("PPI skipped: no disease genes available")
+                logger.warning(f"PPI scoring failed (continuing): {e}")
 
-        # ── Drug-drug chemical similarity ─────────────────────────────────────
+        # Chemical similarity
         sim_score_map: Dict[str, float] = {}
         if fetch_similarity:
             if self._sim_scorer is None:
@@ -174,7 +209,6 @@ class ProductionPipeline:
             try:
                 ref_smiles, ref_names = build_reference_smiles(disease_name, drugs_data)
                 if ref_smiles:
-                    logger.info(f"🧪 Computing drug similarity vs {len(ref_smiles)} known {disease_name} drugs...")
                     sim_results = batch_similarity_scores(
                         drugs_data=drugs_data,
                         reference_smiles=ref_smiles,
@@ -182,30 +216,24 @@ class ProductionPipeline:
                         scorer=self._sim_scorer,
                     )
                     sim_score_map = {name: score for name, (score, _) in sim_results.items()}
-                    n_hits = sum(1 for s in sim_score_map.values() if s > 0)
-                    logger.info(f"✅ Similarity scores: {n_hits}/{len(drugs_data)} drugs above threshold")
-                else:
-                    logger.info(f"Drug similarity skipped: no reference drugs found for '{disease_name}'")
             except Exception as e:
-                logger.warning(f"Drug similarity scoring failed (continuing without it): {e}")
+                logger.warning(f"Drug similarity scoring failed (continuing): {e}")
 
-        # ── MODULE 2: Tissue Expression ───────────────────────────────────────
+        # Tissue expression
         tissue_score_map: Dict[str, float] = {}
         if use_tissue:
             try:
                 from .tissue_expression import TissueExpressionScorer
                 tef = TissueExpressionScorer(disease_name=disease_name)
-                _stub_candidates = [
+                _stub = [
                     {"name": d["name"], "drug_name": d["name"], "target_genes": d.get("targets", [])}
                     for d in drugs_data
                 ]
-                _scored = await tef.score_batch(_stub_candidates)
+                _scored = await tef.score_batch(_stub)
                 tissue_score_map = {
                     c["name"]: c.get("tissue_expression_score", 0.0)
                     for c in _scored
                 }
-                n_tissue = sum(1 for s in tissue_score_map.values() if s > 0)
-                logger.info(f"🧬 Tissue expression: {n_tissue}/{len(drugs_data)} drugs with non-zero score")
                 try:
                     await tef.close()
                 except Exception:
@@ -213,7 +241,7 @@ class ProductionPipeline:
             except Exception as e:
                 logger.warning(f"Tissue expression scoring failed (non-fatal): {e}")
 
-        # ── Score all drugs ───────────────────────────────────────────────────
+        # Score all drugs
         candidates = []
         for drug in drugs_data:
             drug_name    = drug["name"]
@@ -223,19 +251,13 @@ class ProductionPipeline:
             tissue_score = tissue_score_map.get(drug_name, 0.0)
 
             score, evidence = scorer.score_drug_disease_match(
-                drug_name,
-                disease_name,
-                disease_data,
-                drug,
+                drug_name, disease_name, disease_data, drug,
                 external_literature_score=lit_score,
                 ppi_score=ppi_score,
                 similarity_score=sim_score,
             )
 
-            # FIX v6.1: Tissue expression blended at 15% weight, NOT additive.
-            # Additive approach caused everything to clamp to 1.0 for blood
-            # cancers where most genes are expressed in bone marrow.
-            # Weighted blend preserves ranking while incorporating tissue signal.
+            # Tissue expression blended at 15% (not additive — avoids score inflation)
             if tissue_score > 0:
                 score = min(1.0, score * 0.85 + tissue_score * 0.15)
 
@@ -260,9 +282,10 @@ class ProductionPipeline:
                     "tissue_expression_score": tissue_score,
                     "polypharmacology_score": 0.0,
                     "target_genes": [t.upper() for t in (drug.get("targets") or [])],
+                    "patent_status": drug.get("patent_status", "unknown"),
                 })
 
-        # ── MODULE 3: Polypharmacology Scoring ────────────────────────────────
+        # Polypharmacology scoring on top 50
         if use_polypharm and candidates:
             try:
                 from .polypharmacology import PolypharmacologyScorer
@@ -270,118 +293,226 @@ class ProductionPipeline:
                 candidates.sort(key=lambda c: c["score"], reverse=True)
                 top_50 = candidates[:50]
                 top_50 = poly_scorer.score_batch(top_50, disease_targets=disease_genes)
-
                 for c in top_50:
                     poly = c.get("polypharmacology_score", 0.0)
                     if poly > 0:
                         c["score"] = min(1.0, c["score"] + poly * 0.3)
-
                 top_50_names = {c["name"] for c in top_50}
                 rest = [c for c in candidates if c["name"] not in top_50_names]
                 candidates = top_50 + rest
-
-                n_poly = sum(1 for c in top_50 if c.get("polypharmacology_score", 0) > 0)
-                logger.info(f"💊 Polypharmacology: {n_poly}/50 top candidates with poly score")
             except Exception as e:
                 logger.warning(f"Polypharmacology scoring failed (non-fatal): {e}")
 
         return candidates
 
-    # ── Main entry point ──────────────────────────────────────────────────────
+    # ── Primary TwinTrial entry point ─────────────────────────────────────────
+
+    async def generate_treatment_plan(
+        self,
+        disease_name:    str,
+        max_regimens:    int  = 10,
+        include_triples: bool = True,
+        fetch_ppi:       bool = True,
+        fetch_similarity:bool = True,
+        use_tissue:      bool = True,
+        min_single_score:float = 0.10,
+    ) -> Dict:
+        """
+        TwinTrial primary entry point.
+
+        Runs the full pipeline and returns a structured treatment plan
+        containing ranked generic drug combinations with virtual trial
+        ORR estimates, wet-lab targets, and PAG/biotech briefs.
+
+        Parameters
+        ----------
+        disease_name : str
+            Disease to analyse (e.g. "pulmonary arterial hypertension").
+        max_regimens : int
+            Number of combination regimens to include in the plan.
+        include_triples : bool
+            Include 3-drug combinations (default True).
+        fetch_ppi : bool
+            Use STRING PPI proximity scoring (default True).
+        fetch_similarity : bool
+            Use chemical similarity scoring (default True).
+        use_tissue : bool
+            Use tissue expression scoring (default True).
+        min_single_score : float
+            Minimum composite score to include a drug in combo scoring (default 0.10).
+
+        Returns
+        -------
+        dict : complete treatment plan (see TreatmentPlanAssembler.build())
+        """
+        logger.info("=" * 65)
+        logger.info(f"TWINTRIAL TREATMENT PLAN: {disease_name.upper()}")
+        logger.info("=" * 65)
+
+        # Step 1: Disease data
+        logger.info("[1/8] Fetching disease data from OpenTargets...")
+        disease_data = await self.data_fetcher.fetch_disease_data(disease_name)
+        if not disease_data:
+            return {
+                "success": False,
+                "error":   f"Disease not found in OpenTargets: {disease_name}",
+                "disease": disease_name,
+            }
+
+        # Step 2: Generic drug pool
+        logger.info("[2/8] Fetching and filtering to generic drugs only...")
+        generic_drugs, excluded, generic_stats = await self.fetch_generic_drugs(limit=3000)
+        logger.info(
+            f"       Generic pool: {len(generic_drugs)} drugs "
+            f"({len(excluded)} excluded as patented)"
+        )
+
+        # Step 3: Score singles
+        logger.info("[3/8] Scoring singles (gene + pathway + PPI + similarity + tissue + poly)...")
+        candidates = await self.generate_candidates(
+            disease_data=disease_data,
+            drugs_data=generic_drugs,
+            min_score=0.0,
+            fetch_pubmed=False,
+            fetch_ppi=fetch_ppi,
+            fetch_similarity=fetch_similarity,
+            use_efo=True,
+            use_tissue=use_tissue,
+            use_polypharm=True,
+        )
+        candidates.sort(key=lambda c: c["score"], reverse=True)
+        logger.info(f"       {len(candidates)} candidates scored")
+
+        # Step 4: Safety filter
+        logger.info("[4/8] Applying safety filter...")
+        from .drug_filter import DrugSafetyFilter
+        safety_filter = DrugSafetyFilter()
+        safe_candidates, filtered_out = await safety_filter.filter_candidates(
+            candidates=candidates,
+            disease_name=disease_name,
+            remove_absolute=True,
+            remove_relative=True,
+        )
+        logger.info(
+            f"       {len(safe_candidates)} safe candidates "
+            f"({len(filtered_out)} filtered for safety)"
+        )
+
+        # Step 5: Combination scoring
+        logger.info("[5/8] Scoring drug combinations...")
+        disease_genes = disease_data.get("genes", [])
+        combo_scorer = CombinationScorer(disease_name=disease_name)
+
+        # Only combine drugs above min_single_score for speed + quality
+        combo_eligible = [c for c in safe_candidates if c["score"] >= min_single_score]
+        logger.info(f"       {len(combo_eligible)} drugs eligible for combination scoring")
+
+        combos = combo_scorer.rank_combinations(
+            candidates=combo_eligible,
+            disease_genes=disease_genes,
+            top_n_singles=20,
+            max_combos=max_regimens * 3,  # generate 3× and trim after trials
+            include_triples=include_triples,
+        )
+        logger.info(f"       {len(combos)} combinations generated")
+
+        # Step 6: Virtual trials on top combos
+        logger.info(f"[6/8] Running virtual Phase 2 trials on top {max_regimens * 2} combos...")
+        trial_results = []
+        try:
+            from .insilico_trial import InSilicoTrialSimulator
+            top_for_trial = combos[:max_regimens * 2]
+
+            trial_inputs = []
+            for combo in top_for_trial:
+                trial_inputs.append({
+                    "drug_name":            combo["combo_name"],
+                    "score":                combo["combo_score"],
+                    "target_genes":         combo.get("shared_genes", []),
+                    "disease_genes":        disease_genes,
+                    "polypharmacology_score": min(combo["combo_score"] + 0.05, 1.0),
+                    "chembl_properties":    {},
+                })
+
+            simulator = InSilicoTrialSimulator(
+                disease=disease_name, n_patients=200
+            )
+            trial_results = await simulator.run_batch(trial_inputs)
+            logger.info(f"       {len(trial_results)} trial results completed")
+        except Exception as e:
+            logger.warning(f"       Virtual trials failed (non-fatal): {e}")
+
+        # Step 7: Assemble treatment plan
+        logger.info("[7/8] Assembling treatment plan...")
+        assembler = TreatmentPlanAssembler(disease_name=disease_name)
+        plan = await assembler.build(
+            disease_data=disease_data,
+            candidates=safe_candidates,
+            combos=combos,
+            trial_results=trial_results,
+            generic_stats=generic_stats,
+            top_n=max_regimens,
+        )
+
+        # Step 8: Add pipeline metadata
+        logger.info("[8/8] Finalising...")
+        plan["success"]    = True
+        plan["disease"]    = disease_name
+        plan["candidates"] = safe_candidates[:20]  # for API response
+        plan["pipeline_stats"] = {
+            "total_drugs_evaluated":   len(generic_drugs),
+            "after_generic_filter":    len(generic_drugs),
+            "after_scoring":           len(candidates),
+            "after_safety_filter":     len(safe_candidates),
+            "combo_eligible":          len(combo_eligible),
+            "combos_generated":        len(combos),
+            "trials_run":              len(trial_results),
+            "excluded_patented":       len(excluded),
+            "filtered_unsafe":         len(filtered_out),
+        }
+
+        top = plan["ranked_regimens"][0] if plan.get("ranked_regimens") else {}
+        logger.info("=" * 65)
+        logger.info(f"COMPLETE: {disease_name}")
+        logger.info(f"  Top regimen:  {top.get('regimen', 'N/A')}")
+        logger.info(f"  ORR estimate: {top.get('orr_estimate', 0):.1%}")
+        logger.info(f"  P2 prob:      {top.get('p2_probability', 0):.2f}")
+        logger.info(f"  Priority:     {top.get('priority', 'N/A')}")
+        logger.info("=" * 65)
+
+        return plan
+
+    # ── Backward-compatible entry point ───────────────────────────────────────
+
     async def analyze_disease(
         self,
-        disease_name: str,
+        disease_name:  str,
+        min_score:     float = 0.2,
+        max_results:   int   = 10,
         top_n_for_trial: int = 10,
     ) -> Dict:
         """
-        Enhanced pipeline analysis with all 4 new modules integrated.
+        Backward-compatible wrapper around generate_treatment_plan().
+        Used by run_validation.py and the /analyze API endpoint.
         """
-        logger.info(f"[1/9] Fetching disease data: {disease_name}")
-        disease_data = await self.data_fetcher.fetch_disease_data(disease_name)
-
-        if not disease_data:
-            return {"error": f"Disease not found: {disease_name}"}
-
-        logger.info(f"[2/9] EFO ontology expansion...")
-        expander = None
-        try:
-            from efo_ontology import EFOOntologyExpander
-            expander = EFOOntologyExpander(session=self.data_fetcher.session)
-            disease_data = await expander.expand_disease_genes(disease_data)
-            stats = disease_data.get("efo_expansion_stats", {})
-            logger.info(
-                f"     EFO: {stats.get('original_gene_count')} → "
-                f"{stats.get('total_gene_count')} genes "
-                f"(+{stats.get('new_genes_added')} from ontology tree)"
-            )
-        except Exception as e:
-            logger.warning(f"     EFO expansion failed (non-fatal): {e}")
-        finally:
-            if expander is not None:
-                try:
-                    await expander.close()
-                except Exception:
-                    pass
-
-        logger.info(f"[3/9] Fetching and scoring all drugs...")
-        drugs_data = await self.fetch_approved_drugs(limit=3000)
-
-        logger.info(f"[4/9] Running full scoring pipeline (PPI + similarity + tissue + poly)...")
-        candidates = await self.generate_candidates(
-            disease_data=disease_data,
-            drugs_data=drugs_data,
-            min_score=0.0,
-            fetch_pubmed=False,
-            use_efo=False,
-            use_tissue=True,
-            use_polypharm=True,
+        plan = await self.generate_treatment_plan(
+            disease_name=disease_name,
+            max_regimens=max_results,
         )
-        logger.info(f"     Scored {len(candidates)} candidates")
+        if not plan.get("success"):
+            return {"success": False, "error": plan.get("error", "Unknown error")}
 
-        candidates.sort(key=lambda c: c["score"], reverse=True)
-
-        logger.info(f"[6/9] Safety filtering...")
-        safe_candidates = [
-            c for c in candidates
-            if not c.get("safety_concerns") or len(c.get("safety_concerns", [])) < 3
-        ]
-        logger.info(f"     {len(safe_candidates)} candidates passed safety filter")
-
-        top_50 = safe_candidates[:50]
-        synergistic_pairs = []
-
-        logger.info(f"[7/9] Polypharmacology complete (ran inside scoring pipeline)")
-
-        top_50.sort(key=lambda c: c["score"], reverse=True)
-
-        logger.info(f"[8/9] Running virtual clinical trials (top {top_n_for_trial})...")
-        trial_results = []
-        trial_report  = ""
-        try:
-            from .insilico_trial import InSilicoTrialSimulator
-            top_for_trial = top_50[:top_n_for_trial]
-            for c in top_for_trial:
-                c["disease_genes"] = disease_data.get("genes", [])
-            simulator     = InSilicoTrialSimulator(disease=disease_name, n_patients=200)
-            trial_results = await simulator.run_batch(top_for_trial)
-            trial_report  = simulator.generate_trial_report(trial_results)
-            logger.info("     Virtual trials complete")
-        except Exception as e:
-            logger.warning(f"     Virtual trials failed (non-fatal): {e}")
-
-        logger.info(f"[9/9] Assembling final report...")
+        # Reformat to match old analyze_disease() response shape
         return {
-            "disease":            disease_name,
-            "disease_data":       disease_data,
-            "top_candidates":     top_50[:20],
-            "synergistic_pairs":  synergistic_pairs[:5],
-            "trial_results":      trial_results,
-            "trial_report":       trial_report,
-            "pipeline_stats": {
-                "total_candidates_evaluated":  len(candidates),
-                "after_safety_filter":         len(safe_candidates),
-                "efo_expansion": disease_data.get("efo_expansion_stats", {}),
-            },
+            "success":       True,
+            "disease":       disease_name,
+            "disease_data":  plan.get("header", {}),
+            "candidates":    plan.get("candidates", []),
+            "top_candidates":plan.get("candidates", [])[:20],
+            "trial_results": [],
+            "trial_report":  plan.get("pag_brief", ""),
+            "pipeline_stats": plan.get("pipeline_stats", {}),
+            "treatment_plan": plan,
         }
 
     async def close(self):
@@ -390,10 +521,10 @@ class ProductionPipeline:
             await self._pubmed_session.close()
         if self._ppi_scorer:
             await self._ppi_scorer.close()
-        logger.info("🔒 Pipeline closed")
+        logger.info("Pipeline closed")
 
 
-# ── Aliases ───────────────────────────────────────────────────────────────────
+# Aliases
 RepurposingPipeline = ProductionPipeline
 
 
@@ -402,6 +533,6 @@ async def analyze(
 ) -> Dict:
     pipeline = ProductionPipeline()
     try:
-        return await pipeline.analyze_disease(disease_name, min_score, max_results)
+        return await pipeline.generate_treatment_plan(disease_name, max_regimens=max_results)
     finally:
         await pipeline.close()
