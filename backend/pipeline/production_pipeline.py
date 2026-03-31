@@ -105,23 +105,19 @@ class ProductionPipeline:
         return self.drugs_cache
 
     async def fetch_generic_drugs(self, limit: int = 3000) -> tuple:
-        """
-        Fetch and filter to off-patent generics only.
-        Returns (generic_drugs, excluded_drugs, stats).
-        """
         if self._generic_cache is not None:
             return self._generic_cache, [], self.generic_filter.get_stats()
 
         all_drugs = await self.fetch_approved_drugs(limit=limit)
         generic_drugs, excluded = self.generic_filter.filter_to_generics(all_drugs)
+        
+        from .orange_book_filter import OrangeBookFilter
+        ob_filter = OrangeBookFilter()
+        upgraded = ob_filter.upgrade_generic_filter((generic_drugs, excluded))
+        generic_drugs = upgraded["confirmed_generics"]
+        
         self._generic_cache = generic_drugs
-
         stats = self.generic_filter.get_stats()
-        logger.info(
-            f"Generic filter: {stats['total_input']} → "
-            f"{stats['generic_pool_size']} generics "
-            f"({stats['excluded']} excluded as patented)"
-        )
         return generic_drugs, excluded, stats
 
     # ── Core scoring pipeline ─────────────────────────────────────────────────
@@ -398,22 +394,33 @@ class ProductionPipeline:
             f"({len(filtered_out)} filtered for safety)"
         )
 
-        # Step 5: Combination scoring
-        logger.info("[5/8] Scoring drug combinations...")
-        disease_genes = disease_data.get("genes", [])
-        combo_scorer = CombinationScorer(disease_name=disease_name)
+        # Step 5: Combination scoring — use full SimulationProof engine
+        logger.info("[5/8] Scoring drug combinations (Bliss+Loewe+Ω)...")
+        from .combo_scorer import ComboWorkerPool  # the multiprocessing pool
 
-        # Only combine drugs above min_single_score for speed + quality
-        combo_eligible = [c for c in safe_candidates if c["score"] >= min_single_score]
-        logger.info(f"       {len(combo_eligible)} drugs eligible for combination scoring")
-
-        combos = combo_scorer.rank_combinations(
+        pool = ComboWorkerPool(n_workers=max(1, __import__('multiprocessing').cpu_count() - 1))
+        proofs = pool.run(
             candidates=combo_eligible,
             disease_genes=disease_genes,
-            top_n_singles=20,
-            max_combos=max_regimens * 3,  # generate 3× and trim after trials
+            disease_name=disease_name,
+            max_pairs=5000,
+            top_n_singles=30,
             include_triples=include_triples,
         )
+        # proofs are already sorted by final_score — convert to combo format assembler expects
+        combos = [
+            {
+                "combo_name": p["regimen"],
+                "combo_score": p["final_score"],
+                "n_drugs": 2,
+                "shared_genes": p.get("target_pathway_nodes", {}).get("shared_pathways", []),
+                "is_synergistic": p.get("synergy_analysis", {}).get("synergy_call") == "SYNERGISTIC",
+                "is_antagonistic": False,  # antagonistic pairs filtered by worker
+                "safety_margin": p.get("safety_margin", 0),
+                "simulation_proof": p,  # full JSON attached
+            }
+            for p in proofs
+        ]
         logger.info(f"       {len(combos)} combinations generated")
 
         # Step 6: Virtual trials on top combos

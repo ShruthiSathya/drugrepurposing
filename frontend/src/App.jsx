@@ -21,17 +21,21 @@ function App() {
     setLoadingMessage('🔍 Searching for disease in database...');
 
     try {
-      const response = await fetch('http://localhost:8000/analyze', {
+      // In handleSubmit, change:
+      const response = await fetch('http://localhost:8000/treatment_plan', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           disease_name: diseaseName,
-          min_score: minScore,
-          max_results: maxResults,
+          max_regimens: maxResults,
+          include_triples: true,
+          fetch_ppi: true,
+          fetch_similarity: true,
+          use_tissue: true,
         }),
       });
+      // Then update how you read data — results.candidates becomes data.candidates,
+      // results.disease becomes { name: data.disease }, etc.
 
       const data = await response.json();
 
