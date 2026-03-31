@@ -113,12 +113,28 @@ MECHANISM_CLASS_CONTRAINDICATIONS: Dict[str, List[Tuple[str, str, str]]] = {
         ("nsaid",                  "relative",
          "NSAIDs cause sodium retention and worsen heart failure."),
     ],
-    "pulmonary arterial hypertension": [
-        ("vasoconstrictor",        "absolute",
-         "Vasoconstrictors increase pulmonary vascular resistance."),
-        ("endothelin agonist",     "absolute",
-         "Endothelin agonists worsen pulmonary vasoconstriction."),
-    ],
+    "pulmonary arterial hypertension": {
+        "sildenafil": {
+            "severity": "relative",
+            "reason": "Approved for PAH — but do NOT combine with nitrates (hypotension).",
+            "mechanism": "PDE5 inhibitor + nitrate = life-threatening hypotension."
+        },
+        "ergotamine": {
+            "severity": "absolute",
+            "reason": "Vasoconstrictor worsens pulmonary hypertension.",
+            "mechanism": "Serotonin and alpha-adrenergic agonist."
+        },
+        "epinephrine": {
+            "severity": "absolute",
+            "reason": "Potent vasoconstrictor that significantly increases pulmonary vascular resistance.",
+            "mechanism": "Non-selective alpha and beta adrenergic agonist."
+        },
+        "norepinephrine": {
+            "severity": "absolute",
+            "reason": "Strong alpha-1 mediated vasoconstriction worsens pulmonary hypertension.",
+            "mechanism": "Potent alpha-adrenergic agonist."
+        }
+    },
     "glaucoma": [
         ("anticholinergic",        "absolute",
          "Anticholinergic drugs precipitate acute angle-closure glaucoma."),

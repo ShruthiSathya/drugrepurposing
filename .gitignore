@@ -49,3 +49,5 @@ backend/.venv/
 venv/
 venv/
 venv/
+
+frontend/package-lock.json
