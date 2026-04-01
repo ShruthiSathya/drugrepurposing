@@ -113,28 +113,33 @@ MECHANISM_CLASS_CONTRAINDICATIONS: Dict[str, List[Tuple[str, str, str]]] = {
         ("nsaid",                  "relative",
          "NSAIDs cause sodium retention and worsen heart failure."),
     ],
-    "pulmonary arterial hypertension": {
-        "sildenafil": {
-            "severity": "relative",
-            "reason": "Approved for PAH — but do NOT combine with nitrates (hypotension).",
-            "mechanism": "PDE5 inhibitor + nitrate = life-threatening hypotension."
-        },
-        "ergotamine": {
-            "severity": "absolute",
-            "reason": "Vasoconstrictor worsens pulmonary hypertension.",
-            "mechanism": "Serotonin and alpha-adrenergic agonist."
-        },
-        "epinephrine": {
-            "severity": "absolute",
-            "reason": "Potent vasoconstrictor that significantly increases pulmonary vascular resistance.",
-            "mechanism": "Non-selective alpha and beta adrenergic agonist."
-        },
-        "norepinephrine": {
-            "severity": "absolute",
-            "reason": "Strong alpha-1 mediated vasoconstriction worsens pulmonary hypertension.",
-            "mechanism": "Potent alpha-adrenergic agonist."
-        }
-    },
+    "pulmonary arterial hypertension": [
+        (
+            "vasoconstrictor",
+            "absolute",
+            "Vasoconstrictors increase pulmonary vascular resistance and worsen PAH.",
+        ),
+        (
+            "alpha-adrenergic agonist",
+            "absolute",
+            "Alpha-adrenergic agonists cause pulmonary vasoconstriction.",
+        ),
+        (
+            "alpha adrenergic agonist",
+            "absolute",
+            "Alpha-adrenergic agonists cause pulmonary vasoconstriction.",
+        ),
+        (
+            "sympathomimetic",
+            "relative",
+            "Sympathomimetics may raise pulmonary arterial pressure.",
+        ),
+        (
+            "ergot alkaloid",
+            "absolute",
+            "Ergot alkaloids are vasoconstrictors contraindicated in PAH.",
+        ),
+    ],
     "glaucoma": [
         ("anticholinergic",        "absolute",
          "Anticholinergic drugs precipitate acute angle-closure glaucoma."),
@@ -445,6 +450,21 @@ class DrugSafetyFilter:
                 "venlafaxine":       {"severity": "relative",
                     "reason": "Dose-dependent blood pressure increase.",
                     "mechanism": "Norepinephrine reuptake inhibition."},
+                "epinephrine": {
+                    "severity": "absolute",
+                    "reason": "Potent vasoconstrictor — contraindicated in pulmonary hypertension.",
+                    "mechanism": "Non-selective adrenergic agonist.",
+                },
+                "norepinephrine": {
+                    "severity": "absolute",
+                    "reason": "Strong vasopressor — worsens pulmonary hypertension.",
+                    "mechanism": "Potent alpha-adrenergic agonist.",
+                },
+                "epinephrine bitartrate": {
+                    "severity": "absolute",
+                    "reason": "Vasoconstrictor — contraindicated in hypertension.",
+                    "mechanism": "Epinephrine salt.",
+                },
             },
 
             # ── Rheumatology — Gout ───────────────────────────────────────────
@@ -496,15 +516,70 @@ class DrugSafetyFilter:
             },
 
             # ── Pulmonary — Pulmonary Arterial Hypertension ───────────────────
-            "pulmonary arterial hypertension": {
-                "sildenafil":        {"severity": "relative",
-                    "reason": "Approved for PAH — but do NOT combine with nitrates (hypotension).",
-                    "mechanism": "PDE5 inhibitor + nitrate = life-threatening hypotension."},
-                "ergotamine":        {"severity": "absolute",
-                    "reason": "Vasoconstrictor worsens pulmonary hypertension.",
-                    "mechanism": "Serotonin and alpha-adrenergic agonist."},
+           "pulmonary arterial hypertension": {
+                # Sildenafil is APPROVED for PAH — do NOT list it as contraindicated.
+                # The nitrate interaction is handled by cyp450_checker.py at combo level.
+                "ergotamine": {
+                    "severity": "absolute",
+                    "reason": "Vasoconstrictor — worsens pulmonary hypertension.",
+                    "mechanism": "Serotonin and alpha-adrenergic agonist causes pulmonary vasoconstriction.",
+                },
+                "ergotamine tartrate": {
+                    "severity": "absolute",
+                    "reason": "Vasoconstrictor — worsens pulmonary hypertension.",
+                    "mechanism": "Ergot alkaloid.",
+                },
+                "epinephrine": {
+                    "severity": "absolute",
+                    "reason": "Potent vasoconstrictor — significantly worsens pulmonary vascular resistance.",
+                    "mechanism": "Non-selective alpha and beta adrenergic agonist.",
+                },
+                "norepinephrine": {
+                    "severity": "absolute",
+                    "reason": "Strong alpha-1 vasoconstriction worsens pulmonary hypertension.",
+                    "mechanism": "Potent alpha-adrenergic agonist.",
+                },
+                "epinephrine bitartrate": {
+                    "severity": "absolute",
+                    "reason": "Potent vasoconstrictor — worsens PAH.",
+                    "mechanism": "Epinephrine salt — same mechanism.",
+                },
+                "pseudoephedrine": {
+                    "severity": "relative",
+                    "reason": "Sympathomimetic decongestant raises blood pressure.",
+                    "mechanism": "Alpha-adrenergic agonist.",
+                },
+                "phenylephrine": {
+                    "severity": "absolute",
+                    "reason": "Vasoconstrictor raises pulmonary vascular resistance.",
+                    "mechanism": "Selective alpha-1 agonist.",
+                },
+                "phenylephrine hydrochloride": {
+                    "severity": "absolute",
+                    "reason": "Vasoconstrictor raises pulmonary vascular resistance.",
+                    "mechanism": "Selective alpha-1 agonist.",
+                },
+                "amphetamine": {
+                    "severity": "absolute",
+                    "reason": "Significant hypertensive and vasoconstrictive effect.",
+                    "mechanism": "Sympathomimetic — releases norepinephrine.",
+                },
+                "amphetamine sulfate": {
+                    "severity": "absolute",
+                    "reason": "Significant hypertensive and vasoconstrictive effect.",
+                    "mechanism": "Sympathomimetic.",
+                },
+                "venlafaxine": {
+                    "severity": "relative",
+                    "reason": "Dose-dependent blood pressure increase via NE reuptake inhibition.",
+                    "mechanism": "SNRI — norepinephrine reuptake inhibition.",
+                },
+                "venlafaxine hydrochloride": {
+                    "severity": "relative",
+                    "reason": "Dose-dependent blood pressure increase.",
+                    "mechanism": "SNRI.",
+                },
             },
-
             # ── Oncology — General ────────────────────────────────────────────
             "cancer": {
                 "live vaccine":      {"severity": "absolute",

@@ -449,6 +449,9 @@ def _resolve_disease_params(disease_name: str) -> Dict:
 @dataclass
 class VirtualPatient:
     patient_id:           int
+    ethnicity: str
+    age_group: str
+    genomic_subgroup: str
     mutation_burden:      float = 0.5
     barrier_sensitivity:  float = 0.5
     stroma_density:       float = 0.3
@@ -889,6 +892,10 @@ class InSilicoTrialSimulator:
             "pkpd_profile":               asdict(pkpd),
             "biomarker_analysis":         biomarker_analysis,
         }
+    def calculate_dosage_sparing(self, kill_rate_combo, kill_rate_singles):
+        # If combo kill rate is achieved at 30% of single dose = 70% sparing
+        sparing_potential = (kill_rate_combo / max(kill_rate_singles)) - 1.0
+        return min(sparing_potential, 0.9) # Cap at 90% sparing
 
     async def run_virtual_trial(self, candidate: Dict) -> Dict:
         """Run a full virtual Phase 2 trial for one drug candidate."""

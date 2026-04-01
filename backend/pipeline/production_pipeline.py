@@ -32,6 +32,47 @@ logger = logging.getLogger(__name__)
 
 PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
+def _deduplicate_drug_pool(drugs: List[Dict]) -> List[Dict]:
+        """
+        Remove duplicate drugs from the pool.
+        
+        Duplicates occur when:
+        1. ChEMBL returns "Metformin" AND ESSENTIAL_DRUGS fallback adds "Metformin" again
+        2. ChEMBL returns "Metformin hydrochloride" AND "Metformin" (different ChEMBL IDs
+        but same active molecule)
+        
+        Strategy: normalise name (strip salt suffixes, lowercase), keep the entry
+        with the most targets (best-annotated version).
+        """
+        import re
+        
+        SALT_PATTERN = re.compile(
+            r"\\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
+            r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
+            r"anhydrous|bitartrate|besylate|tosylate|citrate|calcium|magnesium)$",
+            re.IGNORECASE,
+        )
+        
+        def normalise(name: str) -> str:
+            return SALT_PATTERN.sub("", name.strip()).lower().strip()
+        
+        seen: Dict[str, Dict] = {}
+        for drug in drugs:
+            norm = normalise(drug["name"])
+            if norm not in seen:
+                seen[norm] = drug
+            else:
+                # Keep the version with more targets (better annotated)
+                existing_targets = len(seen[norm].get("targets") or [])
+                new_targets = len(drug.get("targets") or [])
+                if new_targets > existing_targets:
+                    seen[norm] = drug
+        
+        deduped = list(seen.values())
+        n_removed = len(drugs) - len(deduped)
+        if n_removed > 0:
+            logger.info(f"Deduplication: removed {n_removed} duplicate drugs from pool")
+        return deduped
 
 class ProductionPipeline:
     """
@@ -364,13 +405,16 @@ class ProductionPipeline:
                 "disease": disease_name,
             }
 
-        # Step 2: Generic drug pool (Orange Book + Purple Book)
         logger.info("[2/8] Fetching and filtering to generic drugs only...")
         generic_drugs, excluded, generic_stats = await self.fetch_generic_drugs(limit=3000)
         logger.info(
             f"       Generic pool: {len(generic_drugs)} drugs "
             f"({len(excluded)} excluded as patented)"
         )
+        
+        # FIX: Deduplicate before scoring — prevents "METFORMIN + METFORMIN HYDROCHLORIDE" combos
+        generic_drugs = _deduplicate_drug_pool(generic_drugs)
+        logger.info(f"       After deduplication: {len(generic_drugs)} drugs")
 
         # Step 3: Score singles
         logger.info("[3/8] Scoring singles (gene + pathway + PPI + similarity + tissue + poly)...")
@@ -494,6 +538,25 @@ class ProductionPipeline:
                 for c in raw_combos
             ]
 
+            for combo in combos:
+                # 1. PK Compatibility
+                pk_data = pk_engine.assess_alignment(drug_a_props, drug_b_props)
+                combo["fdc_feasibility"] = pk_data["fdc_feasibility"]
+                
+                # 2. Regulatory Delta
+                reg_data = self.scorer._calculate_regulatory_delta(
+                    combo["combo_score"], drug_a_score, drug_b_score
+                )
+                combo["regulatory_grade"] = reg_data["contribution_of_elements"]
+                
+                # 3. Dosage Sparing
+                combo["dosage_sparing_bonus"] = reg_data["delta_improvement"] * 0.5
+                
+                # 4. Final Re-Ranking
+                # Penalty if they can't be manufactured together or have poor PK sync
+                if combo["fdc_feasibility"] == "LOW":
+                    combo["combo_score"] *= 0.8
+
         logger.info(f"       {len(combos)} combinations generated")
 
         # Step 6: Virtual trials on top combos
@@ -503,11 +566,23 @@ class ProductionPipeline:
             from .insilico_trial import InSilicoTrialSimulator
             top_for_trial = combos[:max_regimens * 2]
             trial_inputs  = []
+            candidate_target_lookup = {
+                c.get("drug_name", c.get("name", "")).upper(): c.get("target_genes", [])
+                for c in safe_candidates
+            }
+            
             for combo in top_for_trial:
+                combo_name = combo["combo_name"]
+                # Collect full target lists for all drugs in combo
+                drug_names_in_combo = [d.strip().upper() for d in combo_name.split(" + ")]
+                all_targets = list(set(
+                    t for dn in drug_names_in_combo
+                    for t in candidate_target_lookup.get(dn, [])
+                ))
                 trial_inputs.append({
-                    "drug_name":             combo["combo_name"],
+                    "drug_name":             combo_name,
                     "score":                 combo["combo_score"],
-                    "target_genes":          combo.get("shared_genes", []),
+                    "target_genes":          all_targets,    # FIX: full union not just shared
                     "disease_genes":         disease_genes,
                     "polypharmacology_score": min(combo["combo_score"] + 0.05, 1.0),
                     "chembl_properties":     {},

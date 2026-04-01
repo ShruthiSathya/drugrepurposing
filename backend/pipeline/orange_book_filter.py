@@ -85,6 +85,63 @@ CONFIRMED_GENERIC_OVERRIDES = {
     "doxycycline", "minocycline", "bupropion", "naltrexone", "acamprosate",
     "disulfiram", "varenicline", "lithium", "valproate", "celecoxib",
     "indomethacin", "diclofenac", "piroxicam", "meloxicam", "ketorolac",
+    # PAH
+    "bosentan", "ambrisentan", "iloprost", "treprostinil", "epoprostenol",
+    "tadalafil",  # already in set but ensure present
+    # Corticosteroids
+    "dexamethasone", "prednisone", "prednisolone", "hydrocortisone",
+    "methylprednisolone", "budesonide", "fluticasone", "betamethasone",
+    # Cardiovascular
+    "metoprolol", "carvedilol", "bisoprolol", "atenolol",
+    "lisinopril", "enalapril", "ramipril", "captopril",
+    "valsartan", "irbesartan", "candesartan",
+    "amlodipine", "diltiazem", "verapamil", "nifedipine",
+    "furosemide", "hydrochlorothiazide", "chlorthalidone",
+    "spironolactone", "eplerenone",
+    "digoxin", "amiodarone",
+    # Lipid
+    "atorvastatin", "rosuvastatin", "simvastatin", "pravastatin",
+    "lovastatin", "fluvastatin", "pitavastatin",
+    "ezetimibe", "fenofibrate", "gemfibrozil",
+    # Rheumatology
+    "sulfasalazine", "leflunomide", "azathioprine", "mycophenolate",
+    "cyclosporine",
+    # Diabetes
+    "glipizide", "glimepiride", "glyburide", "repaglinide", "nateglinide",
+    "pioglitazone", "rosiglitazone",
+    "sitagliptin", "saxagliptin", "alogliptin",
+    "acarbose", "miglitol",
+    # Neurology
+    "rasagiline", "selegiline", "safinamide",
+    "levodopa", "carbidopa", "entacapone", "tolcapone",
+    "pramipexole", "ropinirole", "rotigotine",
+    "amantadine",
+    "donepezil", "rivastigmine", "galantamine", "memantine",
+    # Oncology generics
+    "bortezomib", "melphalan", "cyclophosphamide",
+    "doxorubicin", "vincristine", "vinblastine",
+    "paclitaxel", "docetaxel", "gemcitabine",
+    "carboplatin", "cisplatin", "oxaliplatin",
+    "fluorouracil", "capecitabine",
+    "imatinib", "gefitinib", "erlotinib", "sorafenib", "sunitinib",
+    # Gout
+    "allopurinol", "febuxostat", "probenecid",
+    # Immunology
+    "thalidomide", "lenalidomide",
+    "tacrolimus",
+    # Psychiatry
+    "haloperidol", "chlorpromazine", "fluphenazine",
+    "risperidone", "olanzapine", "quetiapine", "clozapine", "aripiprazole",
+    "fluoxetine", "sertraline", "paroxetine", "citalopram", "escitalopram",
+    "amitriptyline", "nortriptyline", "imipramine",
+    "lithium",
+    # Pain / other
+    "tramadol", "codeine", "morphine",
+    "diclofenac", "naproxen", "ibuprofen", "celecoxib", "indomethacin",
+    "gabapentin", "pregabalin",
+    "colchicine", "allopurinol",
+    "aspirin", "warfarin", "clopidogrel",
+    "metformin", "pioglitazone",
 }
 
 

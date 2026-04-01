@@ -1,0 +1,1042 @@
+{
+  "summary": {
+    "run_timestamp_utc": "2026-04-01T04:56:32.643383+00:00",
+    "elapsed_seconds": 542.63,
+    "top_n": 15,
+    "n_total_cases": 21,
+    "n_pass": 6,
+    "n_fail": 15,
+    "pass_rate": 0.2857,
+    "n_found_in_top_n": 2,
+    "n_passed_via_fallback": 4,
+    "by_tier": {
+      "GOLD": {
+        "pass": 5,
+        "fail": 10
+      },
+      "SILVER": {
+        "pass": 1,
+        "fail": 5
+      }
+    },
+    "n_negative_cases": 2,
+    "n_negative_pass": 2,
+    "negative_pass_rate": 1.0
+  },
+  "positive_results": [
+    {
+      "drugs": [
+        "sildenafil",
+        "bosentan"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "tier": "GOLD",
+      "rationale": "PDE5i (cGMP/NO pathway) + ERA (endothelin pathway) \u2014 dual pathway blockade, AMBITION trial basis",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "sildenafil": 0.5224,
+        "bosentan": 0.0
+      },
+      "individual_threshold": 0.3,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:25053975",
+        "PMID:26308997"
+      ],
+      "notes": "Both drugs should score highly individually; pipeline should recognise non-redundant mechanism classes",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "PAZOPANIB + DASATINIB ANHYDROUS + CELECOXIB",
+          "combo_score": 0.7875,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "IMATINIB + FULVESTRANT + CELECOXIB",
+          "combo_score": 0.7527,
+          "orr": 0.47,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "PAZOPANIB + LABETALOL HYDROCHLORIDE + CELECOXIB",
+          "combo_score": 0.7695,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "sildenafil",
+        "iloprost"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "tier": "GOLD",
+      "rationale": "PDE5i + inhaled prostacyclin analogue \u2014 complementary vasodilatory mechanisms",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "sildenafil": 0.5224,
+        "iloprost": 0.0
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:16291984"
+      ],
+      "notes": "Classic two-pathway combo used pre-triple therapy era",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "PAZOPANIB + DASATINIB ANHYDROUS + CELECOXIB",
+          "combo_score": 0.7875,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "IMATINIB + FULVESTRANT + CELECOXIB",
+          "combo_score": 0.7527,
+          "orr": 0.47,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "PAZOPANIB + LABETALOL HYDROCHLORIDE + CELECOXIB",
+          "combo_score": 0.7695,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "bosentan",
+        "iloprost"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "tier": "SILVER",
+      "rationale": "ERA + prostacyclin \u2014 two distinct pathways, additive effect on pulmonary vascular resistance",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "bosentan": 0.0,
+        "iloprost": 0.0
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:19423868"
+      ],
+      "notes": "Combination used in clinical practice when PDE5i contraindicated",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "PAZOPANIB + DASATINIB ANHYDROUS + CELECOXIB",
+          "combo_score": 0.7875,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "IMATINIB + FULVESTRANT + CELECOXIB",
+          "combo_score": 0.7527,
+          "orr": 0.47,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "PAZOPANIB + LABETALOL HYDROCHLORIDE + CELECOXIB",
+          "combo_score": 0.7695,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "sildenafil",
+        "bosentan",
+        "iloprost"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "tier": "GOLD",
+      "rationale": "Triple therapy: PDE5i + ERA + prostacyclin \u2014 all three PAH pathways targeted simultaneously",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "sildenafil": 0.5224,
+        "bosentan": 0.0,
+        "iloprost": 0.0
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:26308997",
+        "PMID:28157252"
+      ],
+      "notes": "Current ESC/ERS guideline-recommended triple combination for high-risk PAH. Gold standard test case.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "PAZOPANIB + DASATINIB ANHYDROUS + CELECOXIB",
+          "combo_score": 0.7875,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "IMATINIB + FULVESTRANT + CELECOXIB",
+          "combo_score": 0.7527,
+          "orr": 0.47,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "PAZOPANIB + LABETALOL HYDROCHLORIDE + CELECOXIB",
+          "combo_score": 0.7695,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "imatinib",
+        "sildenafil"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "tier": "SILVER",
+      "rationale": "PDGFR/BCR-ABL kinase inhibitor + PDE5i \u2014 anti-proliferative + vasodilatory synergy in PAH",
+      "pass": true,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "imatinib": 0.657,
+        "sildenafil": 0.5224
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:20565548"
+      ],
+      "notes": "IMPRES trial showed imatinib benefit; rational to combine with PDE5i for dual mechanism coverage",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "PAZOPANIB + DASATINIB ANHYDROUS + CELECOXIB",
+          "combo_score": 0.7875,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "IMATINIB + FULVESTRANT + CELECOXIB",
+          "combo_score": 0.7527,
+          "orr": 0.47,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "PAZOPANIB + LABETALOL HYDROCHLORIDE + CELECOXIB",
+          "combo_score": 0.7695,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "thalidomide",
+        "dexamethasone"
+      ],
+      "disease": "multiple myeloma",
+      "tier": "GOLD",
+      "rationale": "IMiD (CRBN/Ikaros/Aiolos degradation) + corticosteroid (GR-mediated apoptosis) \u2014 synergistic via independent mechanisms",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "thalidomide": 0.6576,
+        "dexamethasone": 0.0
+      },
+      "individual_threshold": 0.3,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:16682718"
+      ],
+      "notes": "TD regimen \u2014 backbone of myeloma therapy for >15 years. Both drugs confirmed generics.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "BORTEZOMIB + CARFILZOMIB + VINCRISTINE",
+          "combo_score": 1.0,
+          "orr": 0.7,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 2,
+          "regimen": "BORTEZOMIB + VINCRISTINE + GEMCITABINE",
+          "combo_score": 1.0,
+          "orr": 0.625,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 3,
+          "regimen": "BORTEZOMIB + VINCRISTINE + SORAFENIB",
+          "combo_score": 1.0,
+          "orr": 0.655,
+          "priority": "HIGH"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "bortezomib",
+        "dexamethasone"
+      ],
+      "disease": "multiple myeloma",
+      "tier": "GOLD",
+      "rationale": "Proteasome inhibitor (26S UPS) + glucocorticoid \u2014 VD doublet, first-line standard of care",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "bortezomib": 0.9714,
+        "dexamethasone": 0.0
+      },
+      "individual_threshold": 0.3,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:12931552",
+        "PMID:20516456"
+      ],
+      "notes": "VD doublet \u2014 both in your drug pool as generics. Pipeline should recognise proteasome + NR as distinct classes.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "BORTEZOMIB + CARFILZOMIB + VINCRISTINE",
+          "combo_score": 1.0,
+          "orr": 0.7,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 2,
+          "regimen": "BORTEZOMIB + VINCRISTINE + GEMCITABINE",
+          "combo_score": 1.0,
+          "orr": 0.625,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 3,
+          "regimen": "BORTEZOMIB + VINCRISTINE + SORAFENIB",
+          "combo_score": 1.0,
+          "orr": 0.655,
+          "priority": "HIGH"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "thalidomide",
+        "bortezomib",
+        "dexamethasone"
+      ],
+      "disease": "multiple myeloma",
+      "tier": "GOLD",
+      "rationale": "VTd triplet: IMiD + proteasome inhibitor + corticosteroid \u2014 three distinct mechanisms, highest response rates in transplant-eligible MM",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "thalidomide": 0.6576,
+        "bortezomib": 0.9714,
+        "dexamethasone": 0.0
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:20516456",
+        "PMID:21844591"
+      ],
+      "notes": "VTd is current standard of care induction for transplant-eligible MM. Critical test: can the pipeline find a 3-drug combo across 3 different mechanism classes (imid + proteasome_inhibitor + corticosteroid)?",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "BORTEZOMIB + CARFILZOMIB + VINCRISTINE",
+          "combo_score": 1.0,
+          "orr": 0.7,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 2,
+          "regimen": "BORTEZOMIB + VINCRISTINE + GEMCITABINE",
+          "combo_score": 1.0,
+          "orr": 0.625,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 3,
+          "regimen": "BORTEZOMIB + VINCRISTINE + SORAFENIB",
+          "combo_score": 1.0,
+          "orr": 0.655,
+          "priority": "HIGH"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "melphalan",
+        "dexamethasone"
+      ],
+      "disease": "multiple myeloma",
+      "tier": "SILVER",
+      "rationale": "Alkylating agent + corticosteroid \u2014 MP regimen, standard for transplant-ineligible patients",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "melphalan": 0.0,
+        "dexamethasone": 0.0
+      },
+      "individual_threshold": 0.2,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:15277696"
+      ],
+      "notes": "Melphalan + prednisone/dexamethasone is classic; tests whether pipeline finds alkylator + steroid synergy",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "BORTEZOMIB + CARFILZOMIB + VINCRISTINE",
+          "combo_score": 1.0,
+          "orr": 0.7,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 2,
+          "regimen": "BORTEZOMIB + VINCRISTINE + GEMCITABINE",
+          "combo_score": 1.0,
+          "orr": 0.625,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 3,
+          "regimen": "BORTEZOMIB + VINCRISTINE + SORAFENIB",
+          "combo_score": 1.0,
+          "orr": 0.655,
+          "priority": "HIGH"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "methotrexate",
+        "hydroxychloroquine"
+      ],
+      "disease": "rheumatoid arthritis",
+      "tier": "GOLD",
+      "rationale": "DHFR inhibitor + TLR7/9 lysosomal inhibitor \u2014 dual DMARD with complementary immunomodulatory mechanisms",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "methotrexate": 0.5695,
+        "hydroxychloroquine": 0.0
+      },
+      "individual_threshold": 0.3,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:8551546"
+      ],
+      "notes": "Core of triple DMARD therapy. Both fully generic.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "CARBAMAZEPINE + IMATINIB + COLCHICINE",
+          "combo_score": 0.7659,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "DASATINIB ANHYDROUS + METHOTREXATE + CARBAMAZEPINE",
+          "combo_score": 0.7605,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "IMATINIB + COLCHICINE + RABEPRAZOLE",
+          "combo_score": 0.7362,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "methotrexate",
+        "hydroxychloroquine",
+        "sulfasalazine"
+      ],
+      "disease": "rheumatoid arthritis",
+      "tier": "GOLD",
+      "rationale": "Triple DMARD: DHFR inhibitor + TLR inhibitor + 5-ASA/folate antagonist \u2014 guideline-equivalent to biologics in early RA",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "methotrexate": 0.5695,
+        "hydroxychloroquine": 0.0,
+        "sulfasalazine": 0.5238
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:8551546",
+        "PMID:10720468"
+      ],
+      "notes": "O'Dell triple DMARD trial. Non-inferior to biologics at 2 years. Perfect test case \u2014 all three generics, well-characterised synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "CARBAMAZEPINE + IMATINIB + COLCHICINE",
+          "combo_score": 0.7659,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "DASATINIB ANHYDROUS + METHOTREXATE + CARBAMAZEPINE",
+          "combo_score": 0.7605,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "IMATINIB + COLCHICINE + RABEPRAZOLE",
+          "combo_score": 0.7362,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "methotrexate",
+        "hydroxychloroquine",
+        "leflunomide"
+      ],
+      "disease": "rheumatoid arthritis",
+      "tier": "SILVER",
+      "rationale": "DHFR inhibitor + TLR inhibitor + DHODH inhibitor \u2014 triple DMARD alternative when sulfasalazine intolerant",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "methotrexate": 0.5695,
+        "hydroxychloroquine": 0.0,
+        "leflunomide": 0.0
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:19950318"
+      ],
+      "notes": "Alternative triple DMARD when SSZ not tolerated",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "CARBAMAZEPINE + IMATINIB + COLCHICINE",
+          "combo_score": 0.7659,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "DASATINIB ANHYDROUS + METHOTREXATE + CARBAMAZEPINE",
+          "combo_score": 0.7605,
+          "orr": 0.48,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "IMATINIB + COLCHICINE + RABEPRAZOLE",
+          "combo_score": 0.7362,
+          "orr": 0.465,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "metformin",
+        "pioglitazone"
+      ],
+      "disease": "type 2 diabetes mellitus",
+      "tier": "GOLD",
+      "rationale": "AMPK activator (hepatic gluconeogenesis) + PPAR\u03b3 agonist (insulin sensitiser) \u2014 complementary mechanisms, additive HbA1c reduction",
+      "pass": true,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 12,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "metformin": 0.5224,
+        "pioglitazone": 0.4507
+      },
+      "individual_threshold": 0.3,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:11473914"
+      ],
+      "notes": "Classic combination. Metformin + TZD is guideline standard. Both confirmed generics. Tests AMPK vs PPARg pathway distinction.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + METFORMIN",
+          "combo_score": 0.7719,
+          "orr": 0.58,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + TROGLITAZONE",
+          "combo_score": 0.747,
+          "orr": 0.55,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "METFORMIN HYDROCHLORIDE + INDOMETHACIN + METFORMIN",
+          "combo_score": 0.7367,
+          "orr": 0.51,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "metformin",
+        "glipizide"
+      ],
+      "disease": "type 2 diabetes mellitus",
+      "tier": "GOLD",
+      "rationale": "AMPK activator + sulfonylurea (K-ATP channel closer/insulin secretagogue) \u2014 complementary: insulin sensitiser + insulin secretagogue",
+      "pass": true,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "metformin": 0.5224,
+        "glipizide": 0.5154
+      },
+      "individual_threshold": 0.28,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:9571335"
+      ],
+      "notes": "Most widely used T2DM combination worldwide. Tests whether pipeline recognises sensitiser + secretagogue synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + METFORMIN",
+          "combo_score": 0.7719,
+          "orr": 0.58,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + TROGLITAZONE",
+          "combo_score": 0.747,
+          "orr": 0.55,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "METFORMIN HYDROCHLORIDE + INDOMETHACIN + METFORMIN",
+          "combo_score": 0.7367,
+          "orr": 0.51,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "metformin",
+        "spironolactone"
+      ],
+      "disease": "polycystic ovary syndrome",
+      "tier": "SILVER",
+      "rationale": "AMPK/insulin sensitiser + aldosterone antagonist/anti-androgen \u2014 targets both insulin resistance and androgen excess in PCOS",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "metformin": 0.6309,
+        "spironolactone": 0.0
+      },
+      "individual_threshold": 0.22,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:12788888"
+      ],
+      "notes": "Common clinical combination for PCOS with both metabolic and androgenic features. Both confirmed generics.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "METFORMIN HYDROCHLORIDE + DASATINIB ANHYDROUS + DOXORUBICIN HYDROCHLORIDE",
+          "combo_score": 0.8262,
+          "orr": 0.555,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "TAMOXIFEN + METFORMIN HYDROCHLORIDE + PAZOPANIB",
+          "combo_score": 0.8118,
+          "orr": 0.545,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "METFORMIN HYDROCHLORIDE + DASATINIB ANHYDROUS + DOCETAXEL ANHYDROUS",
+          "combo_score": 0.8074,
+          "orr": 0.57,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "colchicine",
+        "allopurinol"
+      ],
+      "disease": "gout",
+      "tier": "GOLD",
+      "rationale": "Microtubule inhibitor/NLRP3 blocker (flare prevention) + xanthine oxidase inhibitor (urate lowering) \u2014 dual acute/chronic management",
+      "pass": true,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "colchicine": 0.6693,
+        "allopurinol": 0.5147
+      },
+      "individual_threshold": 0.28,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:22585186"
+      ],
+      "notes": "Guideline standard: colchicine prophylaxis when starting ULT. Tests whether pipeline finds flare prevention + ULT synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "VINCRISTINE + DOCETAXEL ANHYDROUS + METFORMIN",
+          "combo_score": 0.7132,
+          "orr": 0.475,
+          "priority": "LOW"
+        },
+        {
+          "rank": 2,
+          "regimen": "COLCHICINE + RALOXIFENE HYDROCHLORIDE + DOXORUBICIN HYDROCHLORIDE",
+          "combo_score": 0.7106,
+          "orr": 0.475,
+          "priority": "LOW"
+        },
+        {
+          "rank": 3,
+          "regimen": "VINCRISTINE + PACLITAXEL + METFORMIN",
+          "combo_score": 0.7032,
+          "orr": 0.475,
+          "priority": "LOW"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "aspirin",
+        "colchicine"
+      ],
+      "disease": "pericarditis",
+      "tier": "GOLD",
+      "rationale": "COX inhibitor (prostaglandin suppression) + microtubule/NLRP3 inhibitor (inflammasome blockade) \u2014 COPE/ICAP trial standard of care",
+      "pass": true,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 2,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "aspirin": 0.5156,
+        "colchicine": 0.6159
+      },
+      "individual_threshold": 0.22,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:23765770",
+        "PMID:24027428"
+      ],
+      "notes": "ESC guideline Class I recommendation. Halves recurrence vs aspirin alone. Perfect test: two generics, distinct mechanisms (COX vs microtubule), well-proven synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "VINCRISTINE + METFORMIN + DOXORUBICIN HYDROCHLORIDE",
+          "combo_score": 0.6075,
+          "orr": 0.38,
+          "priority": "LOW"
+        },
+        {
+          "rank": 2,
+          "regimen": "COLCHICINE + ASPIRIN + METFORMIN",
+          "combo_score": 0.6177,
+          "orr": 0.335,
+          "priority": "LOW"
+        },
+        {
+          "rank": 3,
+          "regimen": "COLCHICINE + VINCRISTINE + METFORMIN",
+          "combo_score": 0.6176,
+          "orr": 0.335,
+          "priority": "LOW"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "spironolactone",
+        "metoprolol"
+      ],
+      "disease": "heart failure",
+      "tier": "GOLD",
+      "rationale": "Aldosterone antagonist (cardiac fibrosis/fluid) + beta-1 blocker (adrenergic blockade, cardiac remodelling) \u2014 neurohormonal blockade from two independent axes",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "spironolactone": 0.0,
+        "metoprolol": 0.0
+      },
+      "individual_threshold": 0.22,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:10471456",
+        "PMID:10385240"
+      ],
+      "notes": "RALES + MERIT-HF trials. Both drugs confirmed generics. Tests whether pipeline finds MRA + beta-blocker synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "CARVEDILOL + ATENOLOL + LABETALOL",
+          "combo_score": 0.6424,
+          "orr": 0.295,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "CARVEDILOL + CAFFEINE + PROPAFENONE HYDROCHLORIDE",
+          "combo_score": 0.6471,
+          "orr": 0.29,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "CARVEDILOL + ATENOLOL + EPINEPHRINE BITARTRATE",
+          "combo_score": 0.6441,
+          "orr": 0.29,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "donepezil",
+        "memantine"
+      ],
+      "disease": "alzheimer disease",
+      "tier": "GOLD",
+      "rationale": "AChE inhibitor (cholinergic augmentation) + NMDA antagonist (glutamate excitotoxicity reduction) \u2014 complementary neurochemical targets",
+      "pass": true,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "donepezil": 0.5088,
+        "memantine": 0.5443
+      },
+      "individual_threshold": 0.25,
+      "fallback_pass": true,
+      "evidence": [
+        "PMID:15304464"
+      ],
+      "notes": "FDA-approved combination (Namzaric). Both fully generic. The only approved combo for AD. Critical test for the pipeline.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "MEMANTINE HYDROCHLORIDE + NICOTINE POLACRILEX + SORAFENIB",
+          "combo_score": 0.6423,
+          "orr": 0.355,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 2,
+          "regimen": "PAZOPANIB + NICOTINE POLACRILEX + ACAMPROSATE CALCIUM",
+          "combo_score": 0.637,
+          "orr": 0.34,
+          "priority": "HIGH"
+        },
+        {
+          "rank": 3,
+          "regimen": "MEMANTINE HYDROCHLORIDE + PAZOPANIB + NICOTINE POLACRILEX",
+          "combo_score": 0.647,
+          "orr": 0.335,
+          "priority": "HIGH"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "rasagiline",
+        "amantadine"
+      ],
+      "disease": "parkinson disease",
+      "tier": "SILVER",
+      "rationale": "MAO-B inhibitor (dopamine preservation) + NMDA antagonist (glutamatergic modulation) \u2014 dual non-dopaminergic mechanism",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "rasagiline": 0.0,
+        "amantadine": 0.0
+      },
+      "individual_threshold": 0.2,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:15072009",
+        "PMID:4142340"
+      ],
+      "notes": "Common clinical combination for early-mid PD. Tests whether pipeline avoids recommending dopamine antagonists alongside dopaminergic agents.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "ORPHENADRINE CITRATE + PAZOPANIB + PROMAZINE",
+          "combo_score": 0.7761,
+          "orr": 0.5,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 2,
+          "regimen": "ORPHENADRINE CITRATE + PAZOPANIB + CARBOPLATIN",
+          "combo_score": 0.796,
+          "orr": 0.495,
+          "priority": "MEDIUM"
+        },
+        {
+          "rank": 3,
+          "regimen": "ORPHENADRINE CITRATE + APOMORPHINE + PAZOPANIB",
+          "combo_score": 0.7932,
+          "orr": 0.45,
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "drugs": [
+        "atorvastatin",
+        "ezetimibe"
+      ],
+      "disease": "hypercholesterolemia",
+      "tier": "GOLD",
+      "rationale": "HMGCR inhibitor (de novo synthesis) + NPC1L1 inhibitor (intestinal absorption) \u2014 complementary cholesterol reduction axes",
+      "pass": false,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
+      "top_n_checked": 15,
+      "individual_scores": {
+        "atorvastatin": 0.0,
+        "ezetimibe": 0.0
+      },
+      "individual_threshold": 0.28,
+      "fallback_pass": false,
+      "evidence": [
+        "PMID:26405429"
+      ],
+      "notes": "IMPROVE-IT trial basis. Both now generic. Additive ~20% additional LDL reduction. Tests statin + absorption inhibitor synergy.",
+      "top_3_regimens": [
+        {
+          "rank": 1,
+          "regimen": "ROSUVASTATIN + DOXORUBICIN HYDROCHLORIDE + ATENOLOL",
+          "combo_score": 0.6716,
+          "orr": 0.4,
+          "priority": "LOW"
+        },
+        {
+          "rank": 2,
+          "regimen": "ROSUVASTATIN + ATENOLOL + CYCLOPHOSPHAMIDE ANHYDROUS",
+          "combo_score": 0.6511,
+          "orr": 0.395,
+          "priority": "LOW"
+        },
+        {
+          "rank": 3,
+          "regimen": "ROSUVASTATIN + ATENOLOL + GEMCITABINE",
+          "combo_score": 0.6568,
+          "orr": 0.385,
+          "priority": "LOW"
+        }
+      ]
+    }
+  ],
+  "negative_results": [
+    {
+      "drugs": [
+        "haloperidol",
+        "levodopa"
+      ],
+      "disease": "parkinson disease",
+      "reason": "Dopamine antagonist + dopamine precursor = direct pharmacological opposition",
+      "pass": true,
+      "correctly_absent_from_top_n": true,
+      "found_at_rank": null,
+      "filtered_drugs": [
+        "haloperidol"
+      ],
+      "filter_reason": "haloperidol absolute contraindication in PD"
+    },
+    {
+      "drugs": [
+        "epinephrine",
+        "sildenafil"
+      ],
+      "disease": "pulmonary arterial hypertension",
+      "reason": "Epinephrine is a vasoconstrictor that worsens PAH; should be filtered by safety filter",
+      "pass": true,
+      "correctly_absent_from_top_n": true,
+      "found_at_rank": null,
+      "filtered_drugs": [
+        "epinephrine"
+      ],
+      "filter_reason": "epinephrine absolute contraindication in PAH"
+    }
+  ]
+}

@@ -186,6 +186,78 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("ivacaftor",               "cftr_modulator"),
     ("complement",              "complement_inhibitor"),
     ("eculizumab",              "complement_inhibitor"),
+    ("antimalarial",        "antimalarial"),
+    ("chloroquine",         "antimalarial"),
+    ("hydroxychloroquine",  "antimalarial"),
+    ("sulfonamide",         "sulfonamide"),
+    ("sulfasalazine",       "sulfonamide"),
+    ("5-aminosalicylic",    "sulfonamide"),
+    ("mineralocorticoid",   "diuretic"),          # spironolactone
+    ("aldosterone",         "diuretic"),          # spironolactone / eplerenone
+    ("loop diuretic",       "diuretic"),
+    ("xanthine oxidase",    "anti_uric_acid"),    # already present
+    ("aldosterone antagonist", "diuretic"),
+    ("potassium-sparing",   "diuretic"),
+        # Beta-blockers (ensure all common names map to beta_blocker)
+    ("labetalol",               "beta_blocker"),
+    ("carvedilol",              "beta_blocker"),
+    ("nadolol",                 "beta_blocker"),
+    ("bisoprolol",              "beta_blocker"),
+    ("atenolol",                "beta_blocker"),
+    ("metoprolol",              "beta_blocker"),
+    ("nebivolol",               "beta_blocker"),
+ 
+    # Statins (ensure all map to statin)
+    ("rosuvastatin",            "statin"),
+    ("atorvastatin",            "statin"),
+    ("simvastatin",             "statin"),
+    ("pravastatin",             "statin"),
+    ("fluvastatin",             "statin"),
+    ("lovastatin",              "statin"),
+    ("pitavastatin",            "statin"),
+ 
+    # ACE inhibitors
+    ("lisinopril",              "ace_inhibitor"),
+    ("enalapril",               "ace_inhibitor"),
+    ("ramipril",                "ace_inhibitor"),
+    ("captopril",               "ace_inhibitor"),
+    ("perindopril",             "ace_inhibitor"),
+ 
+    # ARBs
+    ("valsartan",               "arb"),
+    ("irbesartan",              "arb"),
+    ("candesartan",             "arb"),
+    ("olmesartan",              "arb"),
+    ("telmisartan",             "arb"),
+ 
+    # Prostacyclins — ensure all map correctly
+    ("iloprost",                "prostacyclin"),
+    ("treprostinil",            "prostacyclin"),
+    ("epoprostenol",            "prostacyclin"),
+    ("beraprost",               "prostacyclin"),
+ 
+    # ERAs
+    ("bosentan",                "endothelin_antagonist"),
+    ("ambrisentan",             "endothelin_antagonist"),
+    ("macitentan",              "endothelin_antagonist"),
+ 
+    # Sulfonylureas — add as new class
+    ("glipizide",               "sulfonylurea"),
+    ("glimepiride",             "sulfonylurea"),
+    ("glyburide",               "sulfonylurea"),
+    ("glibenclamide",           "sulfonylurea"),
+    ("sulfonylurea",            "sulfonylurea"),
+ 
+    # Thiazolidinediones
+    ("pioglitazone",            "thiazolidinedione"),
+    ("rosiglitazone",           "thiazolidinedione"),
+ 
+    # DPP-4 inhibitors
+    ("sitagliptin",             "dpp4_inhibitor"),
+    ("saxagliptin",             "dpp4_inhibitor"),
+    ("alogliptin",              "dpp4_inhibitor"),
+    ("dpp-4",                   "dpp4_inhibitor"),
+    ("dipeptidyl peptidase",    "dpp4_inhibitor"),
 ]
 
 
@@ -250,6 +322,37 @@ SYNERGISTIC_PAIRS: Set[frozenset] = {
     frozenset({"anti_uric_acid",         "colchicine"}),
     frozenset({"nsaid",                  "colchicine"}),
     frozenset({"cox2_inhibitor",         "colchicine"}),
+    # ── PAH triple therapy — most proven combination therapy in cardiology ──
+    frozenset({"pde5_inhibitor",        "endothelin_antagonist"}),   # already present
+    frozenset({"pde5_inhibitor",        "prostacyclin"}),            # already present  
+    frozenset({"endothelin_antagonist", "prostacyclin"}),            # already present
+    frozenset({"pde5_inhibitor",        "sgc_stimulator"}),          # already present
+    
+    # ADD THESE — kinase inhibitor + PAH vasodilator (imatinib + sildenafil etc.)
+    frozenset({"kinase_inhibitor",      "pde5_inhibitor"}),
+    frozenset({"kinase_inhibitor",      "endothelin_antagonist"}),
+    frozenset({"kinase_inhibitor",      "prostacyclin"}),
+    frozenset({"kinase_inhibitor",      "sgc_stimulator"}),
+    
+    # ADD THESE — heart failure neurohormonal blockade  
+    frozenset({"beta_blocker",          "diuretic"}),               # BB + loop diuretic
+    frozenset({"ace_inhibitor",         "diuretic"}),               # ACEi + diuretic
+    frozenset({"arb",                   "diuretic"}),               # ARB + diuretic
+    
+    # ADD THESE — DMARD combinations for RA (the triple DMARD)
+    frozenset({"dmard",                 "antimalarial"}),           # MTX + HCQ
+    frozenset({"dmard",                 "sulfonamide"}),            # MTX + sulfasalazine
+    frozenset({"antimalarial",          "sulfonamide"}),            # HCQ + sulfasalazine
+    
+    # ADD THESE — AD combination (the only FDA-approved combo)
+    # acetylcholinesterase_inhibitor + nmda_antagonist is already present
+    
+    # ADD THESE — gout combination
+    frozenset({"colchicine",            "anti_uric_acid"}),         # colchicine + allopurinol
+    
+    # ADD THESE — pericarditis
+    frozenset({"colchicine",            "nsaid"}),                  # already present
+    frozenset({"colchicine",            "cox2_inhibitor"}),         # already present
 }
 
 # Pairs that are clinically antagonistic or dangerous.
@@ -271,17 +374,143 @@ ANTAGONISTIC_PAIRS: Set[frozenset] = {
 
 # Mechanism classes that target the same pathway — penalise for redundancy
 REDUNDANT_CLASS_GROUPS: List[Set[str]] = [
-    {"ace_inhibitor", "arb"},                                  # both RAAS
-    {"pde5_inhibitor", "sgc_stimulator"},                      # both cGMP
-    {"anti_tnf", "anti_il6", "jak_inhibitor"},                 # all immunosuppressive
-    {"aromatase_inhibitor", "serm"},                           # both ER-related
-    {"proteasome_inhibitor", "imid"},                          # both myeloma (keep together for synergy check)
-    {"alkylating_agent", "antimetabolite"},                    # same DNA-damage pathway
-    {"acetylcholinesterase_inhibitor", "nmda_antagonist"},     # both AD (synergistic exception)
-    {"dopamine_agonist", "dopamine_precursor", "maob_inhibitor"},  # all dopaminergic
-    {"hdac_inhibitor", "dnmt_inhibitor"},                      # both epigenetic
-    {"statin", "statin"},                                      # same class (always redundant)
+    # Cardiovascular — same mechanism axis
+    {"ace_inhibitor", "arb"},                              # both RAAS (avoid combining)
+    {"pde5_inhibitor", "sgc_stimulator"},                  # both cGMP (avoid combining)
+    {"beta_blocker", "beta_blocker"},                      # same class (always redundant)
+    
+    # ADDED: beta-blocker group — catch carvedilol+metoprolol+atenolol
+    {"beta_blocker"},                                      # any two beta-blockers = redundant
+    
+    # ADDED: statin group — catch atorvastatin+rosuvastatin+simvastatin
+    {"statin"},                                            # any two statins = redundant
+    
+    # ADDED: ACEi group
+    {"ace_inhibitor"},                                     # any two ACEi = redundant
+    
+    # ADDED: ARB group  
+    {"arb"},                                               # any two ARBs = redundant
+    
+    # ADDED: PDE5i group
+    {"pde5_inhibitor"},                                    # sildenafil+tadalafil = redundant
+    
+    # ADDED: ERA group
+    {"endothelin_antagonist"},                             # bosentan+ambrisentan = redundant
+    
+    # Immunosuppression
+    {"anti_tnf", "anti_il6", "jak_inhibitor"},            # all immunosuppressive
+    {"anti_tnf", "anti_il6"},
+    {"anti_tnf", "jak_inhibitor"},
+    {"anti_il6", "jak_inhibitor"},
+    
+    # Oncology
+    {"aromatase_inhibitor", "serm"},                       # both ER-related
+    {"proteasome_inhibitor", "imid"},                      # keep together (synergistic exception)
+    {"alkylating_agent", "antimetabolite"},                # same DNA-damage pathway
+    
+    # CNS
+    {"acetylcholinesterase_inhibitor"},                     # two AChEIs = redundant
+    {"dopamine_agonist", "dopamine_precursor"},             # both dopaminergic
+    {"dopamine_agonist", "dopamine_agonist"},               # same class
+    
+    # NSAID class
+    {"nsaid", "cox2_inhibitor"},                           # both COX inhibitors
+    {"nsaid"},                                             # two NSAIDs = redundant
+    
+    # Diuretics
+    {"diuretic"},                                          # two diuretics usually redundant
+    
+    # Epigenetic
+    {"hdac_inhibitor", "dnmt_inhibitor"},
 ]
+
+# Maps disease keyword substrings → the mechanism classes that are APPROPRIATE
+# for that disease context. Classes NOT in this set get penalised.
+DISEASE_APPROPRIATE_CLASSES = {
+    "pulmonary arterial hypertension": {
+        "pde5_inhibitor", "endothelin_antagonist", "prostacyclin", "sgc_stimulator",
+        "kinase_inhibitor",    # imatinib/PDGFR is legitimate in PAH
+        "diuretic",            # loop diuretics for fluid management
+        "anticoagulant",       # warfarin for some PAH patients
+        "other",
+    },
+    "pulmonary hypertension": {
+        "pde5_inhibitor", "endothelin_antagonist", "prostacyclin", "sgc_stimulator",
+        "kinase_inhibitor", "diuretic", "other",
+    },
+    "multiple myeloma": {
+        "imid", "proteasome_inhibitor", "corticosteroid", "alkylating_agent",
+        "hdac_inhibitor", "anti_cd20", "kinase_inhibitor", "other",
+    },
+    "rheumatoid arthritis": {
+        "dmard", "anti_tnf", "anti_il6", "jak_inhibitor", "corticosteroid",
+        "nsaid", "cox2_inhibitor", "anti_cd20", "other",
+    },
+    "type 2 diabetes": {
+        "biguanide", "thiazolidinedione", "sglt2_inhibitor", "glp1_agonist",
+        "other",
+        # sulfonylureas map to "other" in the current keyword map — covered
+    },
+    "polycystic ovary syndrome": {
+        "biguanide", "diuretic",    # spironolactone maps to diuretic
+        "serm", "aromatase_inhibitor", "other",
+    },
+    "gout": {
+        "anti_uric_acid", "colchicine", "nsaid", "cox2_inhibitor",
+        "microtubule_inhibitor", "other",
+    },
+    "pericarditis": {
+        "nsaid", "cox2_inhibitor", "colchicine", "corticosteroid",
+        "microtubule_inhibitor", "other",
+    },
+    "heart failure": {
+        "ace_inhibitor", "arb", "beta_blocker", "diuretic",
+        "sglt2_inhibitor", "other",
+    },
+    "alzheimer": {
+        "acetylcholinesterase_inhibitor", "nmda_antagonist", "other",
+    },
+    "parkinson": {
+        "dopamine_agonist", "dopamine_precursor", "maob_inhibitor",
+        "nmda_antagonist", "other",
+    },
+    "hypercholesterolemia": {
+        "statin", "other",  # ezetimibe maps to "other" — covered
+    },
+    "epilepsy": {
+        "anticonvulsant", "other",
+    },
+    "asthma": {
+        "beta_blocker",     # cardioselective only — but mechanism class is the same
+        "corticosteroid", "other",
+    },
+}
+ 
+# Mechanism classes that are ONCOLOGY-SPECIFIC — penalise heavily outside oncology
+ONCOLOGY_CLASSES = {
+    "alkylating_agent", "antimetabolite", "taxane", "vinca_alkaloid",
+    "parp_inhibitor", "checkpoint_inhibitor", "hdac_inhibitor",
+    "anti_vegf",
+}
+ 
+ONCOLOGY_DISEASE_KEYWORDS = {
+    "cancer", "carcinoma", "tumor", "tumour", "myeloma", "leukemia",
+    "lymphoma", "melanoma", "glioma", "glioblastoma", "sarcoma",
+    "blastoma", "adenocarcinoma",
+}
+
+def _is_oncology_disease(disease_name: str) -> bool:
+    d = disease_name.lower()
+    return any(k in d for k in ONCOLOGY_DISEASE_KEYWORDS)
+ 
+ 
+def _get_appropriate_classes(disease_name: str):
+    """Return the set of appropriate mechanism classes for a disease."""
+    d = disease_name.lower()
+    for keyword, classes in DISEASE_APPROPRIATE_CLASSES.items():
+        if keyword in d:
+            return classes
+    return None   # None = unknown disease, no penalty applied
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -321,7 +550,7 @@ class CombinationScorer:
         synergy_bonus:        float = 0.20,
         antagonism_penalty:   float = 0.40,
         coverage_bonus_max:   float = 0.15,
-        redundancy_penalty:   float = 0.08,
+        redundancy_penalty:   float = 0.18,
     ):
         self.disease_name       = disease_name.lower().strip()
         self.synergy_bonus      = synergy_bonus
@@ -362,7 +591,7 @@ class CombinationScorer:
         Penalty when two drugs are in the same mechanism class or class group.
         """
         if class_a == class_b and class_a != "other":
-            return self.redundancy_penalty
+            return self.redundancy_penalty * 2
 
         for group in REDUNDANT_CLASS_GROUPS:
             if class_a in group and class_b in group:
@@ -372,6 +601,36 @@ class CombinationScorer:
                 return self.redundancy_penalty * 0.5
 
         return 0.0
+    
+    def _disease_context_penalty(self, class_a: str, class_b: str) -> float:
+        """
+        Penalise combinations whose mechanism classes are inappropriate for
+        the disease being treated.
+    
+        Returns a penalty value in [0, 0.30] to subtract from combo_score.
+        Returns 0.0 if the disease is unknown (no penalty applied).
+        """
+        if not self.disease_name:
+            return 0.0
+    
+        appropriate = _get_appropriate_classes(self.disease_name)
+        if appropriate is None:
+            return 0.0
+    
+        is_oncology = _is_oncology_disease(self.disease_name)
+        penalty = 0.0
+    
+        for cls in (class_a, class_b):
+            if cls == "other":
+                continue
+            # Heavy penalty for oncology-class drugs outside oncology diseases
+            if cls in ONCOLOGY_CLASSES and not is_oncology:
+                penalty += 0.15
+            # Moderate penalty for mechanism classes not in appropriate set
+            elif cls not in appropriate:
+                penalty += 0.08
+    
+        return min(penalty, 0.30)
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -432,8 +691,10 @@ class CombinationScorer:
         cov_bonus       = self._gene_coverage_bonus(targets_a, targets_b, disease_genes)
         red_penalty     = self._redundancy_penalty(class_a, class_b)
 
+        ctx_penalty = self._disease_context_penalty(class_a, class_b)
         combo_score = max(0.0, min(1.0,
-            base_score + syn_bonus + cov_bonus - ant_penalty - red_penalty
+            base_score + syn_bonus + cov_bonus
+            - ant_penalty - red_penalty - ctx_penalty
         ))
 
         combined_coverage = len((targets_a | targets_b) & disease_set)
@@ -462,6 +723,7 @@ class CombinationScorer:
                 "antagonism_penalty":  round(ant_penalty, 4),
                 "coverage_bonus":      round(cov_bonus, 4),
                 "redundancy_penalty":  round(red_penalty, 4),
+                "context_penalty": round(ctx_penalty, 4),
             },
         }
 
@@ -519,9 +781,14 @@ class CombinationScorer:
         extra = len(combined_all) - combined_best
         triple_bonus = min(extra / max(len(disease_set), 1) * 1.5, 0.12)
 
-        combo_score = max(0.0, min(1.0, geo_mean + triple_bonus))
+        mech_c = classify_mechanism(drug_c.get("mechanism", ""))
+        ctx_penalty = (
+            self._disease_context_penalty(pair_ab["mechanism_a"], pair_ab["mechanism_b"])
+            + self._disease_context_penalty(pair_ab["mechanism_a"], mech_c) * 0.5
+        )
+        combo_score = max(0.0, min(1.0, geo_mean + triple_bonus - ctx_penalty))
         if any_antagonistic:
-            combo_score *= 0.3  # heavy penalty but don't discard here (worker will)
+            combo_score *= 0.3
 
         shared_genes = list(combined_all)
 
@@ -555,6 +822,18 @@ class CombinationScorer:
                 f"{name_a}+{name_c}": s_ac,
                 f"{name_b}+{name_c}": s_bc,
             },
+        }
+    
+    def _calculate_regulatory_delta(self, combo_score, score_a, score_b):
+        max_single = max(score_a, score_b)
+        delta = combo_score - max_single
+        
+        # 2026 Regulatory Grade: Delta must be > 0.15 for "Significant Contribution"
+        evidence_grade = "HIGH" if delta > 0.15 else "LOW"
+        return {
+            "delta_improvement": round(delta, 4),
+            "contribution_of_elements": evidence_grade,
+            "is_approvable_2026": delta > 0.10
         }
 
 

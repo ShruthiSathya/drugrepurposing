@@ -20,12 +20,39 @@ import json
 import logging
 from typing import Optional, List, Dict, Set
 from pathlib import Path
+import math
 
 from .reactome_kegg_integration import HybridPathwayMapper
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+KNOWN_APPROVAL_YEARS: Dict[str, int] = {
+    "sildenafil": 1998, "bosentan": 2001, "iloprost": 2004,
+    "treprostinil": 2002, "ambrisentan": 2007, "tadalafil": 2003,
+    "imatinib": 2001, "metformin": 1994, "pioglitazone": 1999,
+    "dexamethasone": 1961, "prednisone": 1955, "prednisolone": 1955,
+    "hydrocortisone": 1951, "methylprednisolone": 1957,
+    "metoprolol": 1978, "carvedilol": 1995, "atenolol": 1976,
+    "bisoprolol": 1992, "spironolactone": 1960, "lisinopril": 1987,
+    "enalapril": 1985, "furosemide": 1966, "hydrochlorothiazide": 1959,
+    "amlodipine": 1992, "atorvastatin": 1996, "rosuvastatin": 2003,
+    "simvastatin": 1991, "ezetimibe": 2002, "fenofibrate": 1975,
+    "pravastatin": 1991, "lovastatin": 1987,
+    "hydroxychloroquine": 1955, "sulfasalazine": 1950,
+    "leflunomide": 1998, "methotrexate": 1953,
+    "glipizide": 1984, "glimepiride": 1995, "glyburide": 1984,
+    "rasagiline": 2006, "selegiline": 1989, "pramipexole": 1997,
+    "ropinirole": 1997, "levodopa": 1970, "carbidopa": 1975,
+    "amantadine": 1966, "donepezil": 1996, "memantine": 2003,
+    "rivastigmine": 1997, "galantamine": 2001,
+    "colchicine": 1961, "allopurinol": 1966, "febuxostat": 2009,
+    "aspirin": 1899, "bortezomib": 2003, "thalidomide": 1998,
+    "melphalan": 1964, "cyclophosphamide": 1959, "doxorubicin": 1974,
+    "vincristine": 1963, "gemcitabine": 1996, "carboplatin": 1989,
+    "cisplatin": 1978, "paclitaxel": 1992,
+    "rituximab": 1997, "trastuzumab": 1998, "bevacizumab": 2004,
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Disease alias table
@@ -68,6 +95,7 @@ ESSENTIAL_DRUGS: Dict[str, str] = {
     "CHEMBL1201585": "Rituximab",
     "CHEMBL1201607": "Trastuzumab",
     "CHEMBL1201829": "Bevacizumab",
+    "CHEMBL325041": "Bortezomib",
     "CHEMBL1079":    "Bosentan",
     "CHEMBL1431":    "Metformin",
     "CHEMBL595":     "Pioglitazone",
@@ -139,25 +167,250 @@ KNOWN_BIOLOGIC_TARGETS: Dict[str, List[str]] = {
     "guselkumab":    ["IL23A"],
     "nusinersen":    ["SMN2", "SMN1"],
     "eculizumab":    ["C5"],
+ 
+    # ADD NEW:
+    "etanercept":    ["TNFRSF1A", "TNFRSF1B", "TNF", "LTA"],
+    "golimumab":     ["TNF"],
+    "certolizumab":  ["TNF"],
+    "sarilumab":     ["IL6R"],
+    "baricitinib":   ["JAK1", "JAK2"],           # listed as biologic in some systems
+    "tofacitinib":   ["JAK1", "JAK2", "JAK3"],
+    "dupilumab":     ["IL4R"],
+    "mepolizumab":   ["IL5"],
+    "benralizumab":  ["IL5RA"],
+    "daratumumab":   ["CD38"],
+    "elotuzumab":    ["SLAMF7"],
+    "isatuximab":    ["CD38"],
+    "atorvastatin":  ["HMGCR", "LDLR"],
 }
 
-KNOWN_SMALL_MOLECULE_TARGETS: Dict[str, List[str]] = {
-    "gabapentin":   ["CACNA2D1", "CACNA2D2"],
-    "pregabalin":   ["CACNA2D1", "CACNA2D2"],
-    "omeprazole":   ["ATP4A", "ATP4B"],
-    "pantoprazole": ["ATP4A", "ATP4B"],
-    "lansoprazole": ["ATP4A", "ATP4B"],
-    "colchicine":   ["TUBB", "TUBB1", "TUBB2A", "TUBB2B", "TUBB3",
-                     "TUBB4A", "TUBB4B", "TUBB6", "TUBB8"],
-    "ivacaftor":    ["CFTR"],
-    "sirolimus":    ["MTOR", "TSC1", "TSC2", "FKBP1A"],
-    "metformin":    ["PRKAA1", "PRKAA2"],
-    "empagliflozin":["SLC5A2"],
-    "ezetimibe":    ["NPC1L1"],
-    "olaparib":     ["PARP1", "PARP2"],
-    "hydroxychloroquine": ["TLR7", "TLR9"],
-    "aspirin":      ["PTGS1", "PTGS2"],
+KNOWN_SMALL_MOLECULE_TARGETS = {
+    # ── Ion channels / pain ───────────────────────────────────────────────
+    "gabapentin":       ["CACNA2D1", "CACNA2D2"],
+    "pregabalin":       ["CACNA2D1", "CACNA2D2"],
+ 
+    # ── Proton pump inhibitors ────────────────────────────────────────────
+    "omeprazole":       ["ATP4A", "ATP4B"],
+    "pantoprazole":     ["ATP4A", "ATP4B"],
+    "lansoprazole":     ["ATP4A", "ATP4B"],
+    "rabeprazole":      ["ATP4A", "ATP4B"],
+    "esomeprazole":     ["ATP4A", "ATP4B"],
+ 
+    # ── Microtubule / cytoskeleton ────────────────────────────────────────
+    "colchicine":       ["TUBB", "TUBB1", "TUBB2A", "TUBB2B", "TUBB3",
+                         "TUBB4A", "TUBB4B", "TUBB6", "TUBB8",
+                         "NLRP3"],  # NLRP3 inflammasome — key for gout/pericarditis
+ 
+    # ── CFTR / rare ───────────────────────────────────────────────────────
+    "ivacaftor":        ["CFTR"],
+    "sirolimus":        ["MTOR", "TSC1", "TSC2", "FKBP1A"],
+ 
+    # ── Metabolic: biguanide ──────────────────────────────────────────────
+    "metformin":        ["PRKAA1", "PRKAA2", "PPARGC1A"],
+    "metformin hydrochloride": ["PRKAA1", "PRKAA2", "PPARGC1A"],
+ 
+    # ── Metabolic: SGLT2 ─────────────────────────────────────────────────
+    "empagliflozin":    ["SLC5A2"],
+    "dapagliflozin":    ["SLC5A2"],
+    "canagliflozin":    ["SLC5A2"],
+ 
+    # ── Metabolic: cholesterol ────────────────────────────────────────────
+    "ezetimibe":        ["NPC1L1"],
+    "atorvastatin":     ["HMGCR", "LDLR"],
+    "rosuvastatin":     ["HMGCR", "LDLR"],
+    "simvastatin":      ["HMGCR", "LDLR"],
+    "lovastatin":       ["HMGCR", "LDLR"],
+    "pravastatin":      ["HMGCR", "LDLR"],
+    "fluvastatin":      ["HMGCR", "LDLR"],
+    "pitavastatin":     ["HMGCR", "LDLR"],
+ 
+    # ── Metabolic: sulfonylureas ──────────────────────────────────────────
+    "glipizide":        ["ABCC8", "KCNJ11"],
+    "glimepiride":      ["ABCC8", "KCNJ11"],
+    "glyburide":        ["ABCC8", "KCNJ11"],
+    "glibenclamide":    ["ABCC8", "KCNJ11"],
+    "tolbutamide":      ["ABCC8", "KCNJ11"],
+ 
+    # ── Metabolic: thiazolidinediones ─────────────────────────────────────
+    "pioglitazone":     ["PPARG", "PPARA", "PPARD"],
+    "rosiglitazone":    ["PPARG"],
+ 
+    # ── Uric acid / gout ──────────────────────────────────────────────────
+    "allopurinol":      ["XDH"],
+    "febuxostat":       ["XDH"],
+    "probenecid":       ["SLC22A12", "SLC22A6"],
+ 
+    # ── Anti-inflammatory: NSAIDs ─────────────────────────────────────────
+    "aspirin":          ["PTGS1", "PTGS2"],
+    "ibuprofen":        ["PTGS1", "PTGS2"],
+    "naproxen":         ["PTGS1", "PTGS2"],
+    "celecoxib":        ["PTGS2"],
+    "indomethacin":     ["PTGS1", "PTGS2"],
+ 
+    # ── Anti-inflammatory: DMARDs ─────────────────────────────────────────
+    "hydroxychloroquine":   ["TLR7", "TLR9"],
+    "chloroquine":          ["TLR7", "TLR9"],
+    "sulfasalazine":        ["PTGS1", "PTGS2", "DHODH", "NFKB1"],
+    "leflunomide":          ["DHODH"],
+    "teriflunomide":        ["DHODH"],
+ 
+    # ── Corticosteroids ───────────────────────────────────────────────────
+    "dexamethasone":        ["NR3C1", "NR3C2"],
+    "prednisone":           ["NR3C1"],
+    "prednisolone":         ["NR3C1"],
+    "methylprednisolone":   ["NR3C1"],
+    "hydrocortisone":       ["NR3C1", "NR3C2"],
+    "budesonide":           ["NR3C1"],
+    "fluticasone":          ["NR3C1"],
+    "betamethasone":        ["NR3C1"],
+ 
+    # ── Aldosterone antagonists / MRAs ────────────────────────────────────
+    "spironolactone":   ["NR3C2", "AR"],   # also anti-androgenic — key for PCOS
+    "eplerenone":       ["NR3C2"],
+    "finerenone":       ["NR3C2"],
+ 
+    # ── Beta blockers ─────────────────────────────────────────────────────
+    "metoprolol":       ["ADRB1"],
+    "atenolol":         ["ADRB1"],
+    "bisoprolol":       ["ADRB1"],
+    "nebivolol":        ["ADRB1", "NOS3"],
+    "carvedilol":       ["ADRB1", "ADRB2", "ADRA1A"],
+    "propranolol":      ["ADRB1", "ADRB2"],
+    "labetalol":        ["ADRB1", "ADRB2", "ADRA1A"],
+    "sotalol":          ["ADRB1", "ADRB2", "KCNH2"],
+ 
+    # ── ACE inhibitors ────────────────────────────────────────────────────
+    "lisinopril":       ["ACE"],
+    "ramipril":         ["ACE"],
+    "enalapril":        ["ACE"],
+    "captopril":        ["ACE"],
+    "perindopril":      ["ACE"],
+ 
+    # ── ARBs ─────────────────────────────────────────────────────────────
+    "losartan":         ["AGTR1"],
+    "valsartan":        ["AGTR1"],
+    "candesartan":      ["AGTR1"],
+    "irbesartan":       ["AGTR1"],
+    "olmesartan":       ["AGTR1"],
+    "telmisartan":      ["AGTR1", "PPARG"],
+ 
+    # ── PAH: endothelin antagonists ───────────────────────────────────────
+    "bosentan":         ["EDNRA", "EDNRB"],
+    "ambrisentan":      ["EDNRA"],
+    "macitentan":       ["EDNRA", "EDNRB"],
+    "sitaxentan":       ["EDNRA"],
+ 
+    # ── PAH: prostacyclins ────────────────────────────────────────────────
+    "iloprost":         ["PTGIR", "PTGIS"],
+    "treprostinil":     ["PTGIR", "PTGIS", "PTGER2"],
+    "epoprostenol":     ["PTGIR", "PTGIS"],
+    "selexipag":        ["PTGIR"],
+    "beraprost":        ["PTGIR"],
+ 
+    # ── PAH: sGC stimulators ──────────────────────────────────────────────
+    "riociguat":        ["GUCY1A1", "GUCY1B1"],
+ 
+    # ── PDE5 inhibitors ───────────────────────────────────────────────────
+    "sildenafil":       ["PDE5A", "NOS3"],
+    "tadalafil":        ["PDE5A", "PDE11A"],
+    "vardenafil":       ["PDE5A"],
+ 
+    # ── Neurology: MAO-B inhibitors ───────────────────────────────────────
+    "rasagiline":       ["MAOB"],
+    "selegiline":       ["MAOB", "MAOA"],
+    "safinamide":       ["MAOB", "SCN1A"],
+ 
+    # ── Neurology: NMDA antagonists ───────────────────────────────────────
+    "memantine":        ["GRIN1", "GRIN2A", "GRIN2B"],
+    "amantadine":       ["GRIN1", "GRIN2A", "SLC22A2",
+                         "DRD2"],   # also promotes dopamine release
+ 
+    # ── Neurology: AChE inhibitors ────────────────────────────────────────
+    "donepezil":        ["ACHE", "BCHE"],
+    "rivastigmine":     ["ACHE", "BCHE"],
+    "galantamine":      ["ACHE", "CHRNA4"],
+ 
+    # ── Neurology: dopamine precursors ────────────────────────────────────
+    "levodopa":         ["DDC", "COMT"],
+    "carbidopa":        ["DDC"],
+ 
+    # ── Neurology: dopamine agonists ──────────────────────────────────────
+    "pramipexole":      ["DRD2", "DRD3"],
+    "ropinirole":       ["DRD2", "DRD3"],
+    "rotigotine":       ["DRD1", "DRD2", "DRD3"],
+    "apomorphine":      ["DRD1", "DRD2"],
+ 
+    # ── Oncology: alkylating agents ───────────────────────────────────────
+    "melphalan":        ["MGMT", "MLH1", "MSH2"],   # DNA cross-linking
+    "cyclophosphamide": ["MGMT", "MLH1"],
+    "chlorambucil":     ["MGMT"],
+    "busulfan":         ["MGMT"],
+ 
+    # ── Oncology: proteasome inhibitors ───────────────────────────────────
+    "bortezomib":       ["PSMB5", "PSMB6", "PSMB7"],
+    "carfilzomib":      ["PSMB5", "PSMB8"],
+    "ixazomib":         ["PSMB5"],
+ 
+    # ── Oncology: IMiDs ───────────────────────────────────────────────────
+    "thalidomide":      ["CRBN", "IRF4", "IKZF1", "IKZF3"],
+    "lenalidomide":     ["CRBN", "IRF4", "IKZF1", "IKZF3"],
+    "pomalidomide":     ["CRBN", "IRF4", "IKZF1", "IKZF3"],
+ 
+    # ── Oncology: vinca alkaloids ─────────────────────────────────────────
+    "vincristine":      ["TUBB", "TUBB1"],
+    "vinblastine":      ["TUBB", "TUBB1"],
+ 
+    # ── Oncology: taxanes ─────────────────────────────────────────────────
+    "paclitaxel":       ["TUBB", "TUBB2A", "TUBB2B"],
+    "docetaxel":        ["TUBB", "TUBB2A"],
+ 
+    # ── Oncology: antimetabolites ─────────────────────────────────────────
+    "methotrexate":     ["DHFR", "TYMS", "ATIC"],
+    "gemcitabine":      ["RRM1", "RRM2"],
+    "capecitabine":     ["TYMS", "DPYD"],
+    "fluorouracil":     ["TYMS", "DPYD"],
+ 
+    # ── Oncology: PARP inhibitors ─────────────────────────────────────────
+    "olaparib":         ["PARP1", "PARP2"],
+    "niraparib":        ["PARP1", "PARP2"],
+    "rucaparib":        ["PARP1", "PARP2"],
+ 
+    # ── Oncology: SERMs / aromatase ───────────────────────────────────────
+    "tamoxifen":        ["ESR1", "ESR2"],
+    "raloxifene":       ["ESR1", "ESR2"],
+    "letrozole":        ["CYP19A1"],
+    "anastrozole":      ["CYP19A1"],
+    "exemestane":       ["CYP19A1"],
+    "fulvestrant":      ["ESR1"],
+ 
+    # ── 5-alpha reductase ─────────────────────────────────────────────────
+    "finasteride":      ["SRD5A1", "SRD5A2"],
+    "dutasteride":      ["SRD5A1", "SRD5A2"],
+    "minoxidil":        ["KCNJ8", "ABCC9"],
+ 
+    # ── Diuretics ─────────────────────────────────────────────────────────
+    "furosemide":       ["SLC12A1"],
+    "hydrochlorothiazide": ["SLC12A3"],
+    "torsemide":        ["SLC12A1"],
+ 
+    # ── Anticoagulants ────────────────────────────────────────────────────
+    "warfarin":         ["VKORC1", "CYP2C9"],
+ 
+    # ── Immunosuppressants ────────────────────────────────────────────────
+    "tacrolimus":       ["FKBP1A", "PPP3CA"],
+    "cyclosporine":     ["PPIA", "PPP3CA"],
+    "mycophenolate":    ["IMPDH1", "IMPDH2"],
+    "azathioprine":     ["TPMT", "HPRT1"],
+ 
+    # ── Misc rare / other ─────────────────────────────────────────────────
+    "naltrexone":       ["OPRM1", "OPRD1", "OPRK1"],
+    "bupropion":        ["SLC6A2", "SLC6A3"],
+    "clonidine":        ["ADRA2A", "ADRA2B"],
+    "lithium":          ["GSK3B", "INPP1"],
+    "valproic acid":    ["HDAC1", "HDAC2", "SCN1A", "GABA"],
+    "riluzole":         ["SCN1A", "SLC1A2"],
 }
+
 
 
 class ProductionDataFetcher:
@@ -388,6 +641,96 @@ class ProductionDataFetcher:
         except Exception:
             disease_data["active_trials_count"] = 0
         return disease_data
+    
+    def _process_chembl_molecule(self, molecule: Dict) -> Optional[Dict]:
+        """
+        Enhanced for 2026: Includes PKPD and Physicochemical properties 
+        required for FDC (Fixed-Dose Combination) feasibility.
+        """
+        try:
+            chembl_id = molecule.get("molecule_chembl_id")
+            name      = molecule.get("pref_name") or chembl_id
+            if not name or name == chembl_id:
+                return None
+            
+            structures = molecule.get("molecule_structures", {})
+            smiles     = structures.get("canonical_smiles", "") if structures else ""
+
+            # 2026 Commercial Moat: Tracking approval year for patentability logic
+            first_approval = molecule.get("first_approval")
+            try:
+                first_approval_year = int(first_approval) if first_approval else None
+            except (TypeError, ValueError):
+                first_approval_year = None
+
+            # Physicochemical properties for CMC (Manufacturing) Feasibility
+            props = molecule.get("molecule_properties", {}) or {}
+            
+            # PK/PD Compatibility: Base properties
+            # Note: t1/2 and P-gp are often experimental; we use defaults or 
+            # infer them if not in the primary molecule record.
+            return {
+                "id":                 chembl_id,
+                "name":               name,
+                "indication":         molecule.get("indication_class", "Various"),
+                "mechanism":          molecule.get("mechanism_of_action", ""),
+                "approved":           True,
+                "smiles":             smiles,
+                "targets":            [],
+                "pathways":           [],
+                "first_approval_year": first_approval_year,
+                # New 2026 Fields
+                "chembl_properties": {
+                    "full_mwt": props.get("full_mwt"),
+                    "alogp":    props.get("alogp"),
+                    "psa":      props.get("psa"), # TPSA for bioavailability
+                    "hbd":      props.get("hbd"), # Hydrogen bond donors
+                    "hba":      props.get("hba"), # Hydrogen bond acceptors
+                    "num_ro5_violations": props.get("num_ro5_violations"),
+                },
+                # PKPD Compatibility stub (to be enriched by _fetch_pk_data)
+                "pkpd": {
+                    "half_life_hours": 8.0,   # Default if lookup fails
+                    "is_pgp_substrate": False # Default
+                }
+            }
+        except Exception:
+            return None
+
+    async def _fetch_experimental_pk_data(self, chembl_id: str) -> Dict:
+        """
+        Query ChEMBL Activity endpoint for experimental PK values.
+        Filters for 'Half-life' and 'P-glycoprotein' assays.
+        """
+        session = await self._get_session()
+        # In a real 2026 pipeline, you would query specific assay types
+        # for 'Half-life' or 't1/2' and 'P-gp' transport.
+        pk_defaults = {"half_life_hours": 8.0, "is_pgp_substrate": False}
+        
+        try:
+            # Simplified example: Search activities for this molecule
+            async with session.get(
+                f"{self.CHEMBL_API}/activity.json",
+                params={
+                    "molecule_chembl_id": chembl_id,
+                    "standard_type__in": "Half-life,t1/2,P-gp substrate",
+                    "limit": 5
+                }
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    activities = data.get("activities", [])
+                    for act in activities:
+                        std_type = str(act.get("standard_type", "")).lower()
+                        val = act.get("standard_value")
+                        if "half-life" in std_type or "t1/2" in std_type:
+                            if val: pk_defaults["half_life_hours"] = float(val)
+                        if "p-gp" in std_type:
+                            pk_defaults["is_pgp_substrate"] = True
+        except Exception as e:
+            logger.debug(f"PK lookup failed for {chembl_id}: {e}")
+            
+        return pk_defaults
 
     # ── Drug data ─────────────────────────────────────────────────────────────
 
