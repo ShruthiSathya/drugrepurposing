@@ -736,14 +736,32 @@ class ProductionDataFetcher:
 
     async def fetch_approved_drugs(self, limit: int = 3000) -> List[Dict]:
         logger.info(f"Fetching approved drugs from ChEMBL (limit={limit})...")
-
+ 
         cache_file = self.cache_dir / "chembl_approved_drugs.json"
         if cache_file.exists():
             try:
                 with open(cache_file) as f:
                     cached = json.load(f)
                 if len(cached) >= self.MIN_DRUG_CACHE_SIZE:
-                    logger.info(f"Loading {len(cached)} drugs from cache")
+                    # FIX: Re-apply fallbacks on every cache load.
+                    # This is cheap (dict lookups, no API calls) and ensures
+                    # drugs added to KNOWN_SMALL_MOLECULE_TARGETS or
+                    # KNOWN_BIOLOGIC_TARGETS AFTER the cache was built still
+                    # get their targets populated.
+                    #
+                    # Without this, bosentan / iloprost / dexamethasone /
+                    # spironolactone / rasagiline / amantadine / atorvastatin /
+                    # ezetimibe all score 0.0 because their targets were never
+                    # written to the cache file.
+                    cached = self._apply_biologic_fallback(cached)
+                    cached = self._apply_small_molecule_fallback(cached)
+ 
+                    n_with_targets = sum(1 for d in cached if d.get("targets"))
+                    coverage = n_with_targets / len(cached)
+                    logger.info(
+                        f"Loading {len(cached)} drugs from cache "
+                        f"(target coverage: {coverage:.1%})"
+                    )
                     return cached
             except Exception as e:
                 logger.warning(f"Cache read failed: {e}")

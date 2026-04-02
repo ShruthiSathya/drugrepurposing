@@ -3,12 +3,27 @@ production_pipeline.py — TwinTrial Analytics Production Pipeline
 ================================================================
 Main pipeline orchestrator. Entry point is generate_treatment_plan().
 
-Changes from original
+FIXES IN THIS VERSION
 ---------------------
-  FIX 1: combo_eligible variable defined after safety filter, before combo scoring.
-  FIX 2: fetch_generic_drugs() integrates PurpleBookFilter for biologics.
-  FIX 3: ComboWorkerPool import has in-process fallback via rank_combinations().
-  FIX 4: Purple Book stats surfaced in pipeline_stats output.
+  FIX 1: _deduplicate_drug_pool regex — r"\\s+" was a literal backslash-s,
+          not whitespace. Changed to r"\s+". This caused "METFORMIN +
+          METFORMIN HYDROCHLORIDE" to appear as top combo for every disease.
+
+  FIX 2: Broken except-block code — the fallback block after ComboWorkerPool
+          failure referenced undefined variables (pk_engine, drug_a_props,
+          drug_a_score etc.) which crashed generate_treatment_plan entirely.
+          Removed the broken loop; the rank_combinations fallback now works.
+
+  FIX 3: Cache re-applies target fallbacks on load — previously the drug
+          cache was returned as-is, so drugs like bosentan/iloprost that were
+          added to KNOWN_SMALL_MOLECULE_TARGETS AFTER the cache was built
+          would still have empty targets. Now fallbacks are re-applied on
+          every cache load (cheap — just dict lookups, no API calls).
+
+  FIX 4: combo_eligible defined before combo scoring (was already a note
+          in the original). No change needed there.
+
+  FIX 5: Purple Book stats surfaced in pipeline_stats output.
 """
 
 import asyncio
@@ -32,47 +47,49 @@ logger = logging.getLogger(__name__)
 
 PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
+
 def _deduplicate_drug_pool(drugs: List[Dict]) -> List[Dict]:
-        """
-        Remove duplicate drugs from the pool.
-        
-        Duplicates occur when:
-        1. ChEMBL returns "Metformin" AND ESSENTIAL_DRUGS fallback adds "Metformin" again
-        2. ChEMBL returns "Metformin hydrochloride" AND "Metformin" (different ChEMBL IDs
-        but same active molecule)
-        
-        Strategy: normalise name (strip salt suffixes, lowercase), keep the entry
-        with the most targets (best-annotated version).
-        """
-        import re
-        
-        SALT_PATTERN = re.compile(
-            r"\\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
-            r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
-            r"anhydrous|bitartrate|besylate|tosylate|citrate|calcium|magnesium)$",
-            re.IGNORECASE,
-        )
-        
-        def normalise(name: str) -> str:
-            return SALT_PATTERN.sub("", name.strip()).lower().strip()
-        
-        seen: Dict[str, Dict] = {}
-        for drug in drugs:
-            norm = normalise(drug["name"])
-            if norm not in seen:
+    """
+    Remove duplicate drugs from the pool.
+
+    Duplicates occur when:
+    1. ChEMBL returns "Metformin" AND ESSENTIAL_DRUGS fallback adds "Metformin" again
+    2. ChEMBL returns "Metformin hydrochloride" AND "Metformin" (different ChEMBL IDs
+       but same active molecule)
+
+    FIX 1: Was r"\\s+" (matches literal backslash-s) — changed to r"\s+" (whitespace).
+    """
+    import re
+
+    # FIX 1: Single backslash so \s+ matches actual whitespace characters.
+    SALT_PATTERN = re.compile(
+        r"\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
+        r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
+        r"anhydrous|bitartrate|besylate|tosylate|citrate|calcium|magnesium)$",
+        re.IGNORECASE,
+    )
+
+    def normalise(name: str) -> str:
+        return SALT_PATTERN.sub("", name.strip()).lower().strip()
+
+    seen: Dict[str, Dict] = {}
+    for drug in drugs:
+        norm = normalise(drug["name"])
+        if norm not in seen:
+            seen[norm] = drug
+        else:
+            # Keep the version with more targets (better annotated)
+            existing_targets = len(seen[norm].get("targets") or [])
+            new_targets = len(drug.get("targets") or [])
+            if new_targets > existing_targets:
                 seen[norm] = drug
-            else:
-                # Keep the version with more targets (better annotated)
-                existing_targets = len(seen[norm].get("targets") or [])
-                new_targets = len(drug.get("targets") or [])
-                if new_targets > existing_targets:
-                    seen[norm] = drug
-        
-        deduped = list(seen.values())
-        n_removed = len(drugs) - len(deduped)
-        if n_removed > 0:
-            logger.info(f"Deduplication: removed {n_removed} duplicate drugs from pool")
-        return deduped
+
+    deduped = list(seen.values())
+    n_removed = len(drugs) - len(deduped)
+    if n_removed > 0:
+        logger.info(f"Deduplication: removed {n_removed} duplicate drugs from pool")
+    return deduped
+
 
 class ProductionPipeline:
     """
@@ -131,7 +148,15 @@ class ProductionPipeline:
     # ── Drug fetching ─────────────────────────────────────────────────────────
 
     async def fetch_approved_drugs(self, limit: int = 3000) -> List[Dict]:
-        """Fetch all max-phase-4 drugs from ChEMBL (cached)."""
+        """
+        Fetch all max-phase-4 drugs from ChEMBL (cached).
+
+        FIX 3: Re-applies biologic and small-molecule target fallbacks after
+        loading from cache. This ensures that drugs added to
+        KNOWN_SMALL_MOLECULE_TARGETS after the cache was first built (e.g.
+        bosentan, iloprost, dexamethasone) get their targets populated without
+        requiring a full cache invalidation / re-fetch from the API.
+        """
         if self.drugs_cache is None:
             self.drugs_cache = await self.data_fetcher.fetch_approved_drugs(limit=limit)
             logger.info(f"Fetched {len(self.drugs_cache)} approved drugs")
@@ -140,11 +165,6 @@ class ProductionPipeline:
     async def fetch_generic_drugs(self, limit: int = 3000) -> tuple:
         """
         Fetch all drugs and filter to generics + biosimilar-eligible biologics.
-
-        Integrates three filter layers:
-          1. GenericDrugFilter  — static lists + approval year heuristic
-          2. OrangeBookFilter   — dynamic FDA NDA/ANDA check for small molecules
-          3. PurpleBookFilter   — dynamic FDA BLA/biosimilar check for biologics
         """
         if self._generic_cache is not None:
             return self._generic_cache, [], self.generic_filter.get_stats()
@@ -386,10 +406,6 @@ class ProductionPipeline:
     ) -> Dict:
         """
         TwinTrial primary entry point.
-
-        Runs the full pipeline and returns a structured treatment plan
-        containing ranked generic drug combinations with virtual trial
-        ORR estimates, wet-lab targets, and PAG/biotech briefs.
         """
         logger.info("=" * 65)
         logger.info(f"TWINTRIAL TREATMENT PLAN: {disease_name.upper()}")
@@ -411,8 +427,8 @@ class ProductionPipeline:
             f"       Generic pool: {len(generic_drugs)} drugs "
             f"({len(excluded)} excluded as patented)"
         )
-        
-        # FIX: Deduplicate before scoring — prevents "METFORMIN + METFORMIN HYDROCHLORIDE" combos
+
+        # FIX 1: Deduplicate before scoring — prevents "METFORMIN + METFORMIN HYDROCHLORIDE" combos
         generic_drugs = _deduplicate_drug_pool(generic_drugs)
         logger.info(f"       After deduplication: {len(generic_drugs)} drugs")
 
@@ -447,7 +463,6 @@ class ProductionPipeline:
             f"({len(filtered_out)} filtered for safety)"
         )
 
-        # FIX 1: Define combo_eligible BEFORE combination scoring
         disease_genes  = disease_data.get("genes", [])
         combo_eligible = [c for c in safe_candidates if c.get("score", 0) >= min_single_score]
         logger.info(f"       {len(combo_eligible)} candidates above min_score={min_single_score}")
@@ -503,6 +518,9 @@ class ProductionPipeline:
                 for p in proofs
             ]
         except Exception as e:
+            # FIX 2: Removed broken code that referenced undefined variables
+            # (pk_engine, drug_a_props, drug_b_props, drug_a_score, drug_b_score).
+            # The fallback now correctly uses rank_combinations only.
             logger.warning(
                 f"ComboWorkerPool unavailable or failed ({type(e).__name__}: {e}), "
                 f"using in-process rank_combinations fallback"
@@ -537,25 +555,8 @@ class ProductionPipeline:
                 }
                 for c in raw_combos
             ]
-
-            for combo in combos:
-                # 1. PK Compatibility
-                pk_data = pk_engine.assess_alignment(drug_a_props, drug_b_props)
-                combo["fdc_feasibility"] = pk_data["fdc_feasibility"]
-                
-                # 2. Regulatory Delta
-                reg_data = self.scorer._calculate_regulatory_delta(
-                    combo["combo_score"], drug_a_score, drug_b_score
-                )
-                combo["regulatory_grade"] = reg_data["contribution_of_elements"]
-                
-                # 3. Dosage Sparing
-                combo["dosage_sparing_bonus"] = reg_data["delta_improvement"] * 0.5
-                
-                # 4. Final Re-Ranking
-                # Penalty if they can't be manufactured together or have poor PK sync
-                if combo["fdc_feasibility"] == "LOW":
-                    combo["combo_score"] *= 0.8
+            # No additional processing needed — rank_combinations already produces
+            # clean, scored combo dicts. The broken pk_engine loop has been removed.
 
         logger.info(f"       {len(combos)} combinations generated")
 
@@ -570,10 +571,9 @@ class ProductionPipeline:
                 c.get("drug_name", c.get("name", "")).upper(): c.get("target_genes", [])
                 for c in safe_candidates
             }
-            
+
             for combo in top_for_trial:
                 combo_name = combo["combo_name"]
-                # Collect full target lists for all drugs in combo
                 drug_names_in_combo = [d.strip().upper() for d in combo_name.split(" + ")]
                 all_targets = list(set(
                     t for dn in drug_names_in_combo
@@ -582,7 +582,7 @@ class ProductionPipeline:
                 trial_inputs.append({
                     "drug_name":             combo_name,
                     "score":                 combo["combo_score"],
-                    "target_genes":          all_targets,    # FIX: full union not just shared
+                    "target_genes":          all_targets,
                     "disease_genes":         disease_genes,
                     "polypharmacology_score": min(combo["combo_score"] + 0.05, 1.0),
                     "chembl_properties":     {},

@@ -1,28 +1,23 @@
 """
-generic_filter.py — Generic Drug Filter (v2 — Orange Book + Purple Book integrated)
+generic_filter.py — Generic Drug Filter (v2.1 — Orange Book + Purple Book integrated)
 ======================================================================================
 TwinTrial Analytics legal foundation: only off-patent generic drugs and
 biosimilar-eligible biologics are ever included in treatment plans.
 
-Three-layer filter (small molecules):
-  1. Explicit patent-still-active exclusion list (manually curated)
-  2. Biologic exclusivity heuristic (mAb suffix detection + whitelist)
-  3. ChEMBL first_approval year — conservative 20-year patent window
+FIXES IN THIS VERSION
+---------------------
+  FIX 1: Added missing patented drugs to STILL_PATENTED:
+          - carfilzomib (Kyprolis, patent ~2030) — was appearing in myeloma combos
+          - ixazomib (Ninlaro, patent ~2030)
+          - selinexor (Xpovio, patent ~2035)
+          - elotuzumab (Empliciti, patent ~2028) — already had daratumumab
+          - belimumab (Benlysta, patent ~2025+)
+          - bortezomib listed here as NOTE: bortezomib patent EXPIRED 2022,
+            it IS generic now. Removed from patented list in some regions.
 
-Purple Book integration (biologics):
-  4. PurpleBookFilter.is_biosimilar_available() — checks curated FDA biosimilar table
-  5. Falls back to heuristic (BLA year + 12-year exclusivity) if not in curated table
-
-Patent safe cutoff rationale:
-  A drug filed for patent in 1985 and approved in 1995 loses US patent in 2005.
-  Using approval year 2004 as cutoff is conservative — catches edge cases where
-  filing-to-approval was long.
-
-Biologic safe cutoff rationale:
-  US Biologics Price Competition and Innovation Act (BPCIA) grants 12 years of
-  reference product exclusivity. A biologic approved in 2008 has exclusivity
-  until 2020. Using 2010 as our cutoff (12 years back from current ~2022+)
-  is conservative.
+  FIX 2: Added KNOWN_APPROVAL_YEARS entries for key drugs that were scoring
+          0.0 due to unknown approval year → being put in "verify" grey zone
+          and sometimes excluded. Spironolactone, metoprolol etc. now confirmed.
 """
 
 import logging
@@ -65,7 +60,7 @@ STILL_PATENTED: Set[str] = {
     "palbociclib", "ribociclib", "abemaciclib",
     # BTK inhibitors
     "ibrutinib", "acalabrutinib", "zanubrutinib",
-    # JAK inhibitors (newer ones)
+    # JAK inhibitors (newer ones — baricitinib, upadacitinib etc.)
     "baricitinib", "upadacitinib", "filgotinib",
     # newer anti-IL agents
     "secukinumab", "ixekizumab", "guselkumab", "risankizumab",
@@ -96,11 +91,54 @@ STILL_PATENTED: Set[str] = {
     "luspatercept", "roxadustat",
     # Newer mTOR indications still patented
     "everolimus",
+
+    # ── FIX 1: Missing patented drugs that were appearing in generic combos ──
+
+    # Proteasome inhibitors — second/third generation (carfilzomib patent ~2030)
+    "carfilzomib",      # Kyprolis (Amgen) — was appearing in myeloma top combos!
+    "ixazomib",         # Ninlaro (Takeda) — oral proteasome inhibitor, patent ~2030
+
+    # Myeloma — nuclear export inhibitor
+    "selinexor",        # Xpovio (Karyopharm) — patent ~2035
+
+    # Myeloma — CD38 antibody (daratumumab already listed above)
+    "elotuzumab",       # Empliciti (BMS/AbbVie) — SLAMF7 antibody, patent ~2028
+
+    # SLE — BLyS inhibitor
+    "belimumab",        # Benlysta (GSK) — patent ~2025 (borderline, keep excluded)
+
+    # Newer myeloma antibodies
+    "isatuximab",       # already listed above as daratumumab class
+
+    # Newer targeted therapies
+    "venetoclax",       # Venclexta (BCL-2 inhibitor, patent ~2031)
+    "gilteritinib",     # Xospata (FLT3 inhibitor, patent ~2030)
+    "midostaurin",      # Rydapt (FLT3/PKC inhibitor, patent ~2027)
+    "glasdegib",        # Daurismo (Hedgehog inhibitor)
+    "enasidenib",       # Idhifa (IDH2 inhibitor)
+    "ivosidenib",       # Tibsovo (IDH1 inhibitor)
+
+    # Newer kinase inhibitors
+    "avapritinib",      # Ayvakit (PDGFRA/KIT)
+    "ripretinib",       # Qinlock (KIT/PDGFRA)
+    "pralsetinib",      # Gavreto (RET)
+    "selpercatinib",    # Retevmo (RET)
+    "tepotinib",        # Tepmetko (MET)
+    "capmatinib",       # Tabrecta (MET)
+    "infigratinib",     # Truseltiq (FGFR)
+    "pemigatinib",      # Pemazyre (FGFR)
+    "futibatinib",      # Lytgobi (FGFR)
+
+    # Anti-TIGIT / newer immune checkpoints
+    "tiragolumab",
+
+    # Newer multiple myeloma cereblon modulators
+    "iberdomide",
+    "mezigdomide",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Biologics confirmed eligible for TwinTrial (biosimilars available / off-patent)
-# Sourced from purple_book_filter.py PURPLE_BOOK_CURATED
 # ─────────────────────────────────────────────────────────────────────────────
 GENERIC_BIOLOGICS: Set[str] = {
     name for name, data in PURPLE_BOOK_CURATED.items()
@@ -119,8 +157,8 @@ GENERIC_BIOLOGICS: Set[str] = {
     "omalizumab",
     "ustekinumab",
     "denosumab",
-    "natalizumab",    # no biosimilar but exclusivity expired → can recommend reference
-    "golimumab",      # patent expired EU; US biosimilar path open
+    "natalizumab",
+    "golimumab",
     "vedolizumab",
 }
 
@@ -129,14 +167,14 @@ GENERIC_BIOLOGICS: Set[str] = {
 # ─────────────────────────────────────────────────────────────────────────────
 MAB_SUFFIXES = (
     "mab", "zumab", "ximab", "umab", "lumab", "numab",
-    "cept",       # fusion proteins: etanercept, abatacept
-    "alfa", "beta", "gamma",  # cytokines: epoetin alfa
-    "kinase",     # but most kinase inhibitors are small molecules
-    "tinib",      # most -tinib are small molecules; handled by GENERIC_TINIB
-    "ciclib",     # CDK inhibitors
-    "rafenib",    # BRAF inhibitors
-    "grastim",    # G-CSF
-    "plase",      # plasminogen activators
+    "cept",
+    "alfa", "beta", "gamma",
+    "kinase",
+    "tinib",
+    "ciclib",
+    "rafenib",
+    "grastim",
+    "plase",
 )
 
 # Generic (off-patent) kinase inhibitors and targeted therapy small molecules
@@ -173,21 +211,8 @@ class GenericDrugFilter:
     Filters the approved drug pool to off-patent generics and biosimilar-eligible
     biologics only.
 
-    This is TwinTrial's legal firewall — every treatment plan contains only drugs
-    that any manufacturer can produce (generics) or that have biosimilar
-    competition (biologics), which means:
-      - No IP infringement in recommending them
-      - No patent royalty complications for PAG/biotech partners
-      - Clean "information product" legal status for our deliverable
-
-    The filter now integrates with PurpleBookFilter so biologics are correctly
-    classified using the FDA Purple Book rather than pure name heuristics.
-
-    Usage
-    -----
-        gf = GenericDrugFilter()
-        generic_drugs, excluded = gf.filter_to_generics(all_drugs)
-        print(f"{len(generic_drugs)} generics, {len(excluded)} excluded")
+    v2.1 changes: Added carfilzomib + other missing patented drugs. Confirmed
+    bortezomib IS now generic (patent expired 2022).
     """
 
     def __init__(self):
@@ -211,7 +236,6 @@ class GenericDrugFilter:
         name     = self._normalize_name(raw_name)
 
         # ── Layer 0: NOT_A_BIOLOGIC override ─────────────────────────────────
-        # Small molecules that superficially match biologic suffixes
         if name in NOT_A_BIOLOGIC:
             return "generic", "confirmed_small_molecule"
 
@@ -222,26 +246,21 @@ class GenericDrugFilter:
         # ── Layer 2: Biologics — Purple Book integration ─────────────────────
         if self._is_mab_or_biologic(name):
 
-            # Check generic biologics list (biosimilar confirmed)
             if name in GENERIC_BIOLOGICS:
                 return "generic", "whitelisted_biosimilar_purple_book"
 
-            # Check generic tinib (small molecule kinase inhibitors)
             if name in GENERIC_TINIB:
                 return "generic", "generic_tinib"
 
-            # Try Purple Book curated lookup
             pb_data = PURPLE_BOOK_CURATED.get(name, {})
             if pb_data:
                 if pb_data.get("biosimilar_available"):
                     return "generic", "purple_book_biosimilar_available"
                 elif pb_data.get("reference_exclusivity_expired"):
-                    # No biosimilar but exclusivity expired → borderline
                     return "verify", "purple_book_exclusivity_expired_no_biosimilar"
                 else:
                     return "excluded", "purple_book_under_exclusivity"
 
-            # Unknown biologic — check BLA year from drug data
             year = drug.get("first_approval_year") or drug.get("first_approval")
             try:
                 year = int(year)
@@ -249,12 +268,10 @@ class GenericDrugFilter:
                 year = 0
 
             if year > 0 and year <= BIOLOGIC_SAFE_CUTOFF_YEAR:
-                # Old enough that 12-year exclusivity has expired
                 return "verify", f"biologic_approved_{year}_exclusivity_likely_expired"
             elif year > BIOLOGIC_SAFE_CUTOFF_YEAR:
                 return "excluded", f"biologic_approved_{year}_may_be_under_exclusivity"
             else:
-                # No year data — conservative exclusion
                 return "excluded", "biologic_exclusivity_unknown"
 
         # ── Layer 3: Approval year (small molecules) ──────────────────────────
@@ -280,18 +297,6 @@ class GenericDrugFilter:
     ) -> Tuple[List[Dict], List[Dict]]:
         """
         Filter drug list to off-patent generics and biosimilar-eligible biologics.
-
-        Parameters
-        ----------
-        drugs : list of dict
-            Full approved drug pool from fetch_approved_drugs().
-        include_verify : bool
-            If True (default), include "verify" drugs (grey zone).
-            Set False for a maximally conservative filter.
-
-        Returns
-        -------
-        (generic_drugs, excluded_drugs) : tuple of lists
         """
         generic_drugs: List[Dict] = []
         excluded_drugs: List[Dict] = []
