@@ -1,22 +1,22 @@
 {
   "summary": {
-    "run_timestamp_utc": "2026-04-02T18:35:57.139584+00:00",
-    "elapsed_seconds": 4395.13,
+    "run_timestamp_utc": "2026-04-03T04:23:18.227336+00:00",
+    "elapsed_seconds": 3731.42,
     "top_n": 15,
     "n_total_cases": 21,
-    "n_pass": 5,
-    "n_fail": 16,
-    "pass_rate": 0.2381,
-    "n_found_in_top_n": 1,
-    "n_passed_via_fallback": 4,
+    "n_pass": 6,
+    "n_fail": 15,
+    "pass_rate": 0.2857,
+    "n_found_in_top_n": 6,
+    "n_passed_via_fallback": 0,
     "by_tier": {
       "GOLD": {
-        "pass": 4,
-        "fail": 11
+        "pass": 6,
+        "fail": 9
       },
       "SILVER": {
-        "pass": 1,
-        "fail": 5
+        "pass": 0,
+        "fail": 6
       }
     },
     "n_negative_cases": 2,
@@ -37,7 +37,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.5424,
+        "sildenafil": 0.0,
         "bosentan": 0.0
       },
       "individual_threshold": 0.3,
@@ -50,24 +50,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "IMATINIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + OLANZAPINE",
+          "combo_score": 0.6341,
+          "orr": 0.285,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IMATINIB + CELECOXIB + SIROLIMUS",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.6453,
+          "orr": 0.28,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DISULFIRAM",
+          "combo_score": 0.6586,
+          "orr": 0.27,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -84,7 +84,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.5424,
+        "sildenafil": 0.0,
         "iloprost": 0.0
       },
       "individual_threshold": 0.25,
@@ -96,24 +96,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "IMATINIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + OLANZAPINE",
+          "combo_score": 0.6341,
+          "orr": 0.285,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IMATINIB + CELECOXIB + SIROLIMUS",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.6453,
+          "orr": 0.28,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DISULFIRAM",
+          "combo_score": 0.6586,
+          "orr": 0.27,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -142,24 +142,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "IMATINIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + OLANZAPINE",
+          "combo_score": 0.6341,
+          "orr": 0.285,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IMATINIB + CELECOXIB + SIROLIMUS",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.6453,
+          "orr": 0.28,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DISULFIRAM",
+          "combo_score": 0.6586,
+          "orr": 0.27,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -177,7 +177,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.5424,
+        "sildenafil": 0.0,
         "bosentan": 0.0,
         "iloprost": 0.0
       },
@@ -191,24 +191,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "IMATINIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + OLANZAPINE",
+          "combo_score": 0.6341,
+          "orr": 0.285,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IMATINIB + CELECOXIB + SIROLIMUS",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.6453,
+          "orr": 0.28,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DISULFIRAM",
+          "combo_score": 0.6586,
+          "orr": 0.27,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -220,16 +220,16 @@
       "disease": "pulmonary arterial hypertension",
       "tier": "SILVER",
       "rationale": "PDGFR/BCR-ABL kinase inhibitor + PDE5i \u2014 anti-proliferative + vasodilatory synergy in PAH",
-      "pass": true,
+      "pass": false,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "imatinib": 0.6036,
-        "sildenafil": 0.5424
+        "imatinib": 0.6554,
+        "sildenafil": 0.0
       },
       "individual_threshold": 0.25,
-      "fallback_pass": true,
+      "fallback_pass": false,
       "evidence": [
         "PMID:20565548"
       ],
@@ -237,24 +237,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "IMATINIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + OLANZAPINE",
+          "combo_score": 0.6341,
+          "orr": 0.285,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IMATINIB + CELECOXIB + SIROLIMUS",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.6453,
+          "orr": 0.28,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + CELECOXIB + ISOPROTERENOL",
-          "combo_score": 0.8038,
-          "orr": 0.6166,
-          "priority": "FAILED"
+          "regimen": "IMATINIB + DISULFIRAM",
+          "combo_score": 0.6586,
+          "orr": 0.27,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -271,7 +271,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "thalidomide": 0.6574,
+        "thalidomide": 0.6584,
         "dexamethasone": 0.0
       },
       "individual_threshold": 0.3,
@@ -283,24 +283,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "BORTEZOMIB + VORINOSTAT + GEMCITABINE",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.705,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "BORTEZOMIB + VORINOSTAT + IMATINIB",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.7,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "BORTEZOMIB + VORINOSTAT + SORAFENIB",
+          "regimen": "BORTEZOMIB + AZACITIDINE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -317,7 +317,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "bortezomib": 0.9031,
+        "bortezomib": 0.8082,
         "dexamethasone": 0.0
       },
       "individual_threshold": 0.3,
@@ -330,24 +330,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "BORTEZOMIB + VORINOSTAT + GEMCITABINE",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.705,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "BORTEZOMIB + VORINOSTAT + IMATINIB",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.7,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "BORTEZOMIB + VORINOSTAT + SORAFENIB",
+          "regimen": "BORTEZOMIB + AZACITIDINE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -365,8 +365,8 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "thalidomide": 0.6574,
-        "bortezomib": 0.9031,
+        "thalidomide": 0.6584,
+        "bortezomib": 0.8082,
         "dexamethasone": 0.0
       },
       "individual_threshold": 0.25,
@@ -379,24 +379,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "BORTEZOMIB + VORINOSTAT + GEMCITABINE",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.705,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "BORTEZOMIB + VORINOSTAT + IMATINIB",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.7,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "BORTEZOMIB + VORINOSTAT + SORAFENIB",
+          "regimen": "BORTEZOMIB + AZACITIDINE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -425,24 +425,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "BORTEZOMIB + VORINOSTAT + GEMCITABINE",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.705,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "BORTEZOMIB + VORINOSTAT + IMATINIB",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.7,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "BORTEZOMIB + VORINOSTAT + SORAFENIB",
+          "regimen": "BORTEZOMIB + AZACITIDINE",
           "combo_score": 1.0,
-          "orr": 0.6427,
-          "priority": "FAILED"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -454,16 +454,16 @@
       "disease": "rheumatoid arthritis",
       "tier": "GOLD",
       "rationale": "DHFR inhibitor + TLR7/9 lysosomal inhibitor \u2014 dual DMARD with complementary immunomodulatory mechanisms",
-      "pass": false,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "pass": true,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 2,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6158,
-        "hydroxychloroquine": 0.0
+        "methotrexate": 0.5882,
+        "hydroxychloroquine": 0.5621
       },
       "individual_threshold": 0.3,
-      "fallback_pass": false,
+      "fallback_pass": true,
       "evidence": [
         "PMID:8551546"
       ],
@@ -471,24 +471,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PACLITAXEL",
-          "combo_score": 0.7456,
-          "orr": 0.5985,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.8158,
+          "orr": 0.57,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PEGINTERFERON ALFA-2B",
-          "combo_score": 0.7453,
-          "orr": 0.5983,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + INFLIXIMAB",
+          "combo_score": 0.7688,
+          "orr": 0.515,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + INFLIXIMAB",
-          "combo_score": 0.7436,
-          "orr": 0.5977,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + SULFASALAZINE",
+          "combo_score": 0.813,
+          "orr": 0.5,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -501,17 +501,17 @@
       "disease": "rheumatoid arthritis",
       "tier": "GOLD",
       "rationale": "Triple DMARD: DHFR inhibitor + TLR inhibitor + 5-ASA/folate antagonist \u2014 guideline-equivalent to biologics in early RA",
-      "pass": false,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "pass": true,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 3,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6158,
-        "hydroxychloroquine": 0.0,
-        "sulfasalazine": 0.0
+        "methotrexate": 0.5882,
+        "hydroxychloroquine": 0.5621,
+        "sulfasalazine": 0.5112
       },
       "individual_threshold": 0.25,
-      "fallback_pass": false,
+      "fallback_pass": true,
       "evidence": [
         "PMID:8551546",
         "PMID:10720468"
@@ -520,24 +520,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PACLITAXEL",
-          "combo_score": 0.7456,
-          "orr": 0.5985,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.8158,
+          "orr": 0.57,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PEGINTERFERON ALFA-2B",
-          "combo_score": 0.7453,
-          "orr": 0.5983,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + INFLIXIMAB",
+          "combo_score": 0.7688,
+          "orr": 0.515,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + INFLIXIMAB",
-          "combo_score": 0.7436,
-          "orr": 0.5977,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + SULFASALAZINE",
+          "combo_score": 0.813,
+          "orr": 0.5,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -555,8 +555,8 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6158,
-        "hydroxychloroquine": 0.0,
+        "methotrexate": 0.5882,
+        "hydroxychloroquine": 0.5621,
         "leflunomide": 0.0
       },
       "individual_threshold": 0.25,
@@ -568,24 +568,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PACLITAXEL",
-          "combo_score": 0.7456,
-          "orr": 0.5985,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.8158,
+          "orr": 0.57,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + PEGINTERFERON ALFA-2B",
-          "combo_score": 0.7453,
-          "orr": 0.5983,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + INFLIXIMAB",
+          "combo_score": 0.7688,
+          "orr": 0.515,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + DASATINIB ANHYDROUS + INFLIXIMAB",
-          "combo_score": 0.7436,
-          "orr": 0.5977,
-          "priority": "FAILED"
+          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE + SULFASALAZINE",
+          "combo_score": 0.813,
+          "orr": 0.5,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -598,12 +598,12 @@
       "tier": "GOLD",
       "rationale": "AMPK activator (hepatic gluconeogenesis) + PPAR\u03b3 agonist (insulin sensitiser) \u2014 complementary mechanisms, additive HbA1c reduction",
       "pass": true,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 4,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.6118,
-        "pioglitazone": 0.4853
+        "metformin": 0.612,
+        "pioglitazone": 0.4477
       },
       "individual_threshold": 0.3,
       "fallback_pass": true,
@@ -614,24 +614,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + DOXORUBICIN HYDROCHLORIDE",
-          "combo_score": 0.7082,
-          "orr": 0.5825,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE",
+          "combo_score": 0.8439,
+          "orr": 0.6,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + TROGLITAZONE",
-          "combo_score": 0.7077,
-          "orr": 0.5823,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + STREPTOZOCIN",
+          "combo_score": 0.7992,
+          "orr": 0.605,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + INDOMETHACIN",
-          "combo_score": 0.7052,
-          "orr": 0.5811,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + GLYBURIDE",
+          "combo_score": 0.7727,
+          "orr": 0.585,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -644,12 +644,12 @@
       "tier": "GOLD",
       "rationale": "AMPK activator + sulfonylurea (K-ATP channel closer/insulin secretagogue) \u2014 complementary: insulin sensitiser + insulin secretagogue",
       "pass": true,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 6,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.6118,
-        "glipizide": 0.5255
+        "metformin": 0.612,
+        "glipizide": 0.4507
       },
       "individual_threshold": 0.28,
       "fallback_pass": true,
@@ -660,24 +660,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + DOXORUBICIN HYDROCHLORIDE",
-          "combo_score": 0.7082,
-          "orr": 0.5825,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE",
+          "combo_score": 0.8439,
+          "orr": 0.6,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + TROGLITAZONE",
-          "combo_score": 0.7077,
-          "orr": 0.5823,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + STREPTOZOCIN",
+          "combo_score": 0.7992,
+          "orr": 0.605,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE + INDOMETHACIN",
-          "combo_score": 0.7052,
-          "orr": 0.5811,
-          "priority": "FAILED"
+          "regimen": "METFORMIN HYDROCHLORIDE + GLYBURIDE",
+          "combo_score": 0.7727,
+          "orr": 0.585,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -694,7 +694,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.5977,
+        "metformin": 0.5971,
         "spironolactone": 0.0
       },
       "individual_threshold": 0.22,
@@ -706,24 +706,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "TAMOXIFEN + METFORMIN HYDROCHLORIDE + CISPLATIN",
-          "combo_score": 0.809,
-          "orr": 0.6179,
-          "priority": "FAILED"
+          "regimen": "LETROZOLE + METFORMIN HYDROCHLORIDE",
+          "combo_score": 0.8528,
+          "orr": 0.545,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + DOXORUBICIN HYDROCHLORIDE + CISPLATIN",
-          "combo_score": 0.8058,
-          "orr": 0.6171,
-          "priority": "FAILED"
+          "regimen": "TRIAMTERENE + LETROZOLE",
+          "combo_score": 0.8484,
+          "orr": 0.555,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + CISPLATIN + GEMCITABINE",
-          "combo_score": 0.8054,
-          "orr": 0.617,
-          "priority": "FAILED"
+          "regimen": "GOSERELIN ACETATE + LETROZOLE",
+          "combo_score": 0.8421,
+          "orr": 0.56,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -736,15 +736,15 @@
       "tier": "GOLD",
       "rationale": "Microtubule inhibitor/NLRP3 blocker (flare prevention) + xanthine oxidase inhibitor (urate lowering) \u2014 dual acute/chronic management",
       "pass": true,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 3,
       "top_n_checked": 15,
       "individual_scores": {
-        "colchicine": 0.6567,
-        "allopurinol": 0.5479
+        "colchicine": 0.6476,
+        "allopurinol": 0.0
       },
       "individual_threshold": 0.28,
-      "fallback_pass": true,
+      "fallback_pass": false,
       "evidence": [
         "PMID:22585186"
       ],
@@ -752,24 +752,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "COLCHICINE + INDOMETHACIN + DOXORUBICIN HYDROCHLORIDE",
-          "combo_score": 0.6972,
-          "orr": 0.5771,
-          "priority": "FAILED"
+          "regimen": "COLCHICINE + DICLOFENAC SODIUM",
+          "combo_score": 0.814,
+          "orr": 0.515,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "VINCRISTINE + DOCETAXEL ANHYDROUS + INDOMETHACIN",
-          "combo_score": 0.6939,
-          "orr": 0.5753,
-          "priority": "FAILED"
+          "regimen": "CABAZITAXEL + INDOMETHACIN",
+          "combo_score": 0.807,
+          "orr": 0.515,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "PACLITAXEL + VINCRISTINE + DOCETAXEL ANHYDROUS",
-          "combo_score": 0.6907,
-          "orr": 0.5737,
-          "priority": "FAILED"
+          "regimen": "COLCHICINE + ALLOPURINOL",
+          "combo_score": 0.8039,
+          "orr": 0.515,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -783,11 +783,11 @@
       "rationale": "COX inhibitor (prostaglandin suppression) + microtubule/NLRP3 inhibitor (inflammasome blockade) \u2014 COPE/ICAP trial standard of care",
       "pass": true,
       "combo_found_in_top_n": true,
-      "combo_found_at_rank": 1,
+      "combo_found_at_rank": 7,
       "top_n_checked": 15,
       "individual_scores": {
-        "aspirin": 0.5403,
-        "colchicine": 0.6098
+        "aspirin": 0.5351,
+        "colchicine": 0.5586
       },
       "individual_threshold": 0.22,
       "fallback_pass": true,
@@ -799,24 +799,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "COLCHICINE + ASPIRIN + CISPLATIN",
-          "combo_score": 0.626,
-          "orr": 0.5321,
-          "priority": "FAILED"
+          "regimen": "ASPIRIN + CABAZITAXEL",
+          "combo_score": 0.7551,
+          "orr": 0.485,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "COLCHICINE + VORINOSTAT + CISPLATIN",
-          "combo_score": 0.6255,
-          "orr": 0.5317,
-          "priority": "FAILED"
+          "regimen": "ASPIRIN + VINORELBINE",
+          "combo_score": 0.7433,
+          "orr": 0.485,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "COLCHICINE + VINBLASTINE + CISPLATIN",
-          "combo_score": 0.6223,
-          "orr": 0.5292,
-          "priority": "FAILED"
+          "regimen": "ASPIRIN + IXABEPILONE",
+          "combo_score": 0.7468,
+          "orr": 0.47,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -834,7 +834,7 @@
       "top_n_checked": 15,
       "individual_scores": {
         "spironolactone": 0.0,
-        "metoprolol": 0.5464
+        "metoprolol": 0.5811
       },
       "individual_threshold": 0.22,
       "fallback_pass": false,
@@ -846,24 +846,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "CARVEDILOL + CELECOXIB + HYDROCHLOROTHIAZIDE",
-          "combo_score": 0.7615,
-          "orr": 0.6041,
-          "priority": "FAILED"
+          "regimen": "CARVEDILOL + PROPAFENONE HYDROCHLORIDE",
+          "combo_score": 0.6542,
+          "orr": 0.295,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "CARVEDILOL + ATENOLOL + CELECOXIB",
-          "combo_score": 0.7442,
-          "orr": 0.5979,
-          "priority": "FAILED"
+          "regimen": "PROPRANOLOL HYDROCHLORIDE + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.5974,
+          "orr": 0.26,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "EPINEPHRINE + CELECOXIB + HYDROCHLOROTHIAZIDE",
-          "combo_score": 0.7348,
-          "orr": 0.5942,
-          "priority": "FAILED"
+          "regimen": "CARVEDILOL + DIPIVEFRIN HYDROCHLORIDE",
+          "combo_score": 0.623,
+          "orr": 0.25,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -880,7 +880,7 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "donepezil": 0.5187,
+        "donepezil": 0.5078,
         "memantine": 0.0
       },
       "individual_threshold": 0.25,
@@ -892,24 +892,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "PAZOPANIB + METHAMPHETAMINE + ACAMPROSATE CALCIUM",
-          "combo_score": 0.653,
-          "orr": 0.5512,
-          "priority": "FAILED"
+          "regimen": "HALOPERIDOL DECANOATE + GALANTAMINE",
+          "combo_score": 0.7312,
+          "orr": 0.38,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "PAZOPANIB + CLOZAPINE + ACAMPROSATE CALCIUM",
-          "combo_score": 0.6508,
-          "orr": 0.5497,
-          "priority": "FAILED"
+          "regimen": "DONEPEZIL + ORPHENADRINE CITRATE",
+          "combo_score": 0.7198,
+          "orr": 0.405,
+          "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "PAZOPANIB + OLANZAPINE + ACAMPROSATE CALCIUM",
-          "combo_score": 0.6486,
-          "orr": 0.5483,
-          "priority": "FAILED"
+          "regimen": "DONEPEZIL + ACAMPROSATE CALCIUM",
+          "combo_score": 0.7195,
+          "orr": 0.38,
+          "priority": "HIGH"
         }
       ]
     },
@@ -939,24 +939,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "ORPHENADRINE CITRATE + PAZOPANIB + CISPLATIN",
-          "combo_score": 0.8105,
-          "orr": 0.6182,
-          "priority": "FAILED"
+          "regimen": "LEVODOPA + ORPHENADRINE CITRATE",
+          "combo_score": 0.8472,
+          "orr": 0.5,
+          "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "ORPHENADRINE CITRATE + PAZOPANIB + CARBOPLATIN",
-          "combo_score": 0.7972,
-          "orr": 0.6149,
-          "priority": "FAILED"
+          "regimen": "LEVODOPA + ORPHENADRINE CITRATE + APOMORPHINE",
+          "combo_score": 0.6929,
+          "orr": 0.385,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "ORPHENADRINE CITRATE + PAZOPANIB + GEMCITABINE",
-          "combo_score": 0.7898,
-          "orr": 0.6129,
-          "priority": "FAILED"
+          "regimen": "LEVODOPA + ORPHENADRINE CITRATE + DOPAMINE",
+          "combo_score": 0.6799,
+          "orr": 0.355,
+          "priority": "MEDIUM"
         }
       ]
     },
@@ -985,24 +985,24 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "ROSUVASTATIN + DOXORUBICIN HYDROCHLORIDE + CISPLATIN",
-          "combo_score": 0.7339,
-          "orr": 0.5939,
-          "priority": "FAILED"
+          "regimen": "ROSUVASTATIN + EFAVIRENZ",
+          "combo_score": 0.4696,
+          "orr": 0.13,
+          "priority": "LOW"
         },
         {
           "rank": 2,
-          "regimen": "ROSUVASTATIN + DOXORUBICIN HYDROCHLORIDE + SORAFENIB",
-          "combo_score": 0.7292,
-          "orr": 0.5919,
-          "priority": "FAILED"
+          "regimen": "ROSUVASTATIN + ETOPOSIDE",
+          "combo_score": 0.4885,
+          "orr": 0.105,
+          "priority": "LOW"
         },
         {
           "rank": 3,
-          "regimen": "ROSUVASTATIN + CISPLATIN + LOVASTATIN",
-          "combo_score": 0.7286,
-          "orr": 0.5917,
-          "priority": "FAILED"
+          "regimen": "PRAVASTATIN SODIUM + TOPOTECAN HYDROCHLORIDE",
+          "combo_score": 0.435,
+          "orr": 0.085,
+          "priority": "LOW"
         }
       ]
     }
@@ -1034,7 +1034,8 @@
       "correctly_absent_from_top_n": true,
       "found_at_rank": null,
       "filtered_drugs": [
-        "epinephrine"
+        "epinephrine",
+        "sildenafil"
       ],
       "filter_reason": "epinephrine absolute contraindication in PAH"
     }
