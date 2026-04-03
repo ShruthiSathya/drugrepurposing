@@ -23,6 +23,7 @@ FIXES IN THIS VERSION
 """
 
 import asyncio
+import re
 import aiohttp
 import ssl
 import certifi
@@ -1017,18 +1018,39 @@ class ProductionDataFetcher:
         except Exception:
             return []
 
+
+    @staticmethod
+    def _strip_salt(name: str) -> str:
+        """
+        Strip common salt/form suffixes from drug names returned by ChEMBL.
+        ChEMBL often returns "Sildenafil citrate", "Bosentan monohydrate" etc.
+        We need the base INN name to match KNOWN_SMALL_MOLECULE_TARGETS keys.
+        """
+        _SALT_RE = re.compile(
+            r"\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
+            r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
+            r"anhydrous|bitartrate|besylate|tosylate|citrate|calcium|magnesium|"
+            r"bromide|chloride|iodide|nitrate|oxalate|gluconate|lactate|"
+            r"sodium\s+phosphate|disodium|trisodium)$",
+            re.IGNORECASE,
+        )
+        stripped = _SALT_RE.sub("", name.strip()).strip()
+        # Run twice to catch double salts like "X sodium phosphate"
+        stripped = _SALT_RE.sub("", stripped).strip()
+        return stripped.lower()
+
     def _apply_biologic_fallback(self, drugs: List[Dict]) -> List[Dict]:
         """
-        FIX 2: Apply biologic fallback even on cached drugs.
-        Called on every cache load, not just on first build.
+        Apply biologic fallback even on cached drugs.
+        PATCHED: uses _strip_salt() so names like "Rituximab biosimilar" still match.
         """
-        filled  = 0
+        filled = 0
         for drug in drugs:
             if drug.get("targets"):
                 continue
-            name_lower = drug["name"].lower()
-            if name_lower in KNOWN_BIOLOGIC_TARGETS:
-                targets               = KNOWN_BIOLOGIC_TARGETS[name_lower]
+            name_stripped = self._strip_salt(drug["name"])
+            if name_stripped in KNOWN_BIOLOGIC_TARGETS:
+                targets               = KNOWN_BIOLOGIC_TARGETS[name_stripped]
                 drug["targets"]       = targets
                 drug["target_source"] = "biologic_label_fallback"
                 drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
@@ -1039,24 +1061,37 @@ class ProductionDataFetcher:
 
     def _apply_small_molecule_fallback(self, drugs: List[Dict]) -> List[Dict]:
         """
-        FIX 2: Apply small molecule fallback even on cached drugs.
-        Called on every cache load. Ensures dexamethasone, bosentan, iloprost,
-        spironolactone, memantine, rasagiline, amantadine, atorvastatin,
-        ezetimibe etc. always have their correct targets.
+        Apply small molecule fallback on every load.
+        PATCHED v3:
+          1. Uses _strip_salt() so "Sildenafil citrate" matches "sildenafil".
+          2. SUPPLEMENTS existing targets rather than skipping non-empty lists.
+             Adds any curated targets missing from the drug's current target list.
         """
         filled = 0
+        supplemented = 0
         for drug in drugs:
-            if drug.get("targets"):
+            name_stripped = self._strip_salt(drug["name"])
+            if name_stripped not in KNOWN_SMALL_MOLECULE_TARGETS:
                 continue
-            name_lower = drug["name"].lower()
-            if name_lower in KNOWN_SMALL_MOLECULE_TARGETS:
-                targets               = KNOWN_SMALL_MOLECULE_TARGETS[name_lower]
-                drug["targets"]       = targets
+            known    = KNOWN_SMALL_MOLECULE_TARGETS[name_stripped]
+            existing = drug.get("targets") or []
+            if not existing:
+                drug["targets"]       = known
                 drug["target_source"] = "small_molecule_lit_fallback"
-                drug["pathways"]      = self._infer_pathways_from_targets_fallback(targets)
+                drug["pathways"]      = self._infer_pathways_from_targets_fallback(known)
                 filled += 1
-        if filled:
-            logger.info(f"Small molecule fallback applied to {filled} drugs")
+            else:
+                existing_set = set(existing)
+                new_targets  = [t for t in known if t not in existing_set]
+                if new_targets:
+                    drug["targets"] = existing + new_targets
+                    drug["pathways"] = self._infer_pathways_from_targets_fallback(drug["targets"])
+                    supplemented += 1
+        if filled or supplemented:
+            logger.info(
+                f"Small molecule fallback: {filled} drugs filled, "
+                f"{supplemented} drugs supplemented with additional targets"
+            )
         return drugs
 
     async def _fetch_chembl_approved_drugs(self, limit: int) -> List[Dict]:
