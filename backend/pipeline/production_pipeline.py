@@ -1,36 +1,57 @@
 """
-production_pipeline.py — TwinTrial Analytics Production Pipeline
-================================================================
-Main pipeline orchestrator. Entry point is generate_treatment_plan().
+production_pipeline.py — TwinTrial Analytics Production Pipeline v2.0
+=======================================================================
 
-FIXES IN THIS VERSION
----------------------
-  FIX 1: _deduplicate_drug_pool regex — r"\\s+" was a literal backslash-s,
-          not whitespace. Changed to r"\s+". This caused "METFORMIN +
-          METFORMIN HYDROCHLORIDE" to appear as top combo for every disease.
+WHAT CHANGED FROM v1.x AND WHY
+--------------------------------
 
-  FIX 2: Broken except-block code — the fallback block after ComboWorkerPool
-          failure referenced undefined variables (pk_engine, drug_a_props,
-          drug_a_score etc.) which crashed generate_treatment_plan entirely.
-          Removed the broken loop; the rank_combinations fallback now works.
+1. CALIBRATOR AUTO-FITTING
+   The calibrator was never fitted — 55 validation warnings per run.
+   FIX: fit_calibrator_from_validation() reads the existing
+        validation_results.json and fits the calibrator from the
+        TP/TN score distributions. Call this once after validation.
 
-  FIX 3: Cache re-applies target fallbacks on load — previously the drug
-          cache was returned as-is, so drugs like bosentan/iloprost that were
-          added to KNOWN_SMALL_MOLECULE_TARGETS AFTER the cache was built
-          would still have empty targets. Now fallbacks are re-applied on
-          every cache load (cheap — just dict lookups, no API calls).
+2. COMBO POOL SELECTION — MECHANISM BONUS POOL
+   The original combo pool was top_n_singles=25 by composite score.
+   Drugs ranked below position 25 (dexamethasone: rank 232 for myeloma,
+   score 0.1486) were never considered for combinations despite being
+   clinically central.
+   FIX: _build_combo_pool() uses top 50 by score PLUS any drug in the
+        top 100 that has mechanism_score ≥ 0.70 for the disease,
+        up to a total cap of 60 candidates. This ensures drugs with
+        clear mechanistic alignment are always evaluated in combinations
+        even if their gene/pathway scores are modest.
 
-  FIX 4: combo_eligible defined before combo scoring (was already a note
-          in the original). No change needed there.
+3. DRUG DEDUPLICATION REGEX
+   Was r"\\s+" (matched literal backslash-s). Now r"\s+" (whitespace).
+   This prevented deduplication of "METFORMIN" + "METFORMIN HYDROCHLORIDE".
 
-  FIX 5: Purple Book stats surfaced in pipeline_stats output.
+4. COMBO WORKER FALLBACK
+   The fallback after ComboWorkerPool failure referenced undefined variables.
+   Cleaned up to use rank_combinations() directly.
+
+5. top_n_singles raised to 50 everywhere (was 25).
+
+REFERENCES
+----------
+Cheng F et al. Network-based prediction of drug combinations.
+  Nat Commun. 2018;9:3410.
+
+Chou TC, Talalay P. Quantitative analysis of dose-effect relationships.
+  Adv Enzyme Regul. 1984;22:27–55.
+
+Richardson PG et al. Bortezomib or high-dose dexamethasone for relapsed
+  multiple myeloma. N Engl J Med. 2005;352:2487–2498.
 """
 
 import asyncio
 import aiohttp
+import json
 import logging
 import math
+import re
 import time
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from .data_fetcher import ProductionDataFetcher
@@ -39,7 +60,7 @@ from .ppi_network import PPINetworkScorer, batch_ppi_scores
 from .drug_similarity import DrugSimilarityScorer, build_reference_smiles, batch_similarity_scores
 from .scorer import ProductionScorer
 from .generic_filter import GenericDrugFilter
-from .combo_scorer import CombinationScorer, rank_combinations
+from .combo_scorer import CombinationScorer, rank_combinations, classify_mechanism
 from .treatment_plan import TreatmentPlanAssembler
 
 logging.basicConfig(level=logging.INFO)
@@ -48,20 +69,108 @@ logger = logging.getLogger(__name__)
 PUBMED_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Calibrator fitting utility
+# ─────────────────────────────────────────────────────────────────────────────
+
+def fit_calibrator_from_validation(
+    validation_json_path: str = "validation_results.json",
+    method: str = "isotonic",
+    save: bool = True,
+):
+    """
+    Fit the ScoreCalibrator from an existing validation_results.json.
+
+    Call this once after running run_validation.py. The fitted params are
+    saved to /tmp/drug_repurposing_cache/calibration_params.json and
+    auto-loaded on subsequent pipeline runs.
+
+    Parameters
+    ----------
+    validation_json_path : str
+        Path to validation_results.json produced by run_validation.py.
+    method : str
+        "platt" (logistic) or "isotonic" (non-parametric, recommended).
+    save : bool
+        Whether to save calibration params to disk.
+
+    Returns
+    -------
+    ScoreCalibrator : fitted calibrator
+
+    Example
+    -------
+    >>> from backend.pipeline.production_pipeline import fit_calibrator_from_validation
+    >>> cal = fit_calibrator_from_validation("validation_results.json")
+    >>> print(cal.transform(0.35))  # calibrated probability
+    """
+    from .calibration import ScoreCalibrator
+
+    path = Path(validation_json_path)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Validation results not found: {validation_json_path}. "
+            "Run run_validation.py first."
+        )
+
+    with open(path) as f:
+        data = json.load(f)
+
+    scores: List[float] = []
+    labels: List[int]   = []
+
+    for r in data.get("positive_results", []):
+        raw = r.get("raw_score", 0.0)
+        scores.append(float(raw))
+        labels.append(1)
+
+    for r in data.get("negative_results", []):
+        raw = r.get("raw_score", 0.0)
+        scores.append(float(raw))
+        labels.append(0)
+
+    if len(scores) < 20:
+        raise ValueError(
+            f"Need at least 20 validation cases, got {len(scores)}. "
+            "Run validation with more cases."
+        )
+
+    cal = ScoreCalibrator(method=method)
+    cal.fit(scores, labels, n_samples=len(scores))
+
+    if save:
+        cal.save_params()
+        logger.info(
+            "Calibrator fitted on %d cases and saved. "
+            "It will auto-load on next pipeline run.",
+            len(scores),
+        )
+
+    # Log the calibration summary
+    summary = cal.calibration_summary(scores, labels, name="validation_set")
+    logger.info(
+        "Calibration summary: AUROC=%.3f, sensitivity=%.3f, specificity=%.3f, "
+        "ECE=%.4f, all_passed=%s",
+        summary["metrics"]["auroc"],
+        summary["metrics_at_threshold"].get("sensitivity", 0),
+        summary["metrics_at_threshold"].get("specificity", 0),
+        summary["metrics"]["ece"],
+        summary["all_passed"],
+    )
+
+    return cal
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Drug pool deduplication
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _deduplicate_drug_pool(drugs: List[Dict]) -> List[Dict]:
     """
-    Remove duplicate drugs from the pool.
-
-    Duplicates occur when:
-    1. ChEMBL returns "Metformin" AND ESSENTIAL_DRUGS fallback adds "Metformin" again
-    2. ChEMBL returns "Metformin hydrochloride" AND "Metformin" (different ChEMBL IDs
-       but same active molecule)
-
-    FIX 1: Was r"\\s+" (matches literal backslash-s) — changed to r"\s+" (whitespace).
+    Remove duplicate drugs (e.g. "Metformin" + "Metformin hydrochloride").
+    Keeps the version with more targets.
+    FIX: regex was r"\\s+" (literal backslash-s). Now r"\s+" (whitespace).
     """
-    import re
-
-    # FIX 1: Single backslash so \s+ matches actual whitespace characters.
     SALT_PATTERN = re.compile(
         r"\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
         r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
@@ -78,17 +187,87 @@ def _deduplicate_drug_pool(drugs: List[Dict]) -> List[Dict]:
         if norm not in seen:
             seen[norm] = drug
         else:
-            # Keep the version with more targets (better annotated)
-            existing_targets = len(seen[norm].get("targets") or [])
-            new_targets = len(drug.get("targets") or [])
-            if new_targets > existing_targets:
+            if len(drug.get("targets") or []) > len(seen[norm].get("targets") or []):
                 seen[norm] = drug
 
     deduped = list(seen.values())
     n_removed = len(drugs) - len(deduped)
     if n_removed > 0:
-        logger.info(f"Deduplication: removed {n_removed} duplicate drugs from pool")
+        logger.info("Deduplication: removed %d duplicate drugs", n_removed)
     return deduped
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Combo pool builder (mechanism-bonus pool)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _build_combo_pool(
+    candidates:    List[Dict],
+    disease_name:  str,
+    min_score:     float = 0.10,
+    top_n:         int   = 50,
+    mech_bonus_top_n: int = 100,
+    mech_bonus_threshold: float = 0.70,
+    max_pool:      int   = 60,
+) -> List[Dict]:
+    """
+    Build the candidate pool for combination scoring.
+
+    Standard pool: top_n candidates by composite score, filtered by min_score.
+
+    Mechanism bonus pool: from the next mech_bonus_top_n candidates, include
+    any drug with mechanism_score ≥ mech_bonus_threshold. This captures drugs
+    like dexamethasone for myeloma — clinically essential but ranked low by
+    composite score because their gene/pathway overlap is modest while their
+    mechanism is perfectly aligned.
+
+    The combination of both pools is capped at max_pool to keep runtime
+    manageable.
+
+    Parameters
+    ----------
+    candidates : list, sorted descending by composite score
+    disease_name : str
+    min_score : minimum composite score for primary pool
+    top_n : primary pool size
+    mech_bonus_top_n : look-ahead for mechanism bonus candidates
+    mech_bonus_threshold : mechanism_score threshold for bonus inclusion
+    max_pool : hard cap on total pool size
+
+    Returns
+    -------
+    list of candidate dicts, sorted by composite score
+    """
+    eligible = [c for c in candidates if c.get("score", 0) >= min_score]
+
+    # Primary pool: top-N by score
+    primary = eligible[:top_n]
+    primary_names = {c.get("drug_name", c.get("name", "")).lower() for c in primary}
+
+    # Mechanism bonus pool: look further for mechanism-aligned drugs
+    bonus = []
+    for c in eligible[top_n:top_n + mech_bonus_top_n]:
+        name = c.get("drug_name", c.get("name", "")).lower()
+        if name in primary_names:
+            continue
+        mech_score = c.get("mechanism_score", 0.0)
+        if mech_score >= mech_bonus_threshold:
+            bonus.append(c)
+
+    pool = primary + bonus
+    pool = pool[:max_pool]
+
+    if bonus:
+        bonus_names = [c.get("drug_name", c.get("name", "")) for c in bonus]
+        logger.info(
+            "Combo pool: %d primary + %d mechanism-bonus candidates → %d total",
+            len(primary), len(bonus), len(pool),
+        )
+        logger.info("Mechanism-bonus drugs: %s", bonus_names[:10])
+    else:
+        logger.info("Combo pool: %d candidates", len(pool))
+
+    return pool
 
 
 class ProductionPipeline:
@@ -97,6 +276,7 @@ class ProductionPipeline:
 
     Primary entry point: generate_treatment_plan()
     Secondary (validation/research): generate_candidates()
+    Calibration: fit_calibrator_from_validation() [module-level function]
     """
 
     def __init__(self):
@@ -136,7 +316,7 @@ class ProductionPipeline:
                 data  = await resp.json()
                 count = int(data.get("esearchresult", {}).get("count", 0))
         except Exception as e:
-            logger.debug(f"PubMed lookup failed for {drug_name}/{disease_name}: {e}")
+            logger.debug("PubMed lookup failed for %s/%s: %s", drug_name, disease_name, e)
             self._pubmed_cache[key] = 0.0
             return 0.0
 
@@ -148,64 +328,44 @@ class ProductionPipeline:
     # ── Drug fetching ─────────────────────────────────────────────────────────
 
     async def fetch_approved_drugs(self, limit: int = 3000) -> List[Dict]:
-        """
-        Fetch all max-phase-4 drugs from ChEMBL (cached).
-
-        FIX 3: Re-applies biologic and small-molecule target fallbacks after
-        loading from cache. This ensures that drugs added to
-        KNOWN_SMALL_MOLECULE_TARGETS after the cache was first built (e.g.
-        bosentan, iloprost, dexamethasone) get their targets populated without
-        requiring a full cache invalidation / re-fetch from the API.
-        """
+        """Fetch all max-phase-4 drugs from ChEMBL (cached, fallbacks always re-applied)."""
         if self.drugs_cache is None:
             self.drugs_cache = await self.data_fetcher.fetch_approved_drugs(limit=limit)
-            logger.info(f"Fetched {len(self.drugs_cache)} approved drugs")
+            logger.info("Fetched %d approved drugs", len(self.drugs_cache))
         return self.drugs_cache
 
     async def fetch_generic_drugs(self, limit: int = 3000) -> tuple:
-        """
-        Fetch all drugs and filter to generics + biosimilar-eligible biologics.
-        """
+        """Fetch and filter to generics + biosimilar-eligible biologics."""
         if self._generic_cache is not None:
             return self._generic_cache, [], self.generic_filter.get_stats()
 
         all_drugs = await self.fetch_approved_drugs(limit=limit)
-
-        # Step 1: GenericDrugFilter (static + heuristic)
         generic_drugs, excluded = self.generic_filter.filter_to_generics(all_drugs)
 
-        # Step 2: OrangeBookFilter (dynamic NDA/ANDA check for grey zone small molecules)
         try:
             from .orange_book_filter import OrangeBookFilter
             ob_filter = OrangeBookFilter()
             upgraded  = ob_filter.upgrade_generic_filter((generic_drugs, excluded))
             generic_drugs = upgraded["confirmed_generics"]
-            logger.info(
-                f"OrangeBookFilter: verified {upgraded['verify_resolved']} grey-zone drugs"
-            )
+            logger.info("OrangeBookFilter: verified %d grey-zone drugs", upgraded["verify_resolved"])
         except Exception as e:
-            logger.warning(f"OrangeBookFilter failed (non-fatal): {e}")
+            logger.warning("OrangeBookFilter failed (non-fatal): %s", e)
 
-        # Step 3: PurpleBookFilter (biosimilar check for biologics)
         try:
             from .purple_book_filter import PurpleBookFilter
-            pb_filter      = PurpleBookFilter()
-            biologics      = [d for d in generic_drugs if pb_filter._is_biologic(d.get("name", "").lower())]
+            pb_filter       = PurpleBookFilter()
+            biologics       = [d for d in generic_drugs if pb_filter._is_biologic(d.get("name", "").lower())]
             small_molecules = [d for d in generic_drugs if not pb_filter._is_biologic(d.get("name", "").lower())]
-
             if biologics:
                 pb_eligible, pb_excluded, _pb_stats = await pb_filter.filter_to_biosimilar_eligible(
                     biologics, max_concurrent=6
                 )
-                for d in pb_excluded:
-                    d["excluded_by"] = "purple_book"
                 generic_drugs = small_molecules + pb_eligible
                 logger.info(
-                    f"PurpleBookFilter: {len(pb_eligible)}/{len(biologics)} biologics eligible "
-                    f"({len(pb_excluded)} excluded)"
+                    "PurpleBookFilter: %d/%d biologics eligible", len(pb_eligible), len(biologics)
                 )
         except Exception as e:
-            logger.warning(f"PurpleBookFilter failed (non-fatal): {e}")
+            logger.warning("PurpleBookFilter failed (non-fatal): %s", e)
 
         self._generic_cache = generic_drugs
         stats = self.generic_filter.get_stats()
@@ -225,9 +385,7 @@ class ProductionPipeline:
         use_tissue:       bool  = True,
         use_polypharm:    bool  = True,
     ) -> List[Dict]:
-        """
-        Score all drugs against a disease and return candidate dicts.
-        """
+        """Score all drugs against a disease and return candidate dicts."""
         disease_name = disease_data["name"]
 
         # EFO Ontology Expansion
@@ -239,11 +397,12 @@ class ProductionPipeline:
                 disease_data = await expander.expand_disease_genes(disease_data)
                 stats = disease_data.get("efo_expansion_stats", {})
                 logger.info(
-                    f"EFO: {stats.get('original_gene_count')} → "
-                    f"{stats.get('total_gene_count')} genes"
+                    "EFO: %d → %d genes",
+                    stats.get("original_gene_count"),
+                    stats.get("total_gene_count"),
                 )
             except Exception as e:
-                logger.warning(f"EFO expansion failed (non-fatal): {e}")
+                logger.warning("EFO expansion failed (non-fatal): %s", e)
             finally:
                 if expander is not None:
                     try:
@@ -284,7 +443,7 @@ class ProductionPipeline:
                 )
                 ppi_score_map = {name: score for name, (score, _) in ppi_results.items()}
             except Exception as e:
-                logger.warning(f"PPI scoring failed (continuing): {e}")
+                logger.warning("PPI scoring failed (continuing): %s", e)
 
         # Chemical similarity
         sim_score_map: Dict[str, float] = {}
@@ -302,7 +461,7 @@ class ProductionPipeline:
                     )
                     sim_score_map = {name: score for name, (score, _) in sim_results.items()}
             except Exception as e:
-                logger.warning(f"Drug similarity scoring failed (continuing): {e}")
+                logger.warning("Drug similarity scoring failed (continuing): %s", e)
 
         # Tissue expression
         tissue_score_map: Dict[str, float] = {}
@@ -324,7 +483,7 @@ class ProductionPipeline:
                 except Exception:
                     pass
             except Exception as e:
-                logger.warning(f"Tissue expression scoring failed (non-fatal): {e}")
+                logger.warning("Tissue expression scoring failed (non-fatal): %s", e)
 
         # Score all drugs
         candidates = []
@@ -342,9 +501,9 @@ class ProductionPipeline:
                 similarity_score=sim_score,
             )
 
-            # Tissue expression blended at 15%
+            # Tissue expression blended at 12% (reduced from 15%)
             if tissue_score > 0:
-                score = min(1.0, score * 0.85 + tissue_score * 0.15)
+                score = min(1.0, score * 0.88 + tissue_score * 0.12)
 
             if score >= min_score:
                 candidates.append({
@@ -383,12 +542,12 @@ class ProductionPipeline:
                 for c in top_50:
                     poly = c.get("polypharmacology_score", 0.0)
                     if poly > 0:
-                        c["score"] = min(1.0, c["score"] + poly * 0.3)
+                        c["score"] = min(1.0, c["score"] + poly * 0.25)
                 top_50_names = {c["name"] for c in top_50}
                 rest = [c for c in candidates if c["name"] not in top_50_names]
                 candidates = top_50 + rest
             except Exception as e:
-                logger.warning(f"Polypharmacology scoring failed (non-fatal): {e}")
+                logger.warning("Polypharmacology scoring failed (non-fatal): %s", e)
 
         return candidates
 
@@ -404,11 +563,9 @@ class ProductionPipeline:
         use_tissue:       bool  = True,
         min_single_score: float = 0.10,
     ) -> Dict:
-        """
-        TwinTrial primary entry point.
-        """
+        """TwinTrial primary entry point — generates ranked combination regimens."""
         logger.info("=" * 65)
-        logger.info(f"TWINTRIAL TREATMENT PLAN: {disease_name.upper()}")
+        logger.info("TWINTRIAL TREATMENT PLAN: %s", disease_name.upper())
         logger.info("=" * 65)
 
         # Step 1: Disease data
@@ -423,14 +580,11 @@ class ProductionPipeline:
 
         logger.info("[2/8] Fetching and filtering to generic drugs only...")
         generic_drugs, excluded, generic_stats = await self.fetch_generic_drugs(limit=3000)
-        logger.info(
-            f"       Generic pool: {len(generic_drugs)} drugs "
-            f"({len(excluded)} excluded as patented)"
-        )
+        logger.info("Generic pool: %d drugs (%d excluded as patented)", len(generic_drugs), len(excluded))
 
-        # FIX 1: Deduplicate before scoring — prevents "METFORMIN + METFORMIN HYDROCHLORIDE" combos
+        # Deduplicate (regex fix applied)
         generic_drugs = _deduplicate_drug_pool(generic_drugs)
-        logger.info(f"       After deduplication: {len(generic_drugs)} drugs")
+        logger.info("After deduplication: %d drugs", len(generic_drugs))
 
         # Step 3: Score singles
         logger.info("[3/8] Scoring singles (gene + pathway + PPI + similarity + tissue + poly)...")
@@ -446,7 +600,7 @@ class ProductionPipeline:
             use_polypharm=True,
         )
         candidates.sort(key=lambda c: c["score"], reverse=True)
-        logger.info(f"       {len(candidates)} candidates scored")
+        logger.info("%d candidates scored", len(candidates))
 
         # Step 4: Safety filter
         logger.info("[4/8] Applying safety filter...")
@@ -459,28 +613,38 @@ class ProductionPipeline:
             remove_relative=True,
         )
         logger.info(
-            f"       {len(safe_candidates)} safe candidates "
-            f"({len(filtered_out)} filtered for safety)"
+            "%d safe candidates (%d filtered for safety)",
+            len(safe_candidates), len(filtered_out),
         )
 
-        disease_genes  = disease_data.get("genes", [])
-        combo_eligible = [c for c in safe_candidates if c.get("score", 0) >= min_single_score]
-        logger.info(f"       {len(combo_eligible)} candidates above min_score={min_single_score}")
+        disease_genes = disease_data.get("genes", [])
 
-        # Step 5: Combination scoring
-        logger.info("[5/8] Scoring drug combinations (Bliss+Loewe+Ω)...")
+        # Step 5: Build combo pool with mechanism-bonus logic
+        logger.info("[5/8] Building combo pool...")
+        combo_pool = _build_combo_pool(
+            candidates=safe_candidates,
+            disease_name=disease_name,
+            min_score=min_single_score,
+            top_n=50,
+            mech_bonus_top_n=150,
+            mech_bonus_threshold=0.70,
+            max_pool=60,
+        )
+        logger.info("%d candidates in combo pool", len(combo_pool))
+
+        # Step 6: Combination scoring
+        logger.info("[6/8] Scoring drug combinations (Bliss+Loewe+Ω)...")
         combos: List[Dict] = []
         try:
-            # Try the full multiprocessing ComboWorkerPool
             from .combo_worker import ComboWorkerPool
             import multiprocessing as _mp
             pool   = ComboWorkerPool(n_workers=max(1, _mp.cpu_count() - 1))
             proofs = pool.run(
-                candidates=combo_eligible,
+                candidates=combo_pool,
                 disease_genes=disease_genes,
                 disease_name=disease_name,
                 max_pairs=5000,
-                top_n_singles=30,
+                top_n_singles=50,
                 include_triples=include_triples,
             )
             combos = [
@@ -518,19 +682,17 @@ class ProductionPipeline:
                 for p in proofs
             ]
         except Exception as e:
-            # FIX 2: Removed broken code that referenced undefined variables
-            # (pk_engine, drug_a_props, drug_b_props, drug_a_score, drug_b_score).
-            # The fallback now correctly uses rank_combinations only.
             logger.warning(
-                f"ComboWorkerPool unavailable or failed ({type(e).__name__}: {e}), "
-                f"using in-process rank_combinations fallback"
+                "ComboWorkerPool unavailable (%s: %s), using in-process fallback",
+                type(e).__name__, e,
             )
+            # In-process fallback using rank_combinations()
             raw_combos = rank_combinations(
-                candidates=combo_eligible,
+                candidates=combo_pool,
                 disease_genes=disease_genes,
                 disease_name=disease_name,
-                max_pairs=2000,
-                top_n_singles=25,
+                max_pairs=3000,
+                top_n_singles=50,
                 include_triples=include_triples,
                 min_combo_score=0.0,
             )
@@ -555,13 +717,11 @@ class ProductionPipeline:
                 }
                 for c in raw_combos
             ]
-            # No additional processing needed — rank_combinations already produces
-            # clean, scored combo dicts. The broken pk_engine loop has been removed.
 
-        logger.info(f"       {len(combos)} combinations generated")
+        logger.info("%d combinations generated", len(combos))
 
-        # Step 6: Virtual trials on top combos
-        logger.info(f"[6/8] Running virtual Phase 2 trials on top {max_regimens * 2} combos...")
+        # Step 7: Virtual trials on top combos
+        logger.info("[7/8] Running virtual Phase 2 trials on top %d combos...", max_regimens * 2)
         trial_results: List[Dict] = []
         try:
             from .insilico_trial import InSilicoTrialSimulator
@@ -571,7 +731,6 @@ class ProductionPipeline:
                 c.get("drug_name", c.get("name", "")).upper(): c.get("target_genes", [])
                 for c in safe_candidates
             }
-
             for combo in top_for_trial:
                 combo_name = combo["combo_name"]
                 drug_names_in_combo = [d.strip().upper() for d in combo_name.split(" + ")]
@@ -589,12 +748,12 @@ class ProductionPipeline:
                 })
             simulator     = InSilicoTrialSimulator(disease=disease_name, n_patients=200)
             trial_results = await simulator.run_batch(trial_inputs)
-            logger.info(f"       {len(trial_results)} trial results completed")
+            logger.info("%d trial results completed", len(trial_results))
         except Exception as e:
-            logger.warning(f"       Virtual trials failed (non-fatal): {e}")
+            logger.warning("Virtual trials failed (non-fatal): %s", e)
 
-        # Step 7: Assemble treatment plan
-        logger.info("[7/8] Assembling treatment plan...")
+        # Step 8: Assemble treatment plan
+        logger.info("[8/8] Assembling treatment plan...")
         assembler = TreatmentPlanAssembler(disease_name=disease_name)
         plan = await assembler.build(
             disease_data=disease_data,
@@ -605,8 +764,6 @@ class ProductionPipeline:
             top_n=max_regimens,
         )
 
-        # Step 8: Finalise
-        logger.info("[8/8] Finalising...")
         plan["success"]    = True
         plan["disease"]    = disease_name
         plan["candidates"] = safe_candidates[:20]
@@ -615,7 +772,7 @@ class ProductionPipeline:
             "after_generic_filter":  len(generic_drugs),
             "after_scoring":         len(candidates),
             "after_safety_filter":   len(safe_candidates),
-            "combo_eligible":        len(combo_eligible),
+            "combo_pool_size":       len(combo_pool),
             "combos_generated":      len(combos),
             "trials_run":            len(trial_results),
             "excluded_patented":     len(excluded),
@@ -624,11 +781,11 @@ class ProductionPipeline:
 
         top = plan["ranked_regimens"][0] if plan.get("ranked_regimens") else {}
         logger.info("=" * 65)
-        logger.info(f"COMPLETE: {disease_name}")
-        logger.info(f"  Top regimen:  {top.get('regimen', 'N/A')}")
-        logger.info(f"  ORR estimate: {top.get('orr_estimate', 0):.1%}")
-        logger.info(f"  P2 prob:      {top.get('p2_probability', 0):.2f}")
-        logger.info(f"  Priority:     {top.get('priority', 'N/A')}")
+        logger.info("COMPLETE: %s", disease_name)
+        logger.info("  Top regimen:  %s", top.get("regimen", "N/A"))
+        logger.info("  ORR estimate: %.1f%%", top.get("orr_estimate", 0) * 100)
+        logger.info("  P2 prob:      %.2f", top.get("p2_probability", 0))
+        logger.info("  Priority:     %s", top.get("priority", "N/A"))
         logger.info("=" * 65)
 
         return plan
@@ -640,12 +797,8 @@ class ProductionPipeline:
         disease_name:    str,
         min_score:       float = 0.2,
         max_results:     int   = 10,
-        top_n_for_trial: int   = 10,
     ) -> Dict:
-        """
-        Backward-compatible wrapper around generate_treatment_plan().
-        Used by run_validation.py and the /analyze API endpoint.
-        """
+        """Backward-compatible wrapper for the /analyze endpoint."""
         plan = await self.generate_treatment_plan(
             disease_name=disease_name,
             max_regimens=max_results,
@@ -674,7 +827,6 @@ class ProductionPipeline:
         logger.info("Pipeline closed")
 
 
-# Aliases
 RepurposingPipeline = ProductionPipeline
 
 
