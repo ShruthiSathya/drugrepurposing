@@ -1,26 +1,18 @@
 """
-scorer.py — Drug-Disease Scorer v5.2
+scorer.py — Drug-Disease Scorer v5.3
 
-FIXES IN THIS VERSION (v5.2)
+FIXES IN THIS VERSION (v5.3)
 -----------------------------
-  FIX 1 (v5.1): Early-return removed for drugs with no targets (kept).
+  FIX 1-2 (v5.1): kept.
+  FIX 3 (v5.2): DRUG_NAME_MECHANISM_HINTS lookup table: kept.
 
-  FIX 2 (v5.1): Weight rebalance — mechanism 0.05 → 0.10 (kept).
-
-  FIX 3 (v5.2 NEW): Added DRUG_NAME_MECHANISM_HINTS lookup table.
-          Many drugs in ChEMBL have empty or generic mechanism strings
-          (e.g. sildenafil comes back as "" or "Phosphodiesterase inhibitor"
-          without the word "pde5"). This caused sildenafil, bosentan, iloprost,
-          dexamethasone, spironolactone, memantine, rasagiline, atorvastatin,
-          ezetimibe etc. to score 0.0 for diseases where they are approved
-          first-line treatments.
-
-          Fix: if mechanism field is empty (or after stripping, yields no
-          match), look up the drug name in DRUG_NAME_MECHANISM_HINTS and use
-          the hint string for pattern matching.
-
-          This is a read-only supplement — it does NOT overwrite the real
-          mechanism field; it is only used locally inside the scoring function.
+  FIX 4 (v5.3 NEW): _score_mechanism_similarity now checks DRUG_NAME_MECHANISM_HINTS
+          even when a mechanism string IS present but scores 0.0.
+          Previously the hint was only used when mechanism == "".
+          This caused methotrexate (mechanism="antifolate") to score 0 for
+          rheumatoid arthritis because "antifolate" is not in good_patterns.
+          Fix: after scoring the real mechanism, if score==0, also try the
+          hint string and take the max.
 """
 
 import itertools
@@ -33,9 +25,6 @@ logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Drug name → mechanism hint strings
-# Used when ChEMBL mechanism field is empty or doesn't match scoring patterns.
-# These are the words that the good_patterns dict in _score_mechanism_similarity
-# looks for.
 # ─────────────────────────────────────────────────────────────────────────────
 DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
     # PAH / Pulmonary vascular
@@ -57,7 +46,7 @@ DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
     "carvedilol":           "beta blocker beta adrenergic blocker heart failure",
     "atenolol":             "beta blocker beta adrenergic blocker",
     "bisoprolol":           "beta blocker beta adrenergic blocker heart failure",
-    "propranolol":          "beta blocker beta adrenergic blocker hypertension",
+    "propranolol":          "beta blocker beta adrenergic blocker hypertension tremor",
     "nebivolol":            "beta blocker beta adrenergic blocker",
     "labetalol":            "beta blocker beta adrenergic blocker",
     "spironolactone":       "aldosterone antagonist mineralocorticoid heart failure hypertension pcos",
@@ -121,7 +110,6 @@ DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
     "bortezomib":           "proteasome inhibitor myeloma lymphoma",
     "carfilzomib":          "proteasome inhibitor myeloma",
     "ixazomib":             "proteasome inhibitor myeloma",
-    "dexamethasone":        "glucocorticoid corticosteroid steroid myeloma lymphoma",
     "melphalan":            "alkylating agent myeloma lymphoma",
     "cyclophosphamide":     "alkylating agent myeloma lymphoma cancer",
     "doxorubicin":          "topoisomerase anthracycline cancer",
@@ -160,7 +148,6 @@ DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
     "carbamazepine":        "anticonvulsant antiepileptic sodium channel epilepsy",
     "lamotrigine":          "anticonvulsant antiepileptic sodium channel epilepsy",
     "levetiracetam":        "anticonvulsant antiepileptic epilepsy",
-    "propranolol":          "beta blocker beta adrenergic blocker hypertension tremor",
     "clonidine":            "alpha-2 agonist alpha2 hypertension adhd",
     "lithium":              "mood stabilizer bipolar",
     # Gout / Uric acid
@@ -193,7 +180,7 @@ DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Scoring weights v5.2 — same as v5.1
+# Scoring weights v5.3 — unchanged from v5.2
 # Must sum to 1.0
 # ─────────────────────────────────────────────────────────────────────────────
 WEIGHT_GENE        = 0.30
@@ -235,7 +222,7 @@ def weight_grid_search(tuning_cases: List[Dict]) -> Dict:
 
 class ProductionScorer:
     """
-    Evidence-based drug-disease scorer v5.2.
+    Evidence-based drug-disease scorer v5.3.
 
     Scoring formula:
         score = 0.30 × gene_score
@@ -333,9 +320,6 @@ class ProductionScorer:
         ppi_score: float = 0.0,
         similarity_score: float = 0.0,
     ) -> Tuple[float, Dict]:
-        """
-        Score a drug-disease pair using v5.2 weighted formula.
-        """
         evidence: Dict = {
             "shared_genes":         [],
             "shared_pathways":      [],
@@ -471,23 +455,21 @@ class ProductionScorer:
 
     def _score_mechanism_similarity(self, drug_data: Dict, disease_data: Dict) -> float:
         """
-        v5.2: If mechanism field is empty, fall back to DRUG_NAME_MECHANISM_HINTS.
-        This fixes approved drugs (sildenafil, bosentan, dexamethasone, etc.)
-        that score 0.0 because ChEMBL mechanism strings are absent or generic.
+        v5.3: Checks DRUG_NAME_MECHANISM_HINTS whether the mechanism field is
+        empty OR present-but-unmatched. Previously the hint was only used when
+        mechanism == "", causing methotrexate (mechanism="antifolate") to score
+        0.0 because "antifolate" is not a key in good_patterns.
+
+        Logic:
+          1. Score the real mechanism string from drug_data.
+          2. If score == 0, also score the hint string for this drug name.
+          3. Return the maximum of the two.
         """
         mechanism    = drug_data.get("mechanism", "").lower()
         disease_name = disease_data.get("name", "").lower()
         disease_desc = disease_data.get("description", "").lower()
 
-        # FIX (v5.2): if mechanism is empty, try drug name hints
-        if not mechanism:
-            drug_name = (
-                drug_data.get("name", drug_data.get("drug_name", "")).lower()
-            )
-            mechanism = DRUG_NAME_MECHANISM_HINTS.get(drug_name, "")
-
-        if not mechanism:
-            return 0.0
+        drug_name = drug_data.get("name", drug_data.get("drug_name", "")).lower()
 
         good_patterns = {
             "lysosomal storage":        ["lysosomal", "storage", "gaucher", "fabry", "pompe"],
@@ -605,13 +587,31 @@ class ProductionScorer:
             "dopamine precursor":       ["parkinson", "dopamine"],
         }
 
-        score = 0.0
-        for mech_kw, disease_kws in good_patterns.items():
-            if mech_kw in mechanism:
-                for dk in disease_kws:
-                    if dk in disease_name or dk in disease_desc:
-                        score += 0.3
-        return min(score, 1.0)
+        def _pattern_score(mech_str: str) -> float:
+            if not mech_str:
+                return 0.0
+            s = 0.0
+            for mech_kw, disease_kws in good_patterns.items():
+                if mech_kw in mech_str:
+                    for dk in disease_kws:
+                        if dk in disease_name or dk in disease_desc:
+                            s += 0.3
+            return min(s, 1.0)
+
+        # Score the real mechanism field
+        score = _pattern_score(mechanism)
+
+        # FIX (v5.3): if real mechanism scored 0, also try the curated hint.
+        # This handles cases like methotrexate where ChEMBL returns
+        # "antifolate" — a valid mechanism string but not a key in
+        # good_patterns. The hint "dmard antifolate rheumatoid arthritis..."
+        # contains "dmard" which IS a key and maps to rheumatoid arthritis.
+        if score == 0.0 and drug_name:
+            hint = DRUG_NAME_MECHANISM_HINTS.get(drug_name, "")
+            if hint:
+                score = _pattern_score(hint)
+
+        return score
 
     def _apply_bonuses(
         self,
