@@ -127,7 +127,7 @@ MECHANISM_MULTIPLIER_VALUE     = 1.18
 # FIX 3: floor for high-confidence mechanism-only matches
 MECHANISM_FLOOR_THRESHOLD   = 0.90   # mechanism_score must be >= this
 MECHANISM_FLOOR_GENE_MAX    = 0.10   # gene_score must be <= this (to not double-count)
-MECHANISM_FLOOR_VALUE       = 0.28   # minimum score to assign
+MECHANISM_FLOOR_VALUE       = 0.30   # minimum score to assign
 
 
 # ─────────────────────────────────────────────────────────────────────────────
