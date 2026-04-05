@@ -4,9 +4,9 @@
     "n_test_cases": 55,
     "n_positive_cases": 40,
     "n_negative_cases": 15,
-    "run_timestamp_utc": "2026-04-05T02:50:47.248040+00:00",
-    "elapsed_seconds": 43.97,
-    "elapsed_minutes": 0.7,
+    "run_timestamp_utc": "2026-04-05T03:12:04.657604+00:00",
+    "elapsed_seconds": 163.33,
+    "elapsed_minutes": 2.7,
     "min_score_used": 0.0,
     "fast_mode": true,
     "disease_filter": null,
@@ -14,14 +14,15 @@
   },
   "pipeline_fingerprint": {
     "dataset_version": "v3.2",
-    "run_timestamp_utc": "2026-04-05T02:50:47.273048+00:00",
+    "run_timestamp_utc": "2026-04-05T03:14:20.466643+00:00",
     "fast_mode": true,
     "n_drugs_in_pool": 3003,
     "target_source_breakdown": {
       "dgidb": 2065,
-      "none": 901,
-      "small_molecule_lit_fallback": 34,
-      "biologic_label_fallback": 3
+      "chembl_mechanism": 264,
+      "none": 656,
+      "small_molecule_lit_fallback": 17,
+      "biologic_label_fallback": 1
     },
     "scoring_weights": {
       "gene": 0.35,
@@ -45,30 +46,30 @@
   "data_integrity": {
     "passed": true,
     "n_drugs": 3003,
-    "target_coverage": 0.7,
+    "target_coverage": 0.7816,
     "issues": [],
     "warnings": []
   },
   "metrics": {
-    "tp": 34,
-    "fn": 6,
-    "tn": 12,
-    "fp": 3,
-    "sensitivity": 0.85,
-    "specificity": 0.8,
-    "precision": 0.9189,
-    "f1": 0.8831,
-    "rank_only_passes": 1,
-    "score_only_passes": 21,
-    "both_criteria_passes": 12
+    "tp": 36,
+    "fn": 4,
+    "tn": 15,
+    "fp": 0,
+    "sensitivity": 0.9,
+    "specificity": 1.0,
+    "precision": 1.0,
+    "f1": 0.9474,
+    "rank_only_passes": 0,
+    "score_only_passes": 23,
+    "both_criteria_passes": 13
   },
   "stratified_metrics": {
     "cardiovascular": {
-      "tp": 5,
-      "fn": 1,
+      "tp": 6,
+      "fn": 0,
       "tn": 1,
       "fp": 0,
-      "sensitivity": 0.8333,
+      "sensitivity": 1.0,
       "specificity": 1.0,
       "n_positive_cases": 6,
       "n_negative_cases": 1
@@ -86,10 +87,10 @@
     "metabolic": {
       "tp": 5,
       "fn": 1,
-      "tn": 0,
-      "fp": 1,
+      "tn": 1,
+      "fp": 0,
       "sensitivity": 0.8333,
-      "specificity": 0.0,
+      "specificity": 1.0,
       "n_positive_cases": 6,
       "n_negative_cases": 1
     },
@@ -104,12 +105,12 @@
       "n_negative_cases": 2
     },
     "neurological": {
-      "tp": 7,
-      "fn": 2,
-      "tn": 7,
-      "fp": 1,
-      "sensitivity": 0.7778,
-      "specificity": 0.875,
+      "tp": 8,
+      "fn": 1,
+      "tn": 8,
+      "fp": 0,
+      "sensitivity": 0.8889,
+      "specificity": 1.0,
       "n_positive_cases": 9,
       "n_negative_cases": 8
     },
@@ -126,10 +127,10 @@
     "other": {
       "tp": 2,
       "fn": 0,
-      "tn": 0,
-      "fp": 1,
+      "tn": 1,
+      "fp": 0,
       "sensitivity": 1.0,
-      "specificity": 0.0,
+      "specificity": 1.0,
       "n_positive_cases": 2,
       "n_negative_cases": 1
     }
@@ -158,12 +159,12 @@
         "fp": 3
       },
       "cosine": {
-        "sensitivity": 0.775,
+        "sensitivity": 0.75,
         "specificity": 0.8667,
-        "precision": 0.9394,
-        "f1": 0.8493,
-        "tp": 31,
-        "fn": 9,
+        "precision": 0.9375,
+        "f1": 0.8333,
+        "tp": 30,
+        "fn": 10,
         "tn": 13,
         "fp": 2
       }
@@ -171,39 +172,39 @@
   },
   "baseline_f1_delta": {
     "jaccard": {
-      "main_f1": 0.8831,
+      "main_f1": 0.9474,
       "baseline_f1": 0.8056,
-      "f1_delta": 0.0775,
+      "f1_delta": 0.1418,
       "main_better": true
     },
     "gene_count": {
-      "main_f1": 0.8831,
+      "main_f1": 0.9474,
       "baseline_f1": 0.8056,
-      "f1_delta": 0.0775,
+      "f1_delta": 0.1418,
       "main_better": true
     },
     "cosine": {
-      "main_f1": 0.8831,
-      "baseline_f1": 0.8493,
-      "f1_delta": 0.0338,
+      "main_f1": 0.9474,
+      "baseline_f1": 0.8333,
+      "f1_delta": 0.1141,
       "main_better": true
     }
   },
   "sensitivity_analysis": {
-    "rank_correlation_min": 0.974,
+    "rank_correlation_min": 0.976,
     "rank_correlation_max": 1.0,
-    "rank_correlation_mean": 0.9933,
+    "rank_correlation_mean": 0.9936,
     "stable": true,
     "perturbation_results": [
       {
         "perturbed": "gene",
         "direction": "+",
-        "spearman_r": 0.9954
+        "spearman_r": 0.9955
       },
       {
         "perturbed": "gene",
         "direction": "-",
-        "spearman_r": 0.9929
+        "spearman_r": 0.992
       },
       {
         "perturbed": "pathway",
@@ -213,7 +214,7 @@
       {
         "perturbed": "pathway",
         "direction": "-",
-        "spearman_r": 0.9852
+        "spearman_r": 0.9862
       },
       {
         "perturbed": "ppi",
@@ -238,12 +239,12 @@
       {
         "perturbed": "mechanism",
         "direction": "+",
-        "spearman_r": 0.9783
+        "spearman_r": 0.976
       },
       {
         "perturbed": "mechanism",
         "direction": "-",
-        "spearman_r": 0.974
+        "spearman_r": 0.9794
       },
       {
         "perturbed": "literature",
@@ -256,7 +257,7 @@
         "spearman_r": 1.0
       }
     ],
-    "paper_statement": "Sensitivity analysis: Spearman \u03c1 range [0.974, 1.000], mean=0.993 across \u00b110% weight perturbations. Rankings are stable (\u03c1_min \u2265 0.90)."
+    "paper_statement": "Sensitivity analysis: Spearman \u03c1 range [0.976, 1.000], mean=0.994 across \u00b110% weight perturbations. Rankings are stable (\u03c1_min \u2265 0.90)."
   },
   "positive_results": [
     {
@@ -267,7 +268,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5483,
       "calibrated_score": 0.5483,
-      "rank": 77,
+      "rank": 93,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -287,14 +288,14 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NOS3",
           "PDE5A",
+          "NOS3",
           "VEGFA"
         ],
         "shared_pathways": [
+          "cGMP-PKG signaling",
           "Nitric oxide signaling",
-          "Pulmonary vascular remodeling",
-          "cGMP-PKG signaling"
+          "Pulmonary vascular remodeling"
         ]
       },
       "fast_mode": true
@@ -307,7 +308,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4192,
       "calibrated_score": 0.4192,
-      "rank": 103,
+      "rank": 118,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -328,20 +329,20 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BCR",
-          "PDGFRA",
-          "KIT",
           "PDGFRB",
+          "CSF1R",
+          "BCR",
+          "KIT",
           "ABL1",
-          "BIRC5",
-          "CSF1R"
+          "PDGFRA",
+          "BIRC5"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
           "AMPK signaling pathway",
-          "Cell cycle",
-          "ErbB signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "IgSF CAM signaling",
+          "ErbB signaling pathway",
+          "Cell cycle",
           "Insulin signaling pathway"
         ]
       },
@@ -393,7 +394,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5113,
       "calibrated_score": 0.5113,
-      "rank": 62,
+      "rank": 76,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -414,21 +415,21 @@
         "literature_score": 0.0,
         "shared_genes": [
           "JAK2",
+          "MS4A1",
           "FCGR2A",
-          "CXCL13",
           "IL6",
-          "MS4A1"
+          "CXCL13"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
           "Viral protein interaction with cytokine and cytokine receptor",
-          "JAK-STAT signaling",
-          "B-cell receptor signaling",
-          "B-cell differentiation",
-          "Neutrophil extracellular trap formation",
-          "NF-kappa B signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "JAK-STAT signaling pathway",
-          "Chemokine signaling pathway"
+          "Neutrophil extracellular trap formation",
+          "B-cell differentiation",
+          "JAK-STAT signaling",
+          "NF-kappa B signaling pathway",
+          "Chemokine signaling pathway",
+          "B-cell receptor signaling"
         ]
       },
       "fast_mode": true
@@ -441,7 +442,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4552,
       "calibrated_score": 0.4552,
-      "rank": 75,
+      "rank": 89,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -461,20 +462,20 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NFATC1",
-          "TLR4",
+          "GATA3",
           "DHFR",
-          "TNFAIP3",
-          "FLT3",
           "NR3C1",
-          "IKZF1",
+          "TNFAIP3",
           "ALOX5",
-          "GATA3"
+          "TLR4",
+          "IKZF1",
+          "NFATC1",
+          "FLT3"
         ],
         "shared_pathways": [
-          "Serotonergic synapse",
+          "Lysosome biogenesis",
           "Arachidonic acid metabolism",
-          "Lysosome biogenesis"
+          "Serotonergic synapse"
         ]
       },
       "fast_mode": true
@@ -487,7 +488,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5186,
       "calibrated_score": 0.5186,
-      "rank": 61,
+      "rank": 75,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -507,25 +508,25 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TNF",
-          "PTGS2",
           "TLR9",
-          "TLR7"
+          "TLR7",
+          "PTGS2",
+          "TNF"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
-          "Salmonella infection",
-          "Arachidonic acid metabolism",
-          "Efferocytosis",
-          "Lysosome biogenesis",
-          "NF-kappa B signaling pathway",
-          "VEGF signaling pathway",
-          "Neutrophil extracellular trap formation",
-          "Measles",
-          "Chagas disease",
-          "Influenza A",
           "Serotonergic synapse",
+          "Measles",
+          "Neutrophil extracellular trap formation",
+          "Chagas disease",
+          "Arachidonic acid metabolism",
+          "NF-kappa B signaling pathway",
+          "Efferocytosis",
           "Toll-like receptor signaling pathway",
+          "VEGF signaling pathway",
+          "Salmonella infection",
+          "Lysosome biogenesis",
+          "Influenza A",
           "African trypanosomiasis"
         ]
       },
@@ -537,9 +538,9 @@
       "disease_area": "metabolic",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.084,
-      "calibrated_score": 0.084,
-      "rank": 698,
+      "raw_score": 0.204,
+      "calibrated_score": 0.204,
+      "rank": 298,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -556,11 +557,11 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.0,
+        "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARG",
-          "PTEN"
+          "PTEN",
+          "PPARG"
         ],
         "shared_pathways": []
       },
@@ -574,7 +575,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3749,
       "calibrated_score": 0.3749,
-      "rank": 128,
+      "rank": 151,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -595,12 +596,12 @@
         "literature_score": 0.0,
         "shared_genes": [
           "CUL4A",
-          "FGFR2",
           "DDB1",
+          "PTGS2",
+          "FGFR2",
           "CRBN",
           "RBX1",
-          "IRF4",
-          "PTGS2"
+          "IRF4"
         ],
         "shared_pathways": [
           "Ubiquitin-proteasome system"
@@ -614,9 +615,9 @@
       "disease_area": "oncology",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2473,
-      "calibrated_score": 0.2473,
-      "rank": 241,
+      "raw_score": 0.28,
+      "calibrated_score": 0.28,
+      "rank": 254,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -651,7 +652,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4994,
       "calibrated_score": 0.4994,
-      "rank": 85,
+      "rank": 107,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -671,49 +672,49 @@
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "PSMC2",
-          "PSMD6",
-          "PSMC4",
-          "PSMD12",
-          "PSMD8",
-          "PSMA8",
-          "PSMA1",
-          "PSMB8",
-          "TP53",
-          "FGFR3",
           "PSMD1",
-          "PSMC5",
-          "PSMB4",
-          "PSMD14",
-          "SEM1",
           "PSMA2",
-          "PSMA6",
-          "PSMA4",
-          "PSMB5",
-          "BCL2",
-          "PSMA7",
-          "PSMD13",
+          "SEM1",
+          "PSMC4",
           "PSMD7",
-          "PSMC1",
-          "PSMB7",
-          "FLT3",
-          "PSMD11",
-          "PSMD2",
+          "PSMA1",
+          "PSMA8",
+          "PSMB11",
           "PSMC6",
-          "PSMB1",
-          "PSMD4",
-          "PSMB2",
-          "PSMD3",
-          "PSMB10",
-          "PSMC3",
-          "PSMA3",
-          "CCND1",
-          "PSMB3",
           "PSMA5",
+          "PSMD8",
+          "PSMB1",
+          "PSMA3",
+          "FLT3",
+          "PSMD2",
+          "PSMA6",
+          "PSMC2",
+          "FGFR3",
+          "PSMB2",
+          "PSMB8",
+          "PSMB3",
+          "PSMB4",
+          "PSMD3",
+          "PSMD12",
+          "PSMB5",
           "PSMB6",
-          "PSMB9",
+          "PSMC1",
+          "PSMC3",
           "ADRM1",
-          "PSMB11"
+          "CCND1",
+          "PSMD13",
+          "PSMD11",
+          "PSMD14",
+          "PSMB10",
+          "PSMD4",
+          "BCL2",
+          "TP53",
+          "PSMA7",
+          "PSMB7",
+          "PSMD6",
+          "PSMB9",
+          "PSMA4",
+          "PSMC5"
         ],
         "shared_pathways": []
       },
@@ -727,7 +728,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.7136,
       "calibrated_score": 0.7136,
-      "rank": 7,
+      "rank": 9,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
       "rank_pass": true,
@@ -747,35 +748,35 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "RUNX1",
-          "CTNNB1",
-          "PTEN",
-          "NF1",
-          "KRAS",
-          "MYC",
-          "FRK",
-          "IDH1",
-          "LCK",
-          "HCK",
-          "LYN",
-          "CSF3R",
-          "YES1",
-          "BCR",
-          "PDGFRB",
-          "FLT3",
-          "EGFR",
+          "BRAF",
+          "PRKCH",
           "IKZF1",
-          "JAK2",
+          "FLT3",
+          "IDH1",
+          "CSF1R",
+          "KRAS",
+          "BCR",
+          "MYC",
+          "LCK",
+          "NF1",
+          "PTEN",
+          "PDGFRB",
+          "RUNX1",
           "KIT",
           "ABL1",
-          "PRKCH",
-          "CSF1R",
-          "BRAF"
+          "CSF3R",
+          "FRK",
+          "YES1",
+          "JAK2",
+          "LYN",
+          "CTNNB1",
+          "EGFR",
+          "HCK"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
-          "Cell cycle",
           "IgSF CAM signaling",
+          "Cell cycle",
           "ErbB signaling pathway",
           "Hematopoietic cell lineage"
         ]
@@ -786,16 +787,16 @@
       "drug": "propranolol",
       "disease": "essential tremor",
       "disease_area": "neurological",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.13,
-      "calibrated_score": 0.13,
-      "rank": 353,
+      "raw_score": 0.28,
+      "calibrated_score": 0.28,
+      "rank": 191,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.2,
       "mechanism": "Non-selective beta-adrenergic blocker \u2014 reduces peripheral tremor amplitude",
       "sources": [
@@ -807,7 +808,7 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
@@ -822,7 +823,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3013,
       "calibrated_score": 0.3013,
-      "rank": 89,
+      "rank": 93,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -859,7 +860,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5932,
       "calibrated_score": 0.5932,
-      "rank": 36,
+      "rank": 40,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": true,
@@ -880,13 +881,13 @@
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "AR",
-          "SRD5A2"
+          "SRD5A2",
+          "AR"
         ],
         "shared_pathways": [
-          "Androgen receptor signaling",
           "Hair follicle cycling",
-          "5-alpha reductase pathway"
+          "5-alpha reductase pathway",
+          "Androgen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -899,7 +900,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.2834,
       "calibrated_score": 0.2834,
-      "rank": 220,
+      "rank": 238,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -919,16 +920,16 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PTGS2",
           "NAT2",
-          "CDH13",
-          "ACE",
-          "LPA",
-          "PPARG",
           "TGFB1",
+          "PTGS2",
+          "LPA",
+          "PTGS1",
           "ITGA2B",
-          "HMGCR",
-          "PTGS1"
+          "ACE",
+          "PPARG",
+          "CDH13",
+          "HMGCR"
         ],
         "shared_pathways": [
           "NF-kappa B signaling pathway"
@@ -981,7 +982,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4276,
       "calibrated_score": 0.4276,
-      "rank": 80,
+      "rank": 91,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -1002,21 +1003,21 @@
         "literature_score": 0.0,
         "shared_genes": [
           "NRG1",
-          "CYP19A1",
-          "PIK3CA",
-          "NF1",
-          "BRCA1",
-          "TYMS",
-          "ESR1",
+          "CCND1",
           "TP53",
+          "BRCA1",
+          "PIK3CA",
+          "ESR1",
+          "NF1",
+          "CYP19A1",
           "ERBB2",
-          "CCND1"
+          "TYMS"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
+          "Homologous recombination",
           "Nuclear receptor signaling",
-          "Estrogen receptor signaling",
-          "Homologous recombination"
+          "Estrogen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -1029,7 +1030,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.421,
       "calibrated_score": 0.421,
-      "rank": 83,
+      "rank": 94,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -1065,7 +1066,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.7401,
       "calibrated_score": 0.7401,
-      "rank": 10,
+      "rank": 11,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -1085,14 +1086,14 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "DRD2",
           "GRIN2A",
-          "GRIN1"
+          "GRIN1",
+          "DRD2"
         ],
         "shared_pathways": [
+          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling",
-          "NMDA receptor signaling"
+          "Glutamate signaling"
         ]
       },
       "fast_mode": true
@@ -1125,14 +1126,14 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "DRD2",
           "COMT",
-          "MAOB"
+          "MAOB",
+          "DRD2"
         ],
         "shared_pathways": [
+          "Dopamine metabolism",
           "Lysine degradation",
-          "Signaling pathways regulating pluripotency of stem cells",
-          "Dopamine metabolism"
+          "Signaling pathways regulating pluripotency of stem cells"
         ]
       },
       "fast_mode": true
@@ -1143,9 +1144,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4625,
-      "calibrated_score": 0.4625,
-      "rank": 54,
+      "raw_score": 0.4861,
+      "calibrated_score": 0.4861,
+      "rank": 66,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": false,
@@ -1166,14 +1167,14 @@
         "literature_score": 0.0,
         "shared_genes": [
           "HNF1B",
-          "PPARA",
-          "BDNF",
-          "SLC2A2",
           "SLC22A3",
-          "KCNJ11",
-          "PTEN",
           "TCF7L2",
-          "PPARG"
+          "SLC2A2",
+          "PTEN",
+          "BDNF",
+          "PPARA",
+          "PPARG",
+          "KCNJ11"
         ],
         "shared_pathways": []
       },
@@ -1207,12 +1208,12 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARG",
-          "PPARA"
+          "PPARA",
+          "PPARG"
         ],
         "shared_pathways": [
-          "PPAR signaling",
-          "Glucose metabolism"
+          "Glucose metabolism",
+          "PPAR signaling"
         ]
       },
       "fast_mode": true
@@ -1223,9 +1224,9 @@
       "disease_area": "rare_disease",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2078,
-      "calibrated_score": 0.2078,
-      "rank": 73,
+      "raw_score": 0.2778,
+      "calibrated_score": 0.2778,
+      "rank": 71,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1242,12 +1243,12 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.3,
+        "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "FKBP1A",
           "TSC2",
-          "TSC1"
+          "TSC1",
+          "FKBP1A"
         ],
         "shared_pathways": []
       },
@@ -1259,9 +1260,9 @@
       "disease_area": "neurological",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2597,
-      "calibrated_score": 0.2597,
-      "rank": 182,
+      "raw_score": 0.2797,
+      "calibrated_score": 0.2797,
+      "rank": 188,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1281,13 +1282,13 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNA1F",
-          "CACNA1C",
-          "GRIN2B",
           "ABAT",
+          "CACNA1C",
           "CACNA1D",
+          "GRIN2B",
           "SCN1A",
-          "ALDH5A1"
+          "ALDH5A1",
+          "CACNA1F"
         ],
         "shared_pathways": []
       },
@@ -1299,8 +1300,8 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5849,
-      "calibrated_score": 0.5849,
+      "raw_score": 0.585,
+      "calibrated_score": 0.585,
       "rank": 92,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
@@ -1315,34 +1316,34 @@
       "notes": "Approved adjunctive AED.",
       "score_components": {
         "gene_score": 0.6419,
-        "pathway_score": 0.0617283950617284,
+        "pathway_score": 0.06230529595015576,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNG3",
-          "KCNQ3",
-          "CACNA1B",
-          "CACNB2",
-          "CACNA1E",
-          "CACNA1F",
-          "CACNG7",
-          "CACNB1",
-          "CACNG2",
           "CACNA1G",
           "CACNB4",
-          "CACNA2D2",
-          "CACNA1D",
           "CACNG5",
-          "CACNA1I",
+          "CACNG2",
+          "KCNQ3",
+          "CACNB1",
           "CACNA1S",
-          "CACNG1",
-          "CACNA1H",
+          "CACNA1I",
           "CACNB3",
-          "CACNA1C",
-          "CACNA2D1",
+          "CACNA1D",
           "CACNA2D3",
+          "CACNA1H",
+          "CACNA2D1",
+          "CACNG1",
+          "CACNA1F",
+          "CACNA1C",
+          "CACNA1B",
+          "CACNA1E",
+          "CACNG7",
+          "CACNA2D2",
+          "CACNG3",
+          "CACNB2",
           "CACNA1A"
         ],
         "shared_pathways": [
@@ -1357,13 +1358,13 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3279,
-      "calibrated_score": 0.3279,
+      "raw_score": 0.3515,
+      "calibrated_score": 0.3515,
       "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": true,
-      "score_pass": false,
+      "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
       "mechanism": "Anti-C5 monoclonal antibody \u2014 blocks terminal complement activation",
@@ -1413,8 +1414,8 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "SLC26A9",
-          "CFTR"
+          "CFTR",
+          "SLC26A9"
         ],
         "shared_pathways": [
           "Chloride ion transport"
@@ -1430,7 +1431,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.449,
       "calibrated_score": 0.449,
-      "rank": 68,
+      "rank": 87,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -1450,18 +1451,18 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PTGS2",
           "TLR9",
-          "TLR7"
+          "TLR7",
+          "PTGS2"
         ],
         "shared_pathways": [
+          "Measles",
+          "Neutrophil extracellular trap formation",
+          "Chagas disease",
+          "Toll-like receptor signaling pathway",
           "Salmonella infection",
           "Lysosome biogenesis",
-          "Neutrophil extracellular trap formation",
-          "Measles",
-          "Chagas disease",
           "Influenza A",
-          "Toll-like receptor signaling pathway",
           "African trypanosomiasis"
         ]
       },
@@ -1473,9 +1474,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4311,
-      "calibrated_score": 0.4311,
-      "rank": 82,
+      "raw_score": 0.4511,
+      "calibrated_score": 0.4511,
+      "rank": 91,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -1496,22 +1497,22 @@
         "literature_score": 0.0,
         "shared_genes": [
           "NRG1",
-          "TUBB4B",
-          "TUBA1A",
-          "TUBA3C",
-          "TUBB6",
-          "BDNF",
-          "TUBB1",
-          "TUBB3",
-          "TUBA3E",
           "TUBB2B",
-          "TUBB",
-          "TUBB8",
           "TUBB2A",
-          "TUBA1B",
+          "TUBB8",
           "TUBB4A",
+          "TUBB3",
+          "TUBB1",
+          "TUBA1A",
+          "BDNF",
           "TUBA4A",
-          "TUBA1C"
+          "TUBA1C",
+          "TUBB4B",
+          "TUBA3C",
+          "TUBA3E",
+          "TUBB",
+          "TUBB6",
+          "TUBA1B"
         ],
         "shared_pathways": []
       },
@@ -1523,9 +1524,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5586,
-      "calibrated_score": 0.5586,
-      "rank": 64,
+      "raw_score": 0.5557,
+      "calibrated_score": 0.5557,
+      "rank": 80,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1539,24 +1540,24 @@
       "notes": "First-line ULT for gout.",
       "score_components": {
         "gene_score": 0.0928,
-        "pathway_score": 0.4703170028818444,
+        "pathway_score": 0.46046511627906983,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PKD2",
           "GCKR",
-          "XDH"
+          "XDH",
+          "PKD2"
         ],
         "shared_pathways": [
-          "Arachidonic acid metabolism",
+          "Drug metabolism - other enzymes",
+          "Serotonergic synapse",
           "Nucleotide metabolism",
           "Purine metabolism",
-          "Drug metabolism - other enzymes",
+          "Arachidonic acid metabolism",
           "Caffeine metabolism",
-          "Ascorbate and aldarate metabolism",
-          "Serotonergic synapse"
+          "Ascorbate and aldarate metabolism"
         ]
       },
       "fast_mode": true
@@ -1567,9 +1568,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4256,
-      "calibrated_score": 0.4256,
-      "rank": 40,
+      "raw_score": 0.4113,
+      "calibrated_score": 0.4113,
+      "rank": 53,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -1589,22 +1590,22 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TUBB4B",
-          "TUBA1A",
-          "TUBA3C",
-          "TUBB6",
-          "TUBB1",
-          "TUBB3",
-          "TUBA3E",
           "TUBB2B",
-          "TUBB",
-          "TUBB8",
           "TUBB2A",
-          "TUBA1B",
+          "TUBB8",
           "TUBB4A",
+          "TUBB3",
+          "TUBB1",
           "TUB",
+          "TUBA1A",
           "TUBA4A",
-          "TUBA1C"
+          "TUBA1C",
+          "TUBB4B",
+          "TUBA3C",
+          "TUBA3E",
+          "TUBB",
+          "TUBB6",
+          "TUBA1B"
         ],
         "shared_pathways": []
       },
@@ -1614,16 +1615,16 @@
       "drug": "spironolactone",
       "disease": "heart failure",
       "disease_area": "cardiovascular",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2352,
-      "calibrated_score": 0.2352,
-      "rank": 305,
+      "raw_score": 0.2552,
+      "calibrated_score": 0.2552,
+      "rank": 320,
       "total_candidates": 3003,
       "expected_rank_top_n": 35,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.25,
       "mechanism": "Aldosterone receptor antagonist \u2014 reduces cardiac fibrosis and fluid retention",
       "sources": [
@@ -1638,9 +1639,9 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NR3C2",
           "NOS3",
-          "NR3C1"
+          "NR3C1",
+          "NR3C2"
         ],
         "shared_pathways": []
       },
@@ -1654,7 +1655,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4987,
       "calibrated_score": 0.4987,
-      "rank": 60,
+      "rank": 81,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1674,15 +1675,15 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "ACHE",
           "BCHE",
+          "ACHE",
           "APOE"
         ],
         "shared_pathways": [
           "Alzheimer disease",
-          "Acetylcholine degradation",
           "Cholinergic signaling",
-          "cGMP-PKG signaling pathway"
+          "cGMP-PKG signaling pathway",
+          "Acetylcholine degradation"
         ]
       },
       "fast_mode": true
@@ -1720,9 +1721,9 @@
           "GRIN2B"
         ],
         "shared_pathways": [
+          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling",
-          "NMDA receptor signaling"
+          "Glutamate signaling"
         ]
       },
       "fast_mode": true
@@ -1772,7 +1773,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3941,
       "calibrated_score": 0.3941,
-      "rank": 56,
+      "rank": 79,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1793,14 +1794,14 @@
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "AR",
-          "SRD5A2"
+          "SRD5A2",
+          "AR"
         ],
         "shared_pathways": [
-          "Androgen receptor signaling",
+          "Tryptophan metabolism",
           "Hair follicle cycling",
           "5-alpha reductase pathway",
-          "Tryptophan metabolism"
+          "Androgen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -1813,7 +1814,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.6361,
       "calibrated_score": 0.6361,
-      "rank": 21,
+      "rank": 28,
       "total_candidates": 3003,
       "expected_rank_top_n": 60,
       "rank_pass": true,
@@ -1848,7 +1849,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.6581,
       "calibrated_score": 0.6581,
-      "rank": 34,
+      "rank": 42,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1868,33 +1869,33 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "HGF",
-          "PTEN",
-          "NF1",
-          "KRAS",
-          "FRK",
-          "PDGFRA",
-          "NTRK1",
-          "BCR",
-          "RET",
-          "PDGFRB",
-          "FLT3",
-          "NF2",
-          "EGFR",
-          "IKZF1",
+          "BRAF",
           "ALK",
+          "IKZF1",
+          "FLT3",
+          "CSF1R",
+          "KRAS",
+          "BCR",
+          "HGF",
+          "NTRK1",
+          "NF1",
+          "PTEN",
+          "PDGFRB",
           "KIT",
           "ABL1",
-          "CSF1R",
-          "BRAF"
+          "PDGFRA",
+          "FRK",
+          "RET",
+          "NF2",
+          "EGFR"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
+          "IgSF CAM signaling",
           "Cell cycle",
-          "Hematopoietic cell lineage",
-          "Apoptosis",
           "ErbB signaling pathway",
-          "IgSF CAM signaling"
+          "Hematopoietic cell lineage",
+          "Apoptosis"
         ]
       },
       "fast_mode": true
@@ -1907,7 +1908,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5446,
       "calibrated_score": 0.5446,
-      "rank": 34,
+      "rank": 47,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -1927,9 +1928,9 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "ITGB1",
+          "ITGB7",
           "ITGA4",
-          "ITGB7"
+          "ITGB1"
         ],
         "shared_pathways": []
       },
@@ -1943,7 +1944,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4373,
       "calibrated_score": 0.4373,
-      "rank": 84,
+      "rank": 102,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -1963,17 +1964,17 @@
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "SCN4A",
-          "SCN10A",
           "SCN9A",
-          "SCN2A",
-          "SCN1A",
           "TARDBP",
+          "SCN4A",
           "SCN11A",
-          "SCN8A",
+          "SCN3A",
           "SCN7A",
+          "SCN8A",
+          "SCN2A",
           "SCN5A",
-          "SCN3A"
+          "SCN10A",
+          "SCN1A"
         ],
         "shared_pathways": []
       },
@@ -1989,7 +1990,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1328,
+      "rank": 1370,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2017,16 +2018,16 @@
       "drug": "propranolol",
       "disease": "asthma",
       "disease_area": "other",
-      "status": "false_positive",
+      "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.6361,
-      "calibrated_score": 0.6361,
-      "rank": 47,
+      "raw_score": 0.0,
+      "calibrated_score": 0.0,
+      "rank": 1141,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.2,
       "mechanism": "Non-selective beta-blocker \u2014 causes life-threatening bronchospasm in asthma",
       "sources": [
@@ -2034,16 +2035,13 @@
       ],
       "notes": "Absolute contraindication in asthma.",
       "score_components": {
-        "gene_score": 1.0,
+        "gene_score": 0.0,
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
-        "shared_genes": [
-          "ADRB1",
-          "ADRB2"
-        ],
+        "shared_genes": [],
         "shared_pathways": []
       },
       "fast_mode": true
@@ -2056,7 +2054,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.1164,
       "calibrated_score": 0.1164,
-      "rank": 411,
+      "rank": 440,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2076,10 +2074,10 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "KRAS",
-          "IDH1",
           "NRAS",
-          "FLT3"
+          "IDH1",
+          "FLT3",
+          "KRAS"
         ],
         "shared_pathways": []
       },
@@ -2093,7 +2091,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0865,
       "calibrated_score": 0.0865,
-      "rank": 752,
+      "rank": 783,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2111,8 +2109,8 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "B4GALT2",
-          "HMGCR"
+          "HMGCR",
+          "B4GALT2"
         ],
         "shared_pathways": [
           "Protein processing in endoplasmic reticulum",
@@ -2129,7 +2127,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.079,
       "calibrated_score": 0.079,
-      "rank": 617,
+      "rank": 651,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2162,7 +2160,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1276,
+      "rank": 1295,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2192,7 +2190,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0595,
       "calibrated_score": 0.0595,
-      "rank": 547,
+      "rank": 561,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2222,41 +2220,29 @@
       "drug": "furosemide",
       "disease": "alzheimer disease",
       "disease_area": "neurological",
-      "status": "false_positive",
+      "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.2693,
-      "calibrated_score": 0.2693,
-      "rank": 146,
+      "raw_score": 0.0,
+      "calibrated_score": 0.0,
+      "rank": 1140,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.18,
       "mechanism": "Loop diuretic \u2014 renal electrolyte mechanism, no AD-relevant target",
       "sources": [],
       "notes": "Diuretic mechanism unrelated to amyloid/tau/cholinergic pathways.",
       "score_components": {
-        "gene_score": 0.1025,
-        "pathway_score": 0.27790893760539626,
+        "gene_score": 0.0,
+        "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
-        "shared_genes": [
-          "ACE",
-          "ADAM10"
-        ],
-        "shared_pathways": [
-          "Efferocytosis",
-          "Lysosome biogenesis",
-          "Cadherin signaling",
-          "ABC transporters",
-          "Epithelial cell signaling in Helicobacter pylori infection",
-          "Bile secretion",
-          "Alzheimer disease",
-          "Chemokine signaling pathway"
-        ]
+        "shared_genes": [],
+        "shared_pathways": []
       },
       "fast_mode": true
     },
@@ -2268,7 +2254,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1345,
+      "rank": 1389,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2300,7 +2286,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1485,
+      "rank": 1503,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2330,7 +2316,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.1126,
       "calibrated_score": 0.1126,
-      "rank": 344,
+      "rank": 360,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2348,8 +2334,8 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "TNF",
-          "NR3C1"
+          "NR3C1",
+          "TNF"
         ],
         "shared_pathways": [
           "Regulation of lipolysis in adipocytes",
@@ -2366,7 +2352,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0573,
       "calibrated_score": 0.0573,
-      "rank": 651,
+      "rank": 678,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2394,58 +2380,20 @@
       "drug": "atenolol",
       "disease": "type 2 diabetes mellitus",
       "disease_area": "metabolic",
-      "status": "false_positive",
-      "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1803,
-      "calibrated_score": 0.1803,
-      "rank": 170,
-      "total_candidates": 3003,
-      "expected_rank_top_n": 0,
-      "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
-      "min_score_threshold": 0.18,
-      "mechanism": "Beta-1 selective blocker \u2014 can mask hypoglycaemia, no T2DM benefit",
-      "sources": [],
-      "notes": "Beta-blockers are not used for T2DM treatment.",
-      "score_components": {
-        "gene_score": 0.1402,
-        "pathway_score": 0.034090909090909095,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.0,
-        "literature_score": 0.0,
-        "shared_genes": [
-          "PPARA",
-          "PROX1",
-          "FTO",
-          "ABO",
-          "ARAP1"
-        ],
-        "shared_pathways": [
-          "Non-alcoholic fatty liver disease"
-        ]
-      },
-      "fast_mode": true
-    },
-    {
-      "drug": "ondansetron",
-      "disease": "pulmonary arterial hypertension",
-      "disease_area": "cardiovascular",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1260,
+      "rank": 918,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.18,
-      "mechanism": "5-HT3 receptor antagonist (antiemetic) \u2014 unrelated to pulmonary vasomotor tone",
+      "mechanism": "Beta-1 selective blocker \u2014 can mask hypoglycaemia, no T2DM benefit",
       "sources": [],
-      "notes": "Serotonin receptor subtype has no role in PAH pathogenesis.",
+      "notes": "Beta-blockers are not used for T2DM treatment.",
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
@@ -2459,6 +2407,39 @@
       "fast_mode": true
     },
     {
+      "drug": "ondansetron",
+      "disease": "pulmonary arterial hypertension",
+      "disease_area": "cardiovascular",
+      "status": "true_negative_low_score",
+      "expected_status": "TRUE_NEGATIVE",
+      "raw_score": 0.0751,
+      "calibrated_score": 0.0751,
+      "rank": 872,
+      "total_candidates": 3003,
+      "expected_rank_top_n": 0,
+      "rank_pass": false,
+      "score_pass": true,
+      "pass": true,
+      "min_score_threshold": 0.18,
+      "mechanism": "5-HT3 receptor antagonist (antiemetic) \u2014 unrelated to pulmonary vasomotor tone",
+      "sources": [],
+      "notes": "Serotonin receptor subtype has no role in PAH pathogenesis.",
+      "score_components": {
+        "gene_score": 0.0,
+        "pathway_score": 0.06037735849056604,
+        "ppi_score": 0.0,
+        "similarity_score": 0.0,
+        "mechanism_score": 0.0,
+        "literature_score": 0.0,
+        "shared_genes": [],
+        "shared_pathways": [
+          "Serotonergic synapse",
+          "Taste transduction"
+        ]
+      },
+      "fast_mode": true
+    },
+    {
       "drug": "pantoprazole",
       "disease": "parkinson disease",
       "disease_area": "neurological",
@@ -2466,7 +2447,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1789,
+      "rank": 1823,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2498,7 +2479,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5483,
       "calibrated_score": 0.5483,
-      "rank": 77,
+      "rank": 93,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -2518,14 +2499,14 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NOS3",
           "PDE5A",
+          "NOS3",
           "VEGFA"
         ],
         "shared_pathways": [
+          "cGMP-PKG signaling",
           "Nitric oxide signaling",
-          "Pulmonary vascular remodeling",
-          "cGMP-PKG signaling"
+          "Pulmonary vascular remodeling"
         ]
       },
       "fast_mode": true
@@ -2538,7 +2519,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4192,
       "calibrated_score": 0.4192,
-      "rank": 103,
+      "rank": 118,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -2559,20 +2540,20 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BCR",
-          "PDGFRA",
-          "KIT",
           "PDGFRB",
+          "CSF1R",
+          "BCR",
+          "KIT",
           "ABL1",
-          "BIRC5",
-          "CSF1R"
+          "PDGFRA",
+          "BIRC5"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
           "AMPK signaling pathway",
-          "Cell cycle",
-          "ErbB signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "IgSF CAM signaling",
+          "ErbB signaling pathway",
+          "Cell cycle",
           "Insulin signaling pathway"
         ]
       },
@@ -2624,7 +2605,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5113,
       "calibrated_score": 0.5113,
-      "rank": 62,
+      "rank": 76,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -2645,21 +2626,21 @@
         "literature_score": 0.0,
         "shared_genes": [
           "JAK2",
+          "MS4A1",
           "FCGR2A",
-          "CXCL13",
           "IL6",
-          "MS4A1"
+          "CXCL13"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
           "Viral protein interaction with cytokine and cytokine receptor",
-          "JAK-STAT signaling",
-          "B-cell receptor signaling",
-          "B-cell differentiation",
-          "Neutrophil extracellular trap formation",
-          "NF-kappa B signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "JAK-STAT signaling pathway",
-          "Chemokine signaling pathway"
+          "Neutrophil extracellular trap formation",
+          "B-cell differentiation",
+          "JAK-STAT signaling",
+          "NF-kappa B signaling pathway",
+          "Chemokine signaling pathway",
+          "B-cell receptor signaling"
         ]
       },
       "fast_mode": true
@@ -2672,7 +2653,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4552,
       "calibrated_score": 0.4552,
-      "rank": 75,
+      "rank": 89,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -2692,20 +2673,20 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NFATC1",
-          "TLR4",
+          "GATA3",
           "DHFR",
-          "TNFAIP3",
-          "FLT3",
           "NR3C1",
-          "IKZF1",
+          "TNFAIP3",
           "ALOX5",
-          "GATA3"
+          "TLR4",
+          "IKZF1",
+          "NFATC1",
+          "FLT3"
         ],
         "shared_pathways": [
-          "Serotonergic synapse",
+          "Lysosome biogenesis",
           "Arachidonic acid metabolism",
-          "Lysosome biogenesis"
+          "Serotonergic synapse"
         ]
       },
       "fast_mode": true
@@ -2718,7 +2699,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5186,
       "calibrated_score": 0.5186,
-      "rank": 61,
+      "rank": 75,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -2738,25 +2719,25 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TNF",
-          "PTGS2",
           "TLR9",
-          "TLR7"
+          "TLR7",
+          "PTGS2",
+          "TNF"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
-          "Salmonella infection",
-          "Arachidonic acid metabolism",
-          "Efferocytosis",
-          "Lysosome biogenesis",
-          "NF-kappa B signaling pathway",
-          "VEGF signaling pathway",
-          "Neutrophil extracellular trap formation",
-          "Measles",
-          "Chagas disease",
-          "Influenza A",
           "Serotonergic synapse",
+          "Measles",
+          "Neutrophil extracellular trap formation",
+          "Chagas disease",
+          "Arachidonic acid metabolism",
+          "NF-kappa B signaling pathway",
+          "Efferocytosis",
           "Toll-like receptor signaling pathway",
+          "VEGF signaling pathway",
+          "Salmonella infection",
+          "Lysosome biogenesis",
+          "Influenza A",
           "African trypanosomiasis"
         ]
       },
@@ -2768,9 +2749,9 @@
       "disease_area": "metabolic",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.084,
-      "calibrated_score": 0.084,
-      "rank": 698,
+      "raw_score": 0.204,
+      "calibrated_score": 0.204,
+      "rank": 298,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -2787,11 +2768,11 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.0,
+        "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARG",
-          "PTEN"
+          "PTEN",
+          "PPARG"
         ],
         "shared_pathways": []
       },
@@ -2805,7 +2786,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3749,
       "calibrated_score": 0.3749,
-      "rank": 128,
+      "rank": 151,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -2826,12 +2807,12 @@
         "literature_score": 0.0,
         "shared_genes": [
           "CUL4A",
-          "FGFR2",
           "DDB1",
+          "PTGS2",
+          "FGFR2",
           "CRBN",
           "RBX1",
-          "IRF4",
-          "PTGS2"
+          "IRF4"
         ],
         "shared_pathways": [
           "Ubiquitin-proteasome system"
@@ -2845,9 +2826,9 @@
       "disease_area": "oncology",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2473,
-      "calibrated_score": 0.2473,
-      "rank": 241,
+      "raw_score": 0.28,
+      "calibrated_score": 0.28,
+      "rank": 254,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -2882,7 +2863,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4994,
       "calibrated_score": 0.4994,
-      "rank": 85,
+      "rank": 107,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -2902,49 +2883,49 @@
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "PSMC2",
-          "PSMD6",
-          "PSMC4",
-          "PSMD12",
-          "PSMD8",
-          "PSMA8",
-          "PSMA1",
-          "PSMB8",
-          "TP53",
-          "FGFR3",
           "PSMD1",
-          "PSMC5",
-          "PSMB4",
-          "PSMD14",
-          "SEM1",
           "PSMA2",
-          "PSMA6",
-          "PSMA4",
-          "PSMB5",
-          "BCL2",
-          "PSMA7",
-          "PSMD13",
+          "SEM1",
+          "PSMC4",
           "PSMD7",
-          "PSMC1",
-          "PSMB7",
-          "FLT3",
-          "PSMD11",
-          "PSMD2",
+          "PSMA1",
+          "PSMA8",
+          "PSMB11",
           "PSMC6",
-          "PSMB1",
-          "PSMD4",
-          "PSMB2",
-          "PSMD3",
-          "PSMB10",
-          "PSMC3",
-          "PSMA3",
-          "CCND1",
-          "PSMB3",
           "PSMA5",
+          "PSMD8",
+          "PSMB1",
+          "PSMA3",
+          "FLT3",
+          "PSMD2",
+          "PSMA6",
+          "PSMC2",
+          "FGFR3",
+          "PSMB2",
+          "PSMB8",
+          "PSMB3",
+          "PSMB4",
+          "PSMD3",
+          "PSMD12",
+          "PSMB5",
           "PSMB6",
-          "PSMB9",
+          "PSMC1",
+          "PSMC3",
           "ADRM1",
-          "PSMB11"
+          "CCND1",
+          "PSMD13",
+          "PSMD11",
+          "PSMD14",
+          "PSMB10",
+          "PSMD4",
+          "BCL2",
+          "TP53",
+          "PSMA7",
+          "PSMB7",
+          "PSMD6",
+          "PSMB9",
+          "PSMA4",
+          "PSMC5"
         ],
         "shared_pathways": []
       },
@@ -2958,7 +2939,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.7136,
       "calibrated_score": 0.7136,
-      "rank": 7,
+      "rank": 9,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
       "rank_pass": true,
@@ -2978,35 +2959,35 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "RUNX1",
-          "CTNNB1",
-          "PTEN",
-          "NF1",
-          "KRAS",
-          "MYC",
-          "FRK",
-          "IDH1",
-          "LCK",
-          "HCK",
-          "LYN",
-          "CSF3R",
-          "YES1",
-          "BCR",
-          "PDGFRB",
-          "FLT3",
-          "EGFR",
+          "BRAF",
+          "PRKCH",
           "IKZF1",
-          "JAK2",
+          "FLT3",
+          "IDH1",
+          "CSF1R",
+          "KRAS",
+          "BCR",
+          "MYC",
+          "LCK",
+          "NF1",
+          "PTEN",
+          "PDGFRB",
+          "RUNX1",
           "KIT",
           "ABL1",
-          "PRKCH",
-          "CSF1R",
-          "BRAF"
+          "CSF3R",
+          "FRK",
+          "YES1",
+          "JAK2",
+          "LYN",
+          "CTNNB1",
+          "EGFR",
+          "HCK"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
-          "Cell cycle",
           "IgSF CAM signaling",
+          "Cell cycle",
           "ErbB signaling pathway",
           "Hematopoietic cell lineage"
         ]
@@ -3017,16 +2998,16 @@
       "drug": "propranolol",
       "disease": "essential tremor",
       "disease_area": "neurological",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.13,
-      "calibrated_score": 0.13,
-      "rank": 353,
+      "raw_score": 0.28,
+      "calibrated_score": 0.28,
+      "rank": 191,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.2,
       "mechanism": "Non-selective beta-adrenergic blocker \u2014 reduces peripheral tremor amplitude",
       "sources": [
@@ -3038,7 +3019,7 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
@@ -3053,7 +3034,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3013,
       "calibrated_score": 0.3013,
-      "rank": 89,
+      "rank": 93,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -3090,7 +3071,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5932,
       "calibrated_score": 0.5932,
-      "rank": 36,
+      "rank": 40,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": true,
@@ -3111,13 +3092,13 @@
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "AR",
-          "SRD5A2"
+          "SRD5A2",
+          "AR"
         ],
         "shared_pathways": [
-          "Androgen receptor signaling",
           "Hair follicle cycling",
-          "5-alpha reductase pathway"
+          "5-alpha reductase pathway",
+          "Androgen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -3130,7 +3111,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.2834,
       "calibrated_score": 0.2834,
-      "rank": 220,
+      "rank": 238,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3150,16 +3131,16 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PTGS2",
           "NAT2",
-          "CDH13",
-          "ACE",
-          "LPA",
-          "PPARG",
           "TGFB1",
+          "PTGS2",
+          "LPA",
+          "PTGS1",
           "ITGA2B",
-          "HMGCR",
-          "PTGS1"
+          "ACE",
+          "PPARG",
+          "CDH13",
+          "HMGCR"
         ],
         "shared_pathways": [
           "NF-kappa B signaling pathway"
@@ -3212,7 +3193,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4276,
       "calibrated_score": 0.4276,
-      "rank": 80,
+      "rank": 91,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3233,21 +3214,21 @@
         "literature_score": 0.0,
         "shared_genes": [
           "NRG1",
-          "CYP19A1",
-          "PIK3CA",
-          "NF1",
-          "BRCA1",
-          "TYMS",
-          "ESR1",
+          "CCND1",
           "TP53",
+          "BRCA1",
+          "PIK3CA",
+          "ESR1",
+          "NF1",
+          "CYP19A1",
           "ERBB2",
-          "CCND1"
+          "TYMS"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
+          "Homologous recombination",
           "Nuclear receptor signaling",
-          "Estrogen receptor signaling",
-          "Homologous recombination"
+          "Estrogen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -3260,7 +3241,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.421,
       "calibrated_score": 0.421,
-      "rank": 83,
+      "rank": 94,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -3296,7 +3277,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.7401,
       "calibrated_score": 0.7401,
-      "rank": 10,
+      "rank": 11,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -3316,14 +3297,14 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "DRD2",
           "GRIN2A",
-          "GRIN1"
+          "GRIN1",
+          "DRD2"
         ],
         "shared_pathways": [
+          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling",
-          "NMDA receptor signaling"
+          "Glutamate signaling"
         ]
       },
       "fast_mode": true
@@ -3356,14 +3337,14 @@
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "DRD2",
           "COMT",
-          "MAOB"
+          "MAOB",
+          "DRD2"
         ],
         "shared_pathways": [
+          "Dopamine metabolism",
           "Lysine degradation",
-          "Signaling pathways regulating pluripotency of stem cells",
-          "Dopamine metabolism"
+          "Signaling pathways regulating pluripotency of stem cells"
         ]
       },
       "fast_mode": true
@@ -3374,9 +3355,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4625,
-      "calibrated_score": 0.4625,
-      "rank": 54,
+      "raw_score": 0.4861,
+      "calibrated_score": 0.4861,
+      "rank": 66,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": false,
@@ -3397,14 +3378,14 @@
         "literature_score": 0.0,
         "shared_genes": [
           "HNF1B",
-          "PPARA",
-          "BDNF",
-          "SLC2A2",
           "SLC22A3",
-          "KCNJ11",
-          "PTEN",
           "TCF7L2",
-          "PPARG"
+          "SLC2A2",
+          "PTEN",
+          "BDNF",
+          "PPARA",
+          "PPARG",
+          "KCNJ11"
         ],
         "shared_pathways": []
       },
@@ -3438,12 +3419,12 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARG",
-          "PPARA"
+          "PPARA",
+          "PPARG"
         ],
         "shared_pathways": [
-          "PPAR signaling",
-          "Glucose metabolism"
+          "Glucose metabolism",
+          "PPAR signaling"
         ]
       },
       "fast_mode": true
@@ -3454,9 +3435,9 @@
       "disease_area": "rare_disease",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2078,
-      "calibrated_score": 0.2078,
-      "rank": 73,
+      "raw_score": 0.2778,
+      "calibrated_score": 0.2778,
+      "rank": 71,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3473,12 +3454,12 @@
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
-        "mechanism_score": 0.3,
+        "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "FKBP1A",
           "TSC2",
-          "TSC1"
+          "TSC1",
+          "FKBP1A"
         ],
         "shared_pathways": []
       },
@@ -3490,9 +3471,9 @@
       "disease_area": "neurological",
       "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2597,
-      "calibrated_score": 0.2597,
-      "rank": 182,
+      "raw_score": 0.2797,
+      "calibrated_score": 0.2797,
+      "rank": 188,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3512,13 +3493,13 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNA1F",
-          "CACNA1C",
-          "GRIN2B",
           "ABAT",
+          "CACNA1C",
           "CACNA1D",
+          "GRIN2B",
           "SCN1A",
-          "ALDH5A1"
+          "ALDH5A1",
+          "CACNA1F"
         ],
         "shared_pathways": []
       },
@@ -3530,8 +3511,8 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5849,
-      "calibrated_score": 0.5849,
+      "raw_score": 0.585,
+      "calibrated_score": 0.585,
       "rank": 92,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
@@ -3546,34 +3527,34 @@
       "notes": "Approved adjunctive AED.",
       "score_components": {
         "gene_score": 0.6419,
-        "pathway_score": 0.0617283950617284,
+        "pathway_score": 0.06230529595015576,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNG3",
-          "KCNQ3",
-          "CACNA1B",
-          "CACNB2",
-          "CACNA1E",
-          "CACNA1F",
-          "CACNG7",
-          "CACNB1",
-          "CACNG2",
           "CACNA1G",
           "CACNB4",
-          "CACNA2D2",
-          "CACNA1D",
           "CACNG5",
-          "CACNA1I",
+          "CACNG2",
+          "KCNQ3",
+          "CACNB1",
           "CACNA1S",
-          "CACNG1",
-          "CACNA1H",
+          "CACNA1I",
           "CACNB3",
-          "CACNA1C",
-          "CACNA2D1",
+          "CACNA1D",
           "CACNA2D3",
+          "CACNA1H",
+          "CACNA2D1",
+          "CACNG1",
+          "CACNA1F",
+          "CACNA1C",
+          "CACNA1B",
+          "CACNA1E",
+          "CACNG7",
+          "CACNA2D2",
+          "CACNG3",
+          "CACNB2",
           "CACNA1A"
         ],
         "shared_pathways": [
@@ -3588,13 +3569,13 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3279,
-      "calibrated_score": 0.3279,
+      "raw_score": 0.3515,
+      "calibrated_score": 0.3515,
       "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": true,
-      "score_pass": false,
+      "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
       "mechanism": "Anti-C5 monoclonal antibody \u2014 blocks terminal complement activation",
@@ -3644,8 +3625,8 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "SLC26A9",
-          "CFTR"
+          "CFTR",
+          "SLC26A9"
         ],
         "shared_pathways": [
           "Chloride ion transport"
@@ -3661,7 +3642,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.449,
       "calibrated_score": 0.449,
-      "rank": 68,
+      "rank": 87,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3681,18 +3662,18 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PTGS2",
           "TLR9",
-          "TLR7"
+          "TLR7",
+          "PTGS2"
         ],
         "shared_pathways": [
+          "Measles",
+          "Neutrophil extracellular trap formation",
+          "Chagas disease",
+          "Toll-like receptor signaling pathway",
           "Salmonella infection",
           "Lysosome biogenesis",
-          "Neutrophil extracellular trap formation",
-          "Measles",
-          "Chagas disease",
           "Influenza A",
-          "Toll-like receptor signaling pathway",
           "African trypanosomiasis"
         ]
       },
@@ -3704,9 +3685,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4311,
-      "calibrated_score": 0.4311,
-      "rank": 82,
+      "raw_score": 0.4511,
+      "calibrated_score": 0.4511,
+      "rank": 91,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -3727,22 +3708,22 @@
         "literature_score": 0.0,
         "shared_genes": [
           "NRG1",
-          "TUBB4B",
-          "TUBA1A",
-          "TUBA3C",
-          "TUBB6",
-          "BDNF",
-          "TUBB1",
-          "TUBB3",
-          "TUBA3E",
           "TUBB2B",
-          "TUBB",
-          "TUBB8",
           "TUBB2A",
-          "TUBA1B",
+          "TUBB8",
           "TUBB4A",
+          "TUBB3",
+          "TUBB1",
+          "TUBA1A",
+          "BDNF",
           "TUBA4A",
-          "TUBA1C"
+          "TUBA1C",
+          "TUBB4B",
+          "TUBA3C",
+          "TUBA3E",
+          "TUBB",
+          "TUBB6",
+          "TUBA1B"
         ],
         "shared_pathways": []
       },
@@ -3754,9 +3735,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5586,
-      "calibrated_score": 0.5586,
-      "rank": 64,
+      "raw_score": 0.5557,
+      "calibrated_score": 0.5557,
+      "rank": 80,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3770,24 +3751,24 @@
       "notes": "First-line ULT for gout.",
       "score_components": {
         "gene_score": 0.0928,
-        "pathway_score": 0.4703170028818444,
+        "pathway_score": 0.46046511627906983,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PKD2",
           "GCKR",
-          "XDH"
+          "XDH",
+          "PKD2"
         ],
         "shared_pathways": [
-          "Arachidonic acid metabolism",
+          "Drug metabolism - other enzymes",
+          "Serotonergic synapse",
           "Nucleotide metabolism",
           "Purine metabolism",
-          "Drug metabolism - other enzymes",
+          "Arachidonic acid metabolism",
           "Caffeine metabolism",
-          "Ascorbate and aldarate metabolism",
-          "Serotonergic synapse"
+          "Ascorbate and aldarate metabolism"
         ]
       },
       "fast_mode": true
@@ -3798,9 +3779,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4256,
-      "calibrated_score": 0.4256,
-      "rank": 40,
+      "raw_score": 0.4113,
+      "calibrated_score": 0.4113,
+      "rank": 53,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3820,22 +3801,22 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TUBB4B",
-          "TUBA1A",
-          "TUBA3C",
-          "TUBB6",
-          "TUBB1",
-          "TUBB3",
-          "TUBA3E",
           "TUBB2B",
-          "TUBB",
-          "TUBB8",
           "TUBB2A",
-          "TUBA1B",
+          "TUBB8",
           "TUBB4A",
+          "TUBB3",
+          "TUBB1",
           "TUB",
+          "TUBA1A",
           "TUBA4A",
-          "TUBA1C"
+          "TUBA1C",
+          "TUBB4B",
+          "TUBA3C",
+          "TUBA3E",
+          "TUBB",
+          "TUBB6",
+          "TUBA1B"
         ],
         "shared_pathways": []
       },
@@ -3845,16 +3826,16 @@
       "drug": "spironolactone",
       "disease": "heart failure",
       "disease_area": "cardiovascular",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2352,
-      "calibrated_score": 0.2352,
-      "rank": 305,
+      "raw_score": 0.2552,
+      "calibrated_score": 0.2552,
+      "rank": 320,
       "total_candidates": 3003,
       "expected_rank_top_n": 35,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.25,
       "mechanism": "Aldosterone receptor antagonist \u2014 reduces cardiac fibrosis and fluid retention",
       "sources": [
@@ -3869,9 +3850,9 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NR3C2",
           "NOS3",
-          "NR3C1"
+          "NR3C1",
+          "NR3C2"
         ],
         "shared_pathways": []
       },
@@ -3885,7 +3866,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4987,
       "calibrated_score": 0.4987,
-      "rank": 60,
+      "rank": 81,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3905,15 +3886,15 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "ACHE",
           "BCHE",
+          "ACHE",
           "APOE"
         ],
         "shared_pathways": [
           "Alzheimer disease",
-          "Acetylcholine degradation",
           "Cholinergic signaling",
-          "cGMP-PKG signaling pathway"
+          "cGMP-PKG signaling pathway",
+          "Acetylcholine degradation"
         ]
       },
       "fast_mode": true
@@ -3951,9 +3932,9 @@
           "GRIN2B"
         ],
         "shared_pathways": [
+          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling",
-          "NMDA receptor signaling"
+          "Glutamate signaling"
         ]
       },
       "fast_mode": true
@@ -4003,7 +3984,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.3941,
       "calibrated_score": 0.3941,
-      "rank": 56,
+      "rank": 79,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -4024,14 +4005,14 @@
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "AR",
-          "SRD5A2"
+          "SRD5A2",
+          "AR"
         ],
         "shared_pathways": [
-          "Androgen receptor signaling",
+          "Tryptophan metabolism",
           "Hair follicle cycling",
           "5-alpha reductase pathway",
-          "Tryptophan metabolism"
+          "Androgen receptor signaling"
         ]
       },
       "fast_mode": true
@@ -4044,7 +4025,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.6361,
       "calibrated_score": 0.6361,
-      "rank": 21,
+      "rank": 28,
       "total_candidates": 3003,
       "expected_rank_top_n": 60,
       "rank_pass": true,
@@ -4079,7 +4060,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.6581,
       "calibrated_score": 0.6581,
-      "rank": 34,
+      "rank": 42,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -4099,33 +4080,33 @@
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "HGF",
-          "PTEN",
-          "NF1",
-          "KRAS",
-          "FRK",
-          "PDGFRA",
-          "NTRK1",
-          "BCR",
-          "RET",
-          "PDGFRB",
-          "FLT3",
-          "NF2",
-          "EGFR",
-          "IKZF1",
+          "BRAF",
           "ALK",
+          "IKZF1",
+          "FLT3",
+          "CSF1R",
+          "KRAS",
+          "BCR",
+          "HGF",
+          "NTRK1",
+          "NF1",
+          "PTEN",
+          "PDGFRB",
           "KIT",
           "ABL1",
-          "CSF1R",
-          "BRAF"
+          "PDGFRA",
+          "FRK",
+          "RET",
+          "NF2",
+          "EGFR"
         ],
         "shared_pathways": [
           "EGFR tyrosine kinase inhibitor resistance",
+          "IgSF CAM signaling",
           "Cell cycle",
-          "Hematopoietic cell lineage",
-          "Apoptosis",
           "ErbB signaling pathway",
-          "IgSF CAM signaling"
+          "Hematopoietic cell lineage",
+          "Apoptosis"
         ]
       },
       "fast_mode": true
@@ -4138,7 +4119,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.5446,
       "calibrated_score": 0.5446,
-      "rank": 34,
+      "rank": 47,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -4158,9 +4139,9 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "ITGB1",
+          "ITGB7",
           "ITGA4",
-          "ITGB7"
+          "ITGB1"
         ],
         "shared_pathways": []
       },
@@ -4174,7 +4155,7 @@
       "expected_status": "TRUE_POSITIVE",
       "raw_score": 0.4373,
       "calibrated_score": 0.4373,
-      "rank": 84,
+      "rank": 102,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -4194,17 +4175,17 @@
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "SCN4A",
-          "SCN10A",
           "SCN9A",
-          "SCN2A",
-          "SCN1A",
           "TARDBP",
+          "SCN4A",
           "SCN11A",
-          "SCN8A",
+          "SCN3A",
           "SCN7A",
+          "SCN8A",
+          "SCN2A",
           "SCN5A",
-          "SCN3A"
+          "SCN10A",
+          "SCN1A"
         ],
         "shared_pathways": []
       },
@@ -4220,7 +4201,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1328,
+      "rank": 1370,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4248,16 +4229,16 @@
       "drug": "propranolol",
       "disease": "asthma",
       "disease_area": "other",
-      "status": "false_positive",
+      "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.6361,
-      "calibrated_score": 0.6361,
-      "rank": 47,
+      "raw_score": 0.0,
+      "calibrated_score": 0.0,
+      "rank": 1141,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.2,
       "mechanism": "Non-selective beta-blocker \u2014 causes life-threatening bronchospasm in asthma",
       "sources": [
@@ -4265,16 +4246,13 @@
       ],
       "notes": "Absolute contraindication in asthma.",
       "score_components": {
-        "gene_score": 1.0,
+        "gene_score": 0.0,
         "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
-        "shared_genes": [
-          "ADRB1",
-          "ADRB2"
-        ],
+        "shared_genes": [],
         "shared_pathways": []
       },
       "fast_mode": true
@@ -4287,7 +4265,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.1164,
       "calibrated_score": 0.1164,
-      "rank": 411,
+      "rank": 440,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4307,10 +4285,10 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "KRAS",
-          "IDH1",
           "NRAS",
-          "FLT3"
+          "IDH1",
+          "FLT3",
+          "KRAS"
         ],
         "shared_pathways": []
       },
@@ -4324,7 +4302,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0865,
       "calibrated_score": 0.0865,
-      "rank": 752,
+      "rank": 783,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4342,8 +4320,8 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "B4GALT2",
-          "HMGCR"
+          "HMGCR",
+          "B4GALT2"
         ],
         "shared_pathways": [
           "Protein processing in endoplasmic reticulum",
@@ -4360,7 +4338,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.079,
       "calibrated_score": 0.079,
-      "rank": 617,
+      "rank": 651,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4393,7 +4371,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1276,
+      "rank": 1295,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4423,7 +4401,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0595,
       "calibrated_score": 0.0595,
-      "rank": 547,
+      "rank": 561,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4453,41 +4431,29 @@
       "drug": "furosemide",
       "disease": "alzheimer disease",
       "disease_area": "neurological",
-      "status": "false_positive",
+      "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.2693,
-      "calibrated_score": 0.2693,
-      "rank": 146,
+      "raw_score": 0.0,
+      "calibrated_score": 0.0,
+      "rank": 1140,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.18,
       "mechanism": "Loop diuretic \u2014 renal electrolyte mechanism, no AD-relevant target",
       "sources": [],
       "notes": "Diuretic mechanism unrelated to amyloid/tau/cholinergic pathways.",
       "score_components": {
-        "gene_score": 0.1025,
-        "pathway_score": 0.27790893760539626,
+        "gene_score": 0.0,
+        "pathway_score": 0.0,
         "ppi_score": 0.0,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
-        "shared_genes": [
-          "ACE",
-          "ADAM10"
-        ],
-        "shared_pathways": [
-          "Efferocytosis",
-          "Lysosome biogenesis",
-          "Cadherin signaling",
-          "ABC transporters",
-          "Epithelial cell signaling in Helicobacter pylori infection",
-          "Bile secretion",
-          "Alzheimer disease",
-          "Chemokine signaling pathway"
-        ]
+        "shared_genes": [],
+        "shared_pathways": []
       },
       "fast_mode": true
     },
@@ -4499,7 +4465,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1345,
+      "rank": 1389,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4531,7 +4497,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1485,
+      "rank": 1503,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4561,7 +4527,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.1126,
       "calibrated_score": 0.1126,
-      "rank": 344,
+      "rank": 360,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4579,8 +4545,8 @@
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "TNF",
-          "NR3C1"
+          "NR3C1",
+          "TNF"
         ],
         "shared_pathways": [
           "Regulation of lipolysis in adipocytes",
@@ -4597,7 +4563,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0573,
       "calibrated_score": 0.0573,
-      "rank": 651,
+      "rank": 678,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4625,58 +4591,20 @@
       "drug": "atenolol",
       "disease": "type 2 diabetes mellitus",
       "disease_area": "metabolic",
-      "status": "false_positive",
-      "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1803,
-      "calibrated_score": 0.1803,
-      "rank": 170,
-      "total_candidates": 3003,
-      "expected_rank_top_n": 0,
-      "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
-      "min_score_threshold": 0.18,
-      "mechanism": "Beta-1 selective blocker \u2014 can mask hypoglycaemia, no T2DM benefit",
-      "sources": [],
-      "notes": "Beta-blockers are not used for T2DM treatment.",
-      "score_components": {
-        "gene_score": 0.1402,
-        "pathway_score": 0.034090909090909095,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.0,
-        "literature_score": 0.0,
-        "shared_genes": [
-          "PPARA",
-          "PROX1",
-          "FTO",
-          "ABO",
-          "ARAP1"
-        ],
-        "shared_pathways": [
-          "Non-alcoholic fatty liver disease"
-        ]
-      },
-      "fast_mode": true
-    },
-    {
-      "drug": "ondansetron",
-      "disease": "pulmonary arterial hypertension",
-      "disease_area": "cardiovascular",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1260,
+      "rank": 918,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.18,
-      "mechanism": "5-HT3 receptor antagonist (antiemetic) \u2014 unrelated to pulmonary vasomotor tone",
+      "mechanism": "Beta-1 selective blocker \u2014 can mask hypoglycaemia, no T2DM benefit",
       "sources": [],
-      "notes": "Serotonin receptor subtype has no role in PAH pathogenesis.",
+      "notes": "Beta-blockers are not used for T2DM treatment.",
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
@@ -4690,6 +4618,39 @@
       "fast_mode": true
     },
     {
+      "drug": "ondansetron",
+      "disease": "pulmonary arterial hypertension",
+      "disease_area": "cardiovascular",
+      "status": "true_negative_low_score",
+      "expected_status": "TRUE_NEGATIVE",
+      "raw_score": 0.0751,
+      "calibrated_score": 0.0751,
+      "rank": 872,
+      "total_candidates": 3003,
+      "expected_rank_top_n": 0,
+      "rank_pass": false,
+      "score_pass": true,
+      "pass": true,
+      "min_score_threshold": 0.18,
+      "mechanism": "5-HT3 receptor antagonist (antiemetic) \u2014 unrelated to pulmonary vasomotor tone",
+      "sources": [],
+      "notes": "Serotonin receptor subtype has no role in PAH pathogenesis.",
+      "score_components": {
+        "gene_score": 0.0,
+        "pathway_score": 0.06037735849056604,
+        "ppi_score": 0.0,
+        "similarity_score": 0.0,
+        "mechanism_score": 0.0,
+        "literature_score": 0.0,
+        "shared_genes": [],
+        "shared_pathways": [
+          "Serotonergic synapse",
+          "Taste transduction"
+        ]
+      },
+      "fast_mode": true
+    },
+    {
       "drug": "pantoprazole",
       "disease": "parkinson disease",
       "disease_area": "neurological",
@@ -4697,7 +4658,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1789,
+      "rank": 1823,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
