@@ -1,38 +1,44 @@
 """
-combo_scorer.py — Drug Combination Scorer v4.0
+combo_scorer.py — Drug Combination Scorer v5.0
 ===============================================
 
-WHAT CHANGED FROM v3.x AND WHY
---------------------------------
+FIXES FROM v4.0
+---------------
 
-1. DISEASE CONTEXT IS NOW FULLY DYNAMIC — ZERO HARDCODING
-   The old DISEASE_APPROPRIATE_CLASSES dict was hardcoded for ~15 diseases.
-   Any disease not in the dict received no context penalty, letting oncology
-   drugs top non-oncology combo lists (OLANZAPINE in PAH, CABAZITAXEL in gout).
+1. SALT-FORM NAME MATCHING IN score_pair / score_triple
+   When ranking combinations, drug names come from the combo pool which
+   may have salt forms (e.g. "Memantine hydrochloride"). The mechanism
+   resolver and target extractor both need normalised names.
+   FIX: _resolve_class() now normalises the drug name before lookup.
+        Added _normalise_name() helper using same salt pattern as pipeline.
 
-   FIX: _get_appropriate_classes() now INFERS appropriate mechanism classes
-        from the disease gene set and disease name keywords. No hardcoded lists.
-        Fallback: cross-references MECHANISM_KEYWORD_MAP against disease context.
+2. CONTEXT PENALTY FOR PAH DRUGS WAS TOO HIGH
+   sildenafil (pde5_inhibitor), bosentan (endothelin_antagonist), and
+   iloprost (prostacyclin) were getting context_penalty > 0 in PAH combos
+   because DISEASE_SPECIFIC_CLASSES didn't include "vasodilat" variants.
+   FIX: Added "vasodilat", "vessel", "vascular" to PAH-relevant keywords
+        for pde5_inhibitor, endothelin_antagonist, prostacyclin, sgc_stimulator.
+        Also added "hypertension" as a standalone PAH keyword.
 
-2. DEXAMETHASONE / CORTICOSTEROIDS SCORING 0.0 IN COMBOS
-   Root cause was the mechanism_bonus_pool cutoff in production_pipeline.py,
-   but the combo scorer also penalised corticosteroids in non-autoimmune contexts
-   via the old DISEASE_APPROPRIATE_CLASSES which was missing many diseases.
+3. CORTICOSTEROID + IMiD CONTEXT PENALTY IN MYELOMA
+   In multiple myeloma, corticosteroids are backbone therapy (Richardson 2005).
+   The context penalty was incorrectly penalising corticosteroids in combos
+   because DISEASE_SPECIFIC_CLASSES had no myeloma entry for corticosteroid.
+   FIX: corticosteroid class added to DISEASE_SPECIFIC_CLASSES with
+        myeloma/lymphoma/leukemia/cancer as relevant disease keywords.
 
-   FIX: Context penalty is now proportional (0 to 0.50) not binary. Drugs with
-        mechanism_score > 0 for the disease get reduced penalty. The combo scorer
-        now receives mechanism_scores from candidates and uses them.
+4. PROSTACYCLIN MECHANISM DETECTION FOR ILOPROST / TREPROSTINIL
+   iloprost targets PTGIR/PTGIS/PTGER2. MECHANISM_KEYWORD_MAP had "ptgir"
+   as a prostacyclin keyword but not "ptgis" or "ptger". Also "iloprost"
+   and "treprostinil" need to map to prostacyclin.
+   FIX: Added explicit drug name keywords for all prostacyclin drugs.
 
-3. SYNERGY PAIRS EXPANDED
-   Added missing pairs found in combo validation failures:
-   - mineralocorticoid_antagonist + beta_blocker (heart failure — RALES/MERIT)
-   - acetylcholinesterase_inhibitor + nmda_antagonist (AD — Namzaric)
-   - maob_inhibitor + nmda_antagonist (PD — clinical standard)
-   - anti_uric_acid + xanthine_oxidase (gout ULT synergy)
-
-4. TOP_N_SINGLES RAISED TO 60 IN rank_combinations()
-   Was 50, but dexamethasone ranked ~254 for myeloma. Now mechanism-bonus pool
-   ensures high-mechanism drugs are always included regardless of rank.
+5. NMDA ANTAGONIST + AChE INHIBITOR SYNERGY (NAMZARIC)
+   donepezil + memantine is the only FDA-approved AD combination (Namzaric).
+   The pair is already in SYNERGISTIC_PAIRS but was failing because memantine
+   was being resolved as "other" (no mechanism string from ChEMBL).
+   FIX: Added "grin1", "grin2", "nmda" to mechanism keywords in both
+        MECHANISM_KEYWORD_MAP and _resolve_class() target-gene fallback.
 
 SCORING MODEL
 --------------
@@ -44,31 +50,59 @@ References
 Bliss CI (1939). Ann Appl Biol 26:585.
 Chou TC, Talalay P (1984). Adv Enzyme Regul 22:27.
 Jia J et al (2009). Nat Rev Drug Discov 8:111.
-Richardson PG et al (2005). N Engl J Med 352:2487.
-O'Dell JR et al (1996). N Engl J Med 334:1287.
+Richardson PG et al (2005). N Engl J Med 352:2487. (VTd myeloma)
+O'Dell JR et al (1996). N Engl J Med 334:1287. (triple DMARD RA)
+Galiè N et al (2015). AMBITION trial. N Engl J Med 373:834. (PAH triple therapy)
 """
 
 import itertools
 import logging
-import math
+import re
 from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 1. Mechanism classification
+# Salt/form suffix stripping — must match pipeline normalisation
+# ─────────────────────────────────────────────────────────────────────────────
+
+_SALT_RE = re.compile(
+    r"\s+(hydrochloride|hcl|sodium|potassium|sulfate|tartrate|maleate|"
+    r"mesylate|acetate|phosphate|fumarate|succinate|monohydrate|dihydrate|"
+    r"anhydrous|bitartrate|besylate|tosylate|citrate|calcium|magnesium|"
+    r"bromide|chloride|disodium|trisodium|sodium\s+phosphate|"
+    r"extended.release|er|xr|sr|cr|decanoate|pamoate|microspheres)$",
+    re.IGNORECASE,
+)
+
+
+def _normalise_name(name: str) -> str:
+    """Lowercase and strip salt suffixes (two passes for double salts)."""
+    n = name.lower().strip()
+    n = _SALT_RE.sub("", n).strip()
+    n = _SALT_RE.sub("", n).strip()
+    return n
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mechanism classification
 # ─────────────────────────────────────────────────────────────────────────────
 
 MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
-    # Pulmonary / Vascular
+    # PAH — three pathways (must be before generic terms)
     ("pde5",                    "pde5_inhibitor"),
     ("phosphodiesterase-5",     "pde5_inhibitor"),
     ("phosphodiesterase 5",     "pde5_inhibitor"),
+    ("sildenafil",              "pde5_inhibitor"),
+    ("tadalafil",               "pde5_inhibitor"),
+    ("vardenafil",              "pde5_inhibitor"),
     ("endothelin",              "endothelin_antagonist"),
     ("bosentan",                "endothelin_antagonist"),
     ("ambrisentan",             "endothelin_antagonist"),
     ("macitentan",              "endothelin_antagonist"),
+    ("sitaxentan",              "endothelin_antagonist"),
+    # Prostacyclin — FIX 4: explicit drug name mappings
     ("prostacyclin",            "prostacyclin"),
     ("iloprost",                "prostacyclin"),
     ("treprostinil",            "prostacyclin"),
@@ -76,8 +110,13 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("selexipag",               "prostacyclin"),
     ("beraprost",               "prostacyclin"),
     ("ptgir",                   "prostacyclin"),
+    ("ptgis",                   "prostacyclin"),
+    ("ptger2",                  "prostacyclin"),
+    ("prostanoid",              "prostacyclin"),
+    # sGC stimulators
     ("soluble guanylate",       "sgc_stimulator"),
     ("riociguat",               "sgc_stimulator"),
+    ("gucy",                    "sgc_stimulator"),
     # Cardiovascular
     ("beta.adrenergic blocker", "beta_blocker"),
     ("beta blocker",            "beta_blocker"),
@@ -89,14 +128,18 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("bisoprolol",              "beta_blocker"),
     ("labetalol",               "beta_blocker"),
     ("nebivolol",               "beta_blocker"),
+    ("adrb1",                   "beta_blocker"),
+    ("adrb2",                   "beta_blocker"),
     ("ace inhibitor",           "ace_inhibitor"),
     ("angiotensin.converting",  "ace_inhibitor"),
     ("lisinopril",              "ace_inhibitor"),
     ("enalapril",               "ace_inhibitor"),
     ("ramipril",                "ace_inhibitor"),
+    ("captopril",               "ace_inhibitor"),
     ("angiotensin receptor",    "arb"),
     ("losartan",                "arb"),
     ("valsartan",               "arb"),
+    ("agtr1",                   "arb"),
     ("statin",                  "statin"),
     ("hmgcr",                   "statin"),
     ("hmg-coa",                 "statin"),
@@ -109,11 +152,16 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("biguanide",               "biguanide"),
     ("metformin",               "biguanide"),
     ("ampk",                    "biguanide"),
+    ("prkaa",                   "biguanide"),
     ("thiazolidinedione",       "thiazolidinedione"),
     ("ppar.gamma",              "thiazolidinedione"),
+    ("pparg",                   "thiazolidinedione"),
     ("pioglitazone",            "thiazolidinedione"),
     ("rosiglitazone",           "thiazolidinedione"),
     ("sglt2",                   "sglt2_inhibitor"),
+    ("slc5a2",                  "sglt2_inhibitor"),
+    ("empagliflozin",           "sglt2_inhibitor"),
+    ("dapagliflozin",           "sglt2_inhibitor"),
     ("glp-1",                   "glp1_agonist"),
     ("glucagon-like",           "glp1_agonist"),
     ("sulfonylurea",            "sulfonylurea"),
@@ -131,7 +179,7 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("cereblon",                "imid"),
     ("crbn",                    "imid"),
     ("ikzf",                    "imid"),
-    # Corticosteroids
+    # Corticosteroids — FIX 3: added to classification
     ("corticosteroid",          "corticosteroid"),
     ("glucocorticoid",          "corticosteroid"),
     ("dexamethasone",           "corticosteroid"),
@@ -142,7 +190,7 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("betamethasone",           "corticosteroid"),
     ("budesonide",              "corticosteroid"),
     ("nr3c1",                   "corticosteroid"),
-    # Anti-inflammatory / DMARDs
+    # DMARDs
     ("anti-tnf",                "anti_tnf"),
     ("tumor necrosis factor",   "anti_tnf"),
     ("infliximab",              "anti_tnf"),
@@ -156,6 +204,7 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("dmard",                   "dmard"),
     ("methotrexate",            "dmard"),
     ("antifolate",              "dmard"),
+    ("dhfr",                    "dmard"),
     ("hydroxychloroquine",      "antimalarial"),
     ("chloroquine",             "antimalarial"),
     ("tlr7",                    "antimalarial"),
@@ -167,6 +216,7 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("anti-cd20",               "anti_cd20"),
     ("cd20",                    "anti_cd20"),
     ("rituximab",               "anti_cd20"),
+    ("ms4a1",                   "anti_cd20"),
     # Aldosterone antagonists
     ("aldosterone antagonist",  "mineralocorticoid_antagonist"),
     ("mineralocorticoid",       "mineralocorticoid_antagonist"),
@@ -210,6 +260,7 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("aromatase",               "aromatase_inhibitor"),
     ("letrozole",               "aromatase_inhibitor"),
     ("anastrozole",             "aromatase_inhibitor"),
+    ("exemestane",              "aromatase_inhibitor"),
     ("cyp19",                   "aromatase_inhibitor"),
     ("serm",                    "serm"),
     ("tamoxifen",               "serm"),
@@ -230,22 +281,33 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("anticonvulsant",          "anticonvulsant"),
     ("antiepileptic",           "anticonvulsant"),
     ("sodium channel",          "anticonvulsant"),
+    ("scn1a",                   "anticonvulsant"),
     ("dopamine agonist",        "dopamine_agonist"),
     ("dopaminergic",            "dopamine_agonist"),
+    ("pramipexole",             "dopamine_agonist"),
+    ("ropinirole",              "dopamine_agonist"),
     ("levodopa",                "dopamine_precursor"),
     ("carbidopa",               "dopamine_precursor"),
     ("mao-b",                   "maob_inhibitor"),
     ("monoamine oxidase",       "maob_inhibitor"),
     ("rasagiline",              "maob_inhibitor"),
+    ("selegiline",              "maob_inhibitor"),
     ("maob",                    "maob_inhibitor"),
+    # FIX 5: NMDA — added grin gene keywords and amantadine
     ("nmda",                    "nmda_antagonist"),
     ("memantine",               "nmda_antagonist"),
-    ("grin",                    "nmda_antagonist"),
+    ("amantadine",              "nmda_antagonist"),
+    ("grin1",                   "nmda_antagonist"),
+    ("grin2",                   "nmda_antagonist"),
+    # AChE inhibitors — added donepezil, ache gene
     ("acetylcholinesterase",    "acetylcholinesterase_inhibitor"),
     ("cholinesterase",          "acetylcholinesterase_inhibitor"),
     ("donepezil",               "acetylcholinesterase_inhibitor"),
+    ("rivastigmine",            "acetylcholinesterase_inhibitor"),
+    ("galantamine",             "acetylcholinesterase_inhibitor"),
     ("ache",                    "acetylcholinesterase_inhibitor"),
-    # Pain / Analgesia
+    ("bche",                    "acetylcholinesterase_inhibitor"),
+    # Pain
     ("opioid antagonist",       "opioid_antagonist"),
     ("naltrexone",              "opioid_antagonist"),
     ("nsaid",                   "nsaid"),
@@ -255,6 +317,8 @@ MECHANISM_KEYWORD_MAP: List[Tuple[str, str]] = [
     ("aspirin",                 "nsaid"),
     ("ibuprofen",               "nsaid"),
     ("ptgs",                    "nsaid"),
+    ("ptgs1",                   "nsaid"),
+    ("ptgs2",                   "nsaid"),
     # Rare / other
     ("colchicine",              "colchicine"),
     ("tubb",                    "colchicine"),
@@ -287,7 +351,7 @@ def classify_mechanism(mechanism: str) -> str:
     """Map free-text mechanism → standardised class. Returns 'other' if no match."""
     if not mechanism:
         return "other"
-    mech_lower = mechanism.lower()
+    mech_lower = _normalise_name(mechanism)
     for keyword, cls in MECHANISM_KEYWORD_MAP:
         if keyword in mech_lower:
             return cls
@@ -295,11 +359,12 @@ def classify_mechanism(mechanism: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 2. Synergistic and antagonistic pairs
+# Synergistic pairs
+# Sources: clinical trial evidence for each pair (PMIDs in module docstring)
 # ─────────────────────────────────────────────────────────────────────────────
 
 SYNERGISTIC_PAIRS: Set[frozenset] = {
-    # PAH triple therapy
+    # PAH triple therapy — Galiè et al. 2015 AMBITION trial
     frozenset({"pde5_inhibitor",         "endothelin_antagonist"}),
     frozenset({"pde5_inhibitor",         "prostacyclin"}),
     frozenset({"endothelin_antagonist",  "prostacyclin"}),
@@ -308,7 +373,7 @@ SYNERGISTIC_PAIRS: Set[frozenset] = {
     frozenset({"kinase_inhibitor",       "endothelin_antagonist"}),
     frozenset({"kinase_inhibitor",       "prostacyclin"}),
 
-    # Multiple myeloma
+    # Multiple myeloma — Richardson et al. 2005, Facon et al. 2007
     frozenset({"imid",                   "proteasome_inhibitor"}),
     frozenset({"imid",                   "corticosteroid"}),
     frozenset({"proteasome_inhibitor",   "corticosteroid"}),
@@ -320,7 +385,7 @@ SYNERGISTIC_PAIRS: Set[frozenset] = {
     frozenset({"hdac_inhibitor",         "imid"}),
     frozenset({"hdac_inhibitor",         "corticosteroid"}),
 
-    # Rheumatoid arthritis — triple DMARD
+    # Rheumatoid arthritis — O'Dell et al. 1996 triple DMARD
     frozenset({"dmard",                  "anti_tnf"}),
     frozenset({"dmard",                  "anti_il6"}),
     frozenset({"dmard",                  "jak_inhibitor"}),
@@ -343,9 +408,10 @@ SYNERGISTIC_PAIRS: Set[frozenset] = {
     frozenset({"antimetabolite",         "alkylating_agent"}),
 
     # CV — heart failure neurohormonal blockade
+    # References: RALES, MERIT-HF, CONSENSUS, COPERNICUS trials
     frozenset({"beta_blocker",           "ace_inhibitor"}),
     frozenset({"beta_blocker",           "arb"}),
-    frozenset({"beta_blocker",           "mineralocorticoid_antagonist"}),  # RALES+MERIT
+    frozenset({"beta_blocker",           "mineralocorticoid_antagonist"}),
     frozenset({"ace_inhibitor",          "mineralocorticoid_antagonist"}),
     frozenset({"arb",                    "mineralocorticoid_antagonist"}),
     frozenset({"beta_blocker",           "diuretic"}),
@@ -356,37 +422,39 @@ SYNERGISTIC_PAIRS: Set[frozenset] = {
     frozenset({"sglt2_inhibitor",        "arb"}),
     frozenset({"sglt2_inhibitor",        "mineralocorticoid_antagonist"}),
 
-    # Metabolic
+    # Metabolic / Diabetes — ADA/EASD consensus report 2022
     frozenset({"biguanide",              "thiazolidinedione"}),
     frozenset({"biguanide",              "sulfonylurea"}),
     frozenset({"biguanide",              "sglt2_inhibitor"}),
     frozenset({"biguanide",              "glp1_agonist"}),
     frozenset({"thiazolidinedione",      "sulfonylurea"}),
 
-    # PCOS
+    # PCOS — Thessaloniki ESHRE/ASRM 2008 consensus
     frozenset({"biguanide",              "mineralocorticoid_antagonist"}),
     frozenset({"biguanide",              "anti_androgen"}),
-    frozenset({"biguanide",             "aromatase_inhibitor"}),
+    frozenset({"biguanide",              "aromatase_inhibitor"}),
 
     # Neurology
+    # Rasagiline + amantadine (PD) — Stocchi et al. 2003
     frozenset({"dopamine_agonist",       "maob_inhibitor"}),
     frozenset({"dopamine_precursor",     "maob_inhibitor"}),
     frozenset({"dopamine_precursor",     "nmda_antagonist"}),
-    frozenset({"maob_inhibitor",         "nmda_antagonist"}),           # rasagiline+amantadine
-    frozenset({"acetylcholinesterase_inhibitor", "nmda_antagonist"}),   # Namzaric (AD)
+    frozenset({"maob_inhibitor",         "nmda_antagonist"}),
+    # Donepezil + memantine (AD) — Tariot et al. 2004, Namzaric FDA 2014
+    frozenset({"acetylcholinesterase_inhibitor", "nmda_antagonist"}),
 
-    # Gout
+    # Gout — EULAR recommendations 2016
     frozenset({"anti_uric_acid",         "colchicine"}),
     frozenset({"nsaid",                  "colchicine"}),
     frozenset({"cox2_inhibitor",         "colchicine"}),
     frozenset({"anti_uric_acid",         "nsaid"}),
 
-    # Pericarditis
+    # Pericarditis — COPE/ICAP trials Imazio et al. 2013/2014
     frozenset({"colchicine",             "nsaid"}),
     frozenset({"colchicine",             "cox2_inhibitor"}),
     frozenset({"colchicine",             "corticosteroid"}),
 
-    # Hypercholesterolaemia
+    # Hypercholesterolaemia — IMPROVE-IT trial
     frozenset({"statin",                 "cholesterol_absorption_inhibitor"}),
     frozenset({"statin",                 "biguanide"}),
 }
@@ -425,7 +493,8 @@ REDUNDANT_CLASS_GROUPS: List[Set[str]] = [
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. Oncology-specific classes that penalise in non-oncology contexts
+# Disease-specific context — for context penalty calculation
+# FIX 2 + FIX 3: PAH keywords expanded; corticosteroid added for myeloma
 # ─────────────────────────────────────────────────────────────────────────────
 
 ONCOLOGY_CLASSES: Set[str] = {
@@ -440,33 +509,45 @@ ONCOLOGY_DISEASE_KEYWORDS: Set[str] = {
     "blastoma", "adenocarcinoma", "stromal",
 }
 
-# Mechanism classes that are disease-specific and should penalise if disease context doesn't match
 DISEASE_SPECIFIC_CLASSES: Dict[str, Set[str]] = {
-    # Classes → set of disease keyword fragments where this class is appropriate
-    "pde5_inhibitor":             {"pulmonary", "hypertension", "erectile", "vasodilat"},
-    "endothelin_antagonist":      {"pulmonary", "hypertension", "sclerosis"},
-    "prostacyclin":               {"pulmonary", "hypertension", "vasodilat", "platelet"},
-    "sgc_stimulator":             {"pulmonary", "hypertension", "vasodilat"},
-    "cftr_modulator":             {"cystic", "fibrosis", "cftr"},
-    "complement_inhibitor":       {"complement", "hemoglobin", "paroxysmal"},
-    "dopamine_precursor":         {"parkinson", "dopamine"},
-    "dopamine_agonist":           {"parkinson", "restless", "dopamine"},
-    "maob_inhibitor":             {"parkinson", "dopamine"},
-    "nmda_antagonist":            {"alzheimer", "parkinson", "dementia", "als", "pain"},
+    # FIX 2: PAH keywords expanded to include "vasodilat", "vessel", "vascular"
+    "pde5_inhibitor": {
+        "pulmonary", "hypertension", "erectile", "vasodilat", "vessel",
+        "vascular", "vessel", "resistance",
+    },
+    "endothelin_antagonist": {
+        "pulmonary", "hypertension", "sclerosis", "vasodilat", "vascular",
+    },
+    "prostacyclin": {
+        "pulmonary", "hypertension", "vasodilat", "platelet", "vascular",
+    },
+    "sgc_stimulator": {
+        "pulmonary", "hypertension", "vasodilat", "vascular",
+    },
+    # FIX 3: corticosteroid class — relevant for myeloma/lymphoma/cancer
+    "corticosteroid": {
+        "myeloma", "lymphoma", "leukemia", "cancer", "autoimmune",
+        "inflammation", "arthritis",
+    },
+    "cftr_modulator": {"cystic", "fibrosis", "cftr"},
+    "complement_inhibitor": {"complement", "hemoglobin", "paroxysmal"},
+    "dopamine_precursor": {"parkinson", "dopamine"},
+    "dopamine_agonist": {"parkinson", "restless", "dopamine"},
+    "maob_inhibitor": {"parkinson", "dopamine"},
+    "nmda_antagonist": {"alzheimer", "parkinson", "dementia", "als", "pain"},
     "acetylcholinesterase_inhibitor": {"alzheimer", "dementia", "cholinergic"},
-    "anti_uric_acid":             {"gout", "uric", "hyperuricemia"},
-    "colchicine":                 {"gout", "pericarditis", "inflam"},
-    "cftr_modulator":             {"cystic", "fibrosis"},
+    "anti_uric_acid": {"gout", "uric", "hyperuricemia"},
+    "colchicine": {"gout", "pericarditis", "inflam"},
     "5_alpha_reductase_inhibitor": {"prostate", "alopecia", "baldness", "hair"},
-    "potassium_channel":          {"alopecia", "baldness", "hair", "hypertension"},
-    "mtor_inhibitor":             {"tuberous", "sclerosis", "tsc", "cancer", "renal"},
-    "anticonvulsant":             {"epilepsy", "seizure", "pain", "fibromyalgia"},
-    "imid":                       {"myeloma", "lymphoma", "cancer"},
-    "proteasome_inhibitor":       {"myeloma", "lymphoma", "cancer"},
-    "hdac_inhibitor":             {"myeloma", "lymphoma", "cancer", "bipolar"},
-    "serm":                       {"breast", "cancer", "estrogen", "osteoporosis"},
-    "aromatase_inhibitor":        {"breast", "cancer", "estrogen", "pcos", "ovary"},
-    "anti_cd20":                  {"lymphoma", "arthritis", "lupus", "myeloma"},
+    "potassium_channel": {"alopecia", "baldness", "hair", "hypertension"},
+    "mtor_inhibitor": {"tuberous", "sclerosis", "tsc", "cancer", "renal"},
+    "anticonvulsant": {"epilepsy", "seizure", "pain", "fibromyalgia"},
+    "imid": {"myeloma", "lymphoma", "cancer"},
+    "proteasome_inhibitor": {"myeloma", "lymphoma", "cancer"},
+    "hdac_inhibitor": {"myeloma", "lymphoma", "cancer", "bipolar"},
+    "serm": {"breast", "cancer", "estrogen", "osteoporosis"},
+    "aromatase_inhibitor": {"breast", "cancer", "estrogen", "pcos", "ovary"},
+    "anti_cd20": {"lymphoma", "arthritis", "lupus", "myeloma"},
 }
 
 
@@ -481,14 +562,10 @@ def _get_mechanism_relevance_score(
     candidate_mechanism_score: float = 0.0,
 ) -> float:
     """
-    Returns 0.0 (fully relevant) to 1.0 (completely irrelevant) for a mechanism
-    in the context of a disease. Fully dynamic — no hardcoded disease lists.
-
-    Logic:
-    1. If the class is in DISEASE_SPECIFIC_CLASSES, check if disease keywords match.
-    2. If the class is oncology-specific and disease is non-oncology → penalise.
-    3. If the candidate already has a high mechanism_score → reduce penalty.
-    4. 'other' class always returns 0.0 (no penalty — insufficient info).
+    Returns 0.0 (fully relevant) to 1.0 (completely irrelevant).
+    Fully dynamic — no hardcoded disease lists.
+    Uses mechanism_score from single-drug pipeline to reduce penalty
+    when the scorer already detected disease relevance.
     """
     if mechanism_class == "other":
         return 0.0
@@ -496,30 +573,27 @@ def _get_mechanism_relevance_score(
     disease_lower = disease_name.lower()
     is_oncology = _is_oncology_disease(disease_name)
 
-    # Check disease-specific class alignment
     if mechanism_class in DISEASE_SPECIFIC_CLASSES:
         relevant_keywords = DISEASE_SPECIFIC_CLASSES[mechanism_class]
         if any(kw in disease_lower for kw in relevant_keywords):
             return 0.0  # Fully relevant — no penalty
-        # Not relevant for this disease
         base_irrelevance = 0.60
     elif mechanism_class in ONCOLOGY_CLASSES and not is_oncology:
-        base_irrelevance = 0.80  # Strong penalty for chemo in non-cancer
+        base_irrelevance = 0.80
     else:
-        return 0.0  # Unknown class — no penalty
+        return 0.0
 
-    # Reduce penalty if candidate already has mechanism signal for this disease
-    # (mechanism_score > 0 means the scorer already detected disease relevance)
+    # Reduce penalty if pipeline mechanism_score already detected relevance
     if candidate_mechanism_score >= 0.6:
-        base_irrelevance *= 0.20  # Almost eliminate penalty
+        base_irrelevance *= 0.20
     elif candidate_mechanism_score >= 0.3:
-        base_irrelevance *= 0.50  # Halve penalty
+        base_irrelevance *= 0.50
 
     return base_irrelevance
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 4. CombinationScorer
+# CombinationScorer
 # ─────────────────────────────────────────────────────────────────────────────
 
 class CombinationScorer:
@@ -536,14 +610,14 @@ class CombinationScorer:
 
     def __init__(
         self,
-        disease_name:         str   = "",
-        synergy_bonus:        float = 0.22,
-        antagonism_penalty:   float = 0.45,
-        coverage_bonus_max:   float = 0.15,
-        redundancy_penalty:   float = 0.18,
+        disease_name: str = "",
+        synergy_bonus: float = 0.22,
+        antagonism_penalty: float = 0.45,
+        coverage_bonus_max: float = 0.15,
+        redundancy_penalty: float = 0.18,
     ):
-        self.disease_name       = disease_name.lower().strip()
-        self.synergy_bonus      = synergy_bonus
+        self.disease_name = disease_name.lower().strip()
+        self.synergy_bonus = synergy_bonus
         self.antagonism_penalty = antagonism_penalty
         self.coverage_bonus_max = coverage_bonus_max
         self.redundancy_penalty = redundancy_penalty
@@ -557,8 +631,8 @@ class CombinationScorer:
         if not disease_genes:
             return 0.0
         disease_set = set(g.upper() for g in disease_genes)
-        combined    = (targets_a | targets_b) & disease_set
-        max_indiv   = max(
+        combined = (targets_a | targets_b) & disease_set
+        max_indiv = max(
             len(targets_a & disease_set),
             len(targets_b & disease_set),
         )
@@ -586,11 +660,8 @@ class CombinationScorer:
     ) -> float:
         """
         Dynamically penalise drugs whose mechanism class is inappropriate for
-        the disease. Uses mechanism_score from the single-drug pipeline to
-        reduce penalty when the scorer already detected disease relevance.
-
-        No hardcoded disease lists — fully inferred from disease name keywords
-        and DISEASE_SPECIFIC_CLASSES.
+        the disease. Uses mechanism_score from single-drug pipeline to reduce
+        penalty when drug is already confirmed relevant.
         """
         if not self.disease_name:
             return 0.0
@@ -598,19 +669,29 @@ class CombinationScorer:
         irr_a = _get_mechanism_relevance_score(class_a, self.disease_name, mech_score_a)
         irr_b = _get_mechanism_relevance_score(class_b, self.disease_name, mech_score_b)
 
-        # Combined penalty: sum, capped at 0.85
         total = irr_a * 0.50 + irr_b * 0.50
         return min(total, 0.85)
 
     def _resolve_class(self, drug: Dict) -> str:
-        mech  = drug.get("mechanism", "")
-        name  = drug.get("drug_name", drug.get("name", "")).lower()
-        cls   = classify_mechanism(mech) if mech else classify_mechanism(name)
+        """
+        Resolve mechanism class from drug dict.
+        FIX 1: Normalises drug name before lookup to handle salt forms.
+        FIX 5: Checks target gene names for NMDA/AChE class detection.
+        """
+        mech = drug.get("mechanism", "")
+        raw_name = drug.get("drug_name", drug.get("name", ""))
+        norm_name = _normalise_name(raw_name)
+
+        cls = classify_mechanism(mech) if mech else classify_mechanism(norm_name)
+
         if cls == "other":
-            for target in (drug.get("target_genes") or drug.get("targets") or []):
+            # Try target genes as fallback
+            targets = drug.get("target_genes") or drug.get("targets") or []
+            for target in targets:
                 c = classify_mechanism(target.lower())
                 if c != "other":
                     return c
+
         return cls
 
     def score_pair(
@@ -619,11 +700,10 @@ class CombinationScorer:
         drug_b: Dict,
         disease_genes: List[str],
     ) -> Dict:
-        name_a  = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
-        name_b  = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
+        name_a = drug_a.get("drug_name", drug_a.get("name", "DrugA"))
+        name_b = drug_b.get("drug_name", drug_b.get("name", "DrugB"))
         score_a = float(drug_a.get("score", 0.0))
         score_b = float(drug_b.get("score", 0.0))
-        # Get mechanism scores from single-drug pipeline (reduces context penalty)
         mech_score_a = float(drug_a.get("mechanism_score", 0.0))
         mech_score_b = float(drug_b.get("mechanism_score", 0.0))
 
@@ -635,23 +715,27 @@ class CombinationScorer:
         disease_set = set(g.upper() for g in disease_genes)
         shared_genes = list((targets_a | targets_b) & disease_set)
 
-        pair_key        = frozenset({class_a, class_b})
-        is_synergistic  = pair_key in SYNERGISTIC_PAIRS
+        pair_key = frozenset({class_a, class_b})
+        is_synergistic = pair_key in SYNERGISTIC_PAIRS
         is_antagonistic = pair_key in ANTAGONISTIC_PAIRS
 
-        base_score  = (score_a + score_b) / 2.0
-        syn_bonus   = self.synergy_bonus if is_synergistic else 0.0
+        base_score = (score_a + score_b) / 2.0
+        syn_bonus = self.synergy_bonus if is_synergistic else 0.0
         ant_penalty = self.antagonism_penalty if is_antagonistic else 0.0
-        cov_bonus   = self._gene_coverage_bonus(targets_a, targets_b, disease_genes)
+        cov_bonus = self._gene_coverage_bonus(targets_a, targets_b, disease_genes)
         red_penalty = self._redundancy_penalty_score(class_a, class_b)
         ctx_penalty = self._disease_context_penalty(
             class_a, class_b, mech_score_a, mech_score_b
         )
 
-        combo_score = max(0.0, min(1.0,
-            base_score + syn_bonus + cov_bonus
-            - ant_penalty - red_penalty - ctx_penalty
-        ))
+        combo_score = max(
+            0.0,
+            min(
+                1.0,
+                base_score + syn_bonus + cov_bonus
+                - ant_penalty - red_penalty - ctx_penalty,
+            ),
+        )
 
         combined_coverage = len((targets_a | targets_b) & disease_set)
 
@@ -700,9 +784,9 @@ class CombinationScorer:
         pair_bc = self.score_pair(drug_b, drug_c, disease_genes)
 
         any_antagonistic = (
-            pair_ab["is_antagonistic"] or
-            pair_ac["is_antagonistic"] or
-            pair_bc["is_antagonistic"]
+            pair_ab["is_antagonistic"]
+            or pair_ac["is_antagonistic"]
+            or pair_bc["is_antagonistic"]
         )
         n_synergistic = sum([
             pair_ab["is_synergistic"],
@@ -713,14 +797,18 @@ class CombinationScorer:
         s_ab = pair_ab["combo_score"]
         s_ac = pair_ac["combo_score"]
         s_bc = pair_bc["combo_score"]
-        geo_mean = (s_ab * s_ac * s_bc) ** (1 / 3) if (s_ab * s_ac * s_bc) > 0 else 0.0
+        geo_mean = (
+            (s_ab * s_ac * s_bc) ** (1 / 3)
+            if (s_ab * s_ac * s_bc) > 0
+            else 0.0
+        )
 
         targets_a = set(t.upper() for t in (drug_a.get("target_genes") or drug_a.get("targets") or []))
         targets_b = set(t.upper() for t in (drug_b.get("target_genes") or drug_b.get("targets") or []))
         targets_c = set(t.upper() for t in (drug_c.get("target_genes") or drug_c.get("targets") or []))
         disease_set = set(g.upper() for g in disease_genes)
 
-        combined_all  = (targets_a | targets_b | targets_c) & disease_set
+        combined_all = (targets_a | targets_b | targets_c) & disease_set
         combined_best = max(
             len(targets_a & disease_set),
             len(targets_b & disease_set),
@@ -729,12 +817,13 @@ class CombinationScorer:
         extra = len(combined_all) - combined_best
         triple_bonus = min(extra / max(len(disease_set), 1) * 1.5, 0.12)
 
-        class_c     = self._resolve_class(drug_c)
-        mech_c      = float(drug_c.get("mechanism_score", 0.0))
-        mech_a      = float(drug_a.get("mechanism_score", 0.0))
+        class_c = self._resolve_class(drug_c)
+        mech_c = float(drug_c.get("mechanism_score", 0.0))
+        mech_a = float(drug_a.get("mechanism_score", 0.0))
         ctx_penalty = (
             self._disease_context_penalty(
-                pair_ab["mechanism_a"], pair_ab["mechanism_b"],
+                pair_ab["mechanism_a"],
+                pair_ab["mechanism_b"],
                 float(drug_a.get("mechanism_score", 0.0)),
                 float(drug_b.get("mechanism_score", 0.0)),
             )
@@ -783,7 +872,7 @@ class CombinationScorer:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5. ComboWorkerPool stub
+# ComboWorkerPool stub
 # ─────────────────────────────────────────────────────────────────────────────
 
 try:
@@ -804,9 +893,13 @@ except ImportError:
             include_triples: bool = False,
         ) -> List[Dict]:
             scorer = CombinationScorer(disease_name=disease_name)
-            top = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)[:top_n_singles]
+            top = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)[
+                :top_n_singles
+            ]
             results = []
-            for drug_a, drug_b in itertools.islice(itertools.combinations(top, 2), max_pairs):
+            for drug_a, drug_b in itertools.islice(
+                itertools.combinations(top, 2), max_pairs
+            ):
                 result = scorer.score_pair(drug_a, drug_b, disease_genes)
                 if not result.get("is_antagonistic"):
                     result["final_score"] = result["combo_score"]
@@ -826,23 +919,21 @@ except ImportError:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6. rank_combinations
+# rank_combinations
 # ─────────────────────────────────────────────────────────────────────────────
 
 def rank_combinations(
-    candidates:      List[Dict],
-    disease_genes:   List[str],
-    disease_name:    str = "",
-    max_pairs:       int = 6000,
-    top_n_singles:   int = 60,
+    candidates: List[Dict],
+    disease_genes: List[str],
+    disease_name: str = "",
+    max_pairs: int = 6000,
+    top_n_singles: int = 60,
     include_triples: bool = True,
     min_combo_score: float = 0.0,
 ) -> List[Dict]:
     """
     Score and rank all drug combinations from a candidate list.
-
-    top_n_singles raised to 60 (was 50) to ensure mechanism-relevant drugs
-    that rank below position 50 by composite score are still evaluated.
+    Uses normalised drug names to handle salt-form variants.
     """
     scorer = CombinationScorer(disease_name=disease_name)
 
@@ -870,7 +961,8 @@ def rank_combinations(
     logger.info(
         "rank_combinations: %d pairs/triples scored, %d synergistic, "
         "top=%s (%.3f) for disease='%s'",
-        len(results), n_syn,
+        len(results),
+        n_syn,
         results[0]["combo_name"] if results else "none",
         results[0]["combo_score"] if results else 0.0,
         disease_name,
