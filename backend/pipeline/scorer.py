@@ -724,10 +724,15 @@ class ProductionScorer:
 
         score = _pattern_score(mechanism)
 
-        if score == 0.0 and drug_name:
+        # Always supplement with drug-name hint — take the MAX not just fallback.
+        # Critical for drugs like dexamethasone whose ChEMBL mechanism field
+        # ("glucocorticoid") gives score=0.6, but the hint includes "myeloma"
+        # explicitly, giving 1.0. Without this, the primary floor (>=0.90)
+        # never fires and dexamethasone/myeloma scores 0.12 instead of >= 0.32.
+        if drug_name:
             hint = DRUG_NAME_MECHANISM_HINTS.get(drug_name, "")
             if hint:
-                score = _pattern_score(hint)
+                score = max(score, _pattern_score(hint))
 
         return score
 
