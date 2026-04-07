@@ -204,7 +204,7 @@ def _build_combo_pool(
     top_n: int = 60,
     mech_bonus_threshold: float = 0.55,
     mech_override_threshold: float = 0.80,
-    max_pool: int = 70,
+    max_pool: int = 80,  # v4.1: increased from 70
 ) -> List[Dict]:
     """
     Build the candidate pool for combination scoring.
@@ -827,7 +827,7 @@ class ProductionPipeline:
 
         plan["success"] = True
         plan["disease"] = disease_name
-        plan["candidates"] = safe_candidates[:20]
+        plan["candidates"] = safe_candidates[:100]  # v4.1: was [:20], increased for combo validation lookup
         plan["pipeline_stats"] = {
             "total_drugs_evaluated": len(generic_drugs),
             "after_generic_filter": len(generic_drugs),
