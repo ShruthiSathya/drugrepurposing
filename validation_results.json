@@ -4,18 +4,18 @@
     "n_test_cases": 55,
     "n_positive_cases": 40,
     "n_negative_cases": 15,
-    "run_timestamp_utc": "2026-04-05T03:12:04.657604+00:00",
-    "elapsed_seconds": 163.33,
-    "elapsed_minutes": 2.7,
+    "run_timestamp_utc": "2026-04-07T21:49:11.285775+00:00",
+    "elapsed_seconds": 7179.95,
+    "elapsed_minutes": 119.7,
     "min_score_used": 0.0,
-    "fast_mode": true,
+    "fast_mode": false,
     "disease_filter": null,
     "pass_criterion": "rank_ok OR score_ok (v3.1)"
   },
   "pipeline_fingerprint": {
     "dataset_version": "v3.2",
-    "run_timestamp_utc": "2026-04-05T03:14:20.466643+00:00",
-    "fast_mode": true,
+    "run_timestamp_utc": "2026-04-07T21:49:11.314892+00:00",
+    "fast_mode": false,
     "n_drugs_in_pool": 3003,
     "target_source_breakdown": {
       "dgidb": 2065,
@@ -36,12 +36,12 @@
       "ChEMBL (max_phase=4)",
       "OpenTargets Platform",
       "DGIdb 4.0",
-      "STRING v12 (PPI) [SKIPPED in fast mode]",
+      "STRING v12 (PPI)",
       "Reactome v88 + KEGG PATHWAY (pathway annotations)",
       "ClinicalTrials.gov v2",
       "OpenFDA"
     ],
-    "fast_mode_note": "Fast mode skips STRING PPI, tissue expression, drug similarity, and EFO expansion to reduce runtime from ~60-90min to ~5-10min. PPI/tissue/similarity scores will be 0 in fast mode."
+    "fast_mode_note": null
   },
   "data_integrity": {
     "passed": true,
@@ -51,17 +51,17 @@
     "warnings": []
   },
   "metrics": {
-    "tp": 36,
-    "fn": 4,
-    "tn": 15,
-    "fp": 0,
-    "sensitivity": 0.9,
-    "specificity": 1.0,
-    "precision": 1.0,
-    "f1": 0.9474,
+    "tp": 39,
+    "fn": 1,
+    "tn": 10,
+    "fp": 5,
+    "sensitivity": 0.975,
+    "specificity": 0.6667,
+    "precision": 0.8864,
+    "f1": 0.9286,
     "rank_only_passes": 0,
-    "score_only_passes": 23,
-    "both_criteria_passes": 13
+    "score_only_passes": 20,
+    "both_criteria_passes": 19
   },
   "stratified_metrics": {
     "cardiovascular": {
@@ -77,50 +77,50 @@
     "autoimmune_inflammatory": {
       "tp": 5,
       "fn": 0,
-      "tn": 1,
-      "fp": 0,
+      "tn": 0,
+      "fp": 1,
       "sensitivity": 1.0,
-      "specificity": 1.0,
+      "specificity": 0.0,
       "n_positive_cases": 5,
       "n_negative_cases": 1
     },
     "metabolic": {
-      "tp": 5,
-      "fn": 1,
+      "tp": 6,
+      "fn": 0,
       "tn": 1,
       "fp": 0,
-      "sensitivity": 0.8333,
+      "sensitivity": 1.0,
       "specificity": 1.0,
       "n_positive_cases": 6,
       "n_negative_cases": 1
     },
     "oncology": {
-      "tp": 4,
-      "fn": 1,
-      "tn": 2,
-      "fp": 0,
-      "sensitivity": 0.8,
-      "specificity": 1.0,
+      "tp": 5,
+      "fn": 0,
+      "tn": 1,
+      "fp": 1,
+      "sensitivity": 1.0,
+      "specificity": 0.5,
       "n_positive_cases": 5,
       "n_negative_cases": 2
     },
     "neurological": {
-      "tp": 8,
-      "fn": 1,
-      "tn": 8,
-      "fp": 0,
-      "sensitivity": 0.8889,
-      "specificity": 1.0,
+      "tp": 9,
+      "fn": 0,
+      "tn": 6,
+      "fp": 2,
+      "sensitivity": 1.0,
+      "specificity": 0.75,
       "n_positive_cases": 9,
       "n_negative_cases": 8
     },
     "rare_disease": {
       "tp": 6,
       "fn": 1,
-      "tn": 1,
-      "fp": 0,
+      "tn": 0,
+      "fp": 1,
       "sensitivity": 0.8571,
-      "specificity": 1.0,
+      "specificity": 0.0,
       "n_positive_cases": 7,
       "n_negative_cases": 1
     },
@@ -139,112 +139,112 @@
     "top_k": 100,
     "baselines": {
       "jaccard": {
-        "sensitivity": 0.725,
-        "specificity": 0.8,
-        "precision": 0.9062,
-        "f1": 0.8056,
-        "tp": 29,
-        "fn": 11,
-        "tn": 12,
-        "fp": 3
-      },
-      "gene_count": {
-        "sensitivity": 0.725,
-        "specificity": 0.8,
-        "precision": 0.9062,
-        "f1": 0.8056,
-        "tp": 29,
-        "fn": 11,
-        "tn": 12,
-        "fp": 3
-      },
-      "cosine": {
-        "sensitivity": 0.75,
+        "sensitivity": 0.475,
         "specificity": 0.8667,
-        "precision": 0.9375,
-        "f1": 0.8333,
-        "tp": 30,
-        "fn": 10,
+        "precision": 0.9048,
+        "f1": 0.623,
+        "tp": 19,
+        "fn": 21,
         "tn": 13,
         "fp": 2
+      },
+      "gene_count": {
+        "sensitivity": 0.475,
+        "specificity": 0.8667,
+        "precision": 0.9048,
+        "f1": 0.623,
+        "tp": 19,
+        "fn": 21,
+        "tn": 13,
+        "fp": 2
+      },
+      "cosine": {
+        "sensitivity": 0.65,
+        "specificity": 0.9333,
+        "precision": 0.963,
+        "f1": 0.7761,
+        "tp": 26,
+        "fn": 14,
+        "tn": 14,
+        "fp": 1
       }
     }
   },
   "baseline_f1_delta": {
     "jaccard": {
-      "main_f1": 0.9474,
-      "baseline_f1": 0.8056,
-      "f1_delta": 0.1418,
+      "main_f1": 0.9286,
+      "baseline_f1": 0.623,
+      "f1_delta": 0.3056,
       "main_better": true
     },
     "gene_count": {
-      "main_f1": 0.9474,
-      "baseline_f1": 0.8056,
-      "f1_delta": 0.1418,
+      "main_f1": 0.9286,
+      "baseline_f1": 0.623,
+      "f1_delta": 0.3056,
       "main_better": true
     },
     "cosine": {
-      "main_f1": 0.9474,
-      "baseline_f1": 0.8333,
-      "f1_delta": 0.1141,
+      "main_f1": 0.9286,
+      "baseline_f1": 0.7761,
+      "f1_delta": 0.1525,
       "main_better": true
     }
   },
   "sensitivity_analysis": {
-    "rank_correlation_min": 0.976,
+    "rank_correlation_min": 0.9675,
     "rank_correlation_max": 1.0,
-    "rank_correlation_mean": 0.9936,
+    "rank_correlation_mean": 0.9897,
     "stable": true,
     "perturbation_results": [
       {
         "perturbed": "gene",
         "direction": "+",
-        "spearman_r": 0.9955
+        "spearman_r": 0.9948
       },
       {
         "perturbed": "gene",
         "direction": "-",
-        "spearman_r": 0.992
+        "spearman_r": 0.9884
       },
       {
         "perturbed": "pathway",
         "direction": "+",
-        "spearman_r": 0.9938
+        "spearman_r": 0.9947
       },
       {
         "perturbed": "pathway",
         "direction": "-",
-        "spearman_r": 0.9862
+        "spearman_r": 0.9913
       },
       {
         "perturbed": "ppi",
         "direction": "+",
-        "spearman_r": 1.0
+        "spearman_r": 0.9986
       },
       {
         "perturbed": "ppi",
         "direction": "-",
-        "spearman_r": 1.0
+        "spearman_r": 0.9993
       },
       {
         "perturbed": "similarity",
         "direction": "+",
-        "spearman_r": 1.0
+        "spearman_r": 0.9814
       },
       {
         "perturbed": "similarity",
         "direction": "-",
-        "spearman_r": 1.0
+        "spearman_r": 0.9675
       },
       {
         "perturbed": "mechanism",
         "direction": "+",
-        "spearman_r": 0.976
+        "spearman_r": 0.9856
       },
       {
         "perturbed": "mechanism",
         "direction": "-",
-        "spearman_r": 0.9794
+        "spearman_r": 0.9742
       },
       {
         "perturbed": "literature",
@@ -257,7 +257,7 @@
         "spearman_r": 1.0
       }
     ],
-    "paper_statement": "Sensitivity analysis: Spearman \u03c1 range [0.976, 1.000], mean=0.994 across \u00b110% weight perturbations. Rankings are stable (\u03c1_min \u2265 0.90)."
+    "paper_statement": "Sensitivity analysis: Spearman \u03c1 range [0.968, 1.000], mean=0.990 across \u00b110% weight perturbations. Rankings are stable (\u03c1_min \u2265 0.90)."
   },
   "positive_results": [
     {
@@ -266,12 +266,12 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5483,
-      "calibrated_score": 0.5483,
-      "rank": 93,
+      "raw_score": 0.734,
+      "calibrated_score": 0.734,
+      "rank": 16,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.4,
@@ -281,16 +281,17 @@
       ],
       "notes": "FDA-approved for PAH (Revatio). Landmark RCT.",
       "score_components": {
-        "gene_score": 0.2296,
+        "gene_score": 0.3464,
         "pathway_score": 0.1761006289308176,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3339,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PDE5A",
           "NOS3",
-          "VEGFA"
+          "VEGFA",
+          "PDE5A",
+          "COPA"
         ],
         "shared_pathways": [
           "cGMP-PKG signaling",
@@ -298,7 +299,7 @@
           "Pulmonary vascular remodeling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -306,9 +307,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4192,
-      "calibrated_score": 0.4192,
-      "rank": 118,
+      "raw_score": 0.5001,
+      "calibrated_score": 0.5001,
+      "rank": 156,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -322,31 +323,38 @@
       ],
       "notes": "Phase 2 data (IMPRES trial). PDGFRB expressed in PAH vessels.",
       "score_components": {
-        "gene_score": 0.1322,
+        "gene_score": 0.2321,
         "pathway_score": 0.28846960167714886,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3842,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PDGFRB",
-          "CSF1R",
+          "PDGFRA",
+          "BIRC5",
           "BCR",
           "KIT",
+          "NF1",
+          "RET",
           "ABL1",
-          "PDGFRA",
-          "BIRC5"
+          "CSF1R",
+          "EGFR",
+          "ALK",
+          "BRAF",
+          "PDGFRB",
+          "ABCA3",
+          "KRAS"
         ],
         "shared_pathways": [
-          "AMPK signaling pathway",
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Insulin signaling pathway",
           "IgSF CAM signaling",
-          "ErbB signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
-          "Insulin signaling pathway"
+          "AMPK signaling pathway",
+          "ErbB signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "bosentan",
@@ -354,8 +362,8 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 1.0,
-      "calibrated_score": 1.0,
+      "raw_score": 0.9882,
+      "calibrated_score": 0.9882,
       "rank": 2,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
@@ -371,8 +379,8 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.09559748427672955,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.294,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
@@ -380,11 +388,11 @@
           "EDNRA"
         ],
         "shared_pathways": [
-          "Endothelin signaling",
-          "Pulmonary vascular remodeling"
+          "Pulmonary vascular remodeling",
+          "Endothelin signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "rituximab",
@@ -392,9 +400,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5113,
-      "calibrated_score": 0.5113,
-      "rank": 76,
+      "raw_score": 0.5296,
+      "calibrated_score": 0.5296,
+      "rank": 72,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -409,30 +417,30 @@
       "score_components": {
         "gene_score": 0.2804,
         "pathway_score": 0.4510067114093961,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3886,
         "similarity_score": 0.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
           "JAK2",
-          "MS4A1",
-          "FCGR2A",
           "IL6",
-          "CXCL13"
+          "CXCL13",
+          "MS4A1",
+          "FCGR2A"
         ],
         "shared_pathways": [
-          "Viral protein interaction with cytokine and cytokine receptor",
-          "EGFR tyrosine kinase inhibitor resistance",
-          "JAK-STAT signaling pathway",
-          "Neutrophil extracellular trap formation",
-          "B-cell differentiation",
-          "JAK-STAT signaling",
           "NF-kappa B signaling pathway",
+          "Neutrophil extracellular trap formation",
+          "JAK-STAT signaling",
+          "JAK-STAT signaling pathway",
           "Chemokine signaling pathway",
-          "B-cell receptor signaling"
+          "EGFR tyrosine kinase inhibitor resistance",
+          "Viral protein interaction with cytokine and cytokine receptor",
+          "B-cell receptor signaling",
+          "B-cell differentiation"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "methotrexate",
@@ -440,12 +448,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4552,
-      "calibrated_score": 0.4552,
-      "rank": 89,
+      "raw_score": 0.6303,
+      "calibrated_score": 0.6303,
+      "rank": 17,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
@@ -455,30 +463,32 @@
       ],
       "notes": "Anchor DMARD for RA for decades.",
       "score_components": {
-        "gene_score": 0.1049,
+        "gene_score": 0.1177,
         "pathway_score": 0.13154362416107385,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3792,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "GATA3",
-          "DHFR",
-          "NR3C1",
-          "TNFAIP3",
-          "ALOX5",
-          "TLR4",
           "IKZF1",
+          "DHFR",
+          "TLR4",
+          "NR3C1",
           "NFATC1",
+          "IL1RN",
+          "ALOX5",
+          "SLC22A11",
+          "GATA3",
+          "TNFAIP3",
           "FLT3"
         ],
         "shared_pathways": [
-          "Lysosome biogenesis",
           "Arachidonic acid metabolism",
-          "Serotonergic synapse"
+          "Serotonergic synapse",
+          "Lysosome biogenesis"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "hydroxychloroquine",
@@ -486,9 +496,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5186,
-      "calibrated_score": 0.5186,
-      "rank": 75,
+      "raw_score": 0.5054,
+      "calibrated_score": 0.5054,
+      "rank": 87,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -501,51 +511,51 @@
       ],
       "notes": "Standard DMARD in RA triple therapy.",
       "score_components": {
-        "gene_score": 0.2297,
+        "gene_score": 0.2296,
         "pathway_score": 0.6586129753914989,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3538,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "TLR9",
-          "TLR7",
+          "TNF",
           "PTGS2",
-          "TNF"
+          "TLR7"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
-          "Serotonergic synapse",
-          "Measles",
-          "Neutrophil extracellular trap formation",
-          "Chagas disease",
           "Arachidonic acid metabolism",
+          "Measles",
+          "Chagas disease",
           "NF-kappa B signaling pathway",
-          "Efferocytosis",
-          "Toll-like receptor signaling pathway",
           "VEGF signaling pathway",
-          "Salmonella infection",
+          "African trypanosomiasis",
+          "Neutrophil extracellular trap formation",
+          "EGFR tyrosine kinase inhibitor resistance",
+          "Efferocytosis",
+          "Serotonergic synapse",
           "Lysosome biogenesis",
-          "Influenza A",
-          "African trypanosomiasis"
+          "Toll-like receptor signaling pathway",
+          "Salmonella infection",
+          "Influenza A"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
       "disease": "polycystic ovary syndrome",
       "disease_area": "metabolic",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.204,
-      "calibrated_score": 0.204,
-      "rank": 298,
+      "raw_score": 0.5323,
+      "calibrated_score": 0.5323,
+      "rank": 71,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.28,
       "mechanism": "AMPK activator \u2014 reduces insulin resistance and androgen excess in PCOS",
       "sources": [
@@ -553,19 +563,26 @@
       ],
       "notes": "Systematic review and meta-analysis of metformin in PCOS.",
       "score_components": {
-        "gene_score": 0.0411,
+        "gene_score": 0.2418,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3731,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
           "PTEN",
-          "PPARG"
+          "KCNJ11",
+          "NRAS",
+          "HRAS",
+          "HNF1B",
+          "PPARG",
+          "PIK3CA",
+          "MAP2K1",
+          "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "thalidomide",
@@ -573,12 +590,12 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3749,
-      "calibrated_score": 0.3749,
-      "rank": 151,
+      "raw_score": 0.6885,
+      "calibrated_score": 0.6885,
+      "rank": 8,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
@@ -588,41 +605,41 @@
       ],
       "notes": "Landmark Singhal et al. N Engl J Med 1999 paper.",
       "score_components": {
-        "gene_score": 0.1998,
+        "gene_score": 0.1993,
         "pathway_score": 0.2535211267605634,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.4487,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CUL4A",
+          "RBX1",
           "DDB1",
+          "CRBN",
           "PTGS2",
           "FGFR2",
-          "CRBN",
-          "RBX1",
+          "CUL4A",
           "IRF4"
         ],
         "shared_pathways": [
           "Ubiquitin-proteasome system"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "dexamethasone",
       "disease": "multiple myeloma",
       "disease_area": "oncology",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.28,
-      "calibrated_score": 0.28,
-      "rank": 254,
+      "raw_score": 0.4421,
+      "calibrated_score": 0.4421,
+      "rank": 162,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.3,
       "mechanism": "Glucocorticoid receptor agonist \u2014 induces apoptosis in myeloma cells",
       "sources": [
@@ -630,19 +647,23 @@
       ],
       "notes": "Backbone of almost all myeloma regimens.",
       "score_components": {
-        "gene_score": 0.0221,
+        "gene_score": 0.0791,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.443,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CD86",
-          "NR3C1"
+          "RET",
+          "NR3C1",
+          "JAK3",
+          "KDR",
+          "RARA",
+          "CD86"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "bortezomib",
@@ -650,12 +671,12 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4994,
-      "calibrated_score": 0.4994,
-      "rank": 107,
+      "raw_score": 0.6557,
+      "calibrated_score": 0.6557,
+      "rank": 13,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.3,
@@ -665,60 +686,61 @@
       ],
       "notes": "FDA approved for myeloma 2003.",
       "score_components": {
-        "gene_score": 0.6333,
+        "gene_score": 0.6236,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.497,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "PSMD1",
-          "PSMA2",
-          "SEM1",
-          "PSMC4",
-          "PSMD7",
-          "PSMA1",
+          "ADRM1",
           "PSMA8",
-          "PSMB11",
-          "PSMC6",
-          "PSMA5",
-          "PSMD8",
-          "PSMB1",
-          "PSMA3",
-          "FLT3",
+          "TP53",
+          "PSMB8",
+          "PSMB4",
+          "BCL2",
+          "PSMD3",
+          "PSMC4",
           "PSMD2",
+          "PSMB3",
           "PSMA6",
+          "PSMA2",
+          "PSMD12",
+          "PSMD7",
+          "GATA2",
+          "PSMD4",
+          "SEM1",
+          "PSMC6",
+          "PSMD6",
+          "PSMD8",
+          "PSMD14",
+          "PSMB7",
+          "PSMA5",
+          "PSMA1",
+          "PSMB1",
+          "PSMB6",
+          "PSMA3",
+          "PSMC3",
+          "PSMB9",
+          "PSMC5",
+          "PSMB11",
+          "PSMA7",
+          "FLT3",
+          "PSMD1",
+          "PSMB5",
+          "PSMA4",
+          "CCND1",
+          "PSMB10",
+          "PSMD13",
+          "PSMC1",
           "PSMC2",
           "FGFR3",
-          "PSMB2",
-          "PSMB8",
-          "PSMB3",
-          "PSMB4",
-          "PSMD3",
-          "PSMD12",
-          "PSMB5",
-          "PSMB6",
-          "PSMC1",
-          "PSMC3",
-          "ADRM1",
-          "CCND1",
-          "PSMD13",
           "PSMD11",
-          "PSMD14",
-          "PSMB10",
-          "PSMD4",
-          "BCL2",
-          "TP53",
-          "PSMA7",
-          "PSMB7",
-          "PSMD6",
-          "PSMB9",
-          "PSMA4",
-          "PSMC5"
+          "PSMB2"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -726,9 +748,9 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7136,
-      "calibrated_score": 0.7136,
-      "rank": 9,
+      "raw_score": 0.7965,
+      "calibrated_score": 0.7965,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
       "rank_pass": true,
@@ -741,47 +763,51 @@
       ],
       "notes": "Prototype precision oncology. ABL1 is dominant CML gene.",
       "score_components": {
-        "gene_score": 0.4148,
+        "gene_score": 0.4497,
         "pathway_score": 0.4601769911504425,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4743,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "PDGFRA",
+          "JAK2",
+          "SMAD3",
+          "IKZF1",
+          "YES1",
+          "CSF3R",
+          "RET",
+          "NF1",
+          "KIT",
+          "FRK",
+          "MYC",
           "BRAF",
           "PRKCH",
-          "IKZF1",
-          "FLT3",
-          "IDH1",
-          "CSF1R",
-          "KRAS",
           "BCR",
-          "MYC",
-          "LCK",
-          "NF1",
-          "PTEN",
-          "PDGFRB",
-          "RUNX1",
-          "KIT",
           "ABL1",
-          "CSF3R",
-          "FRK",
-          "YES1",
-          "JAK2",
-          "LYN",
+          "CSF1R",
+          "RUNX1",
+          "IRAK1",
           "CTNNB1",
+          "PDGFRB",
+          "FLT3",
+          "PTEN",
+          "LCK",
+          "LYN",
+          "HCK",
           "EGFR",
-          "HCK"
+          "IDH1",
+          "KRAS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Hematopoietic cell lineage",
           "IgSF CAM signaling",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
-          "ErbB signaling pathway",
-          "Hematopoietic cell lineage"
+          "ErbB signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -789,9 +815,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.28,
-      "calibrated_score": 0.28,
-      "rank": 191,
+      "raw_score": 0.32,
+      "calibrated_score": 0.32,
+      "rank": 236,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -806,14 +832,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2922,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "minoxidil",
@@ -821,9 +847,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3013,
-      "calibrated_score": 0.3013,
-      "rank": 93,
+      "raw_score": 0.3199,
+      "calibrated_score": 0.3199,
+      "rank": 187,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -836,9 +862,9 @@
       ],
       "notes": "Classic repurposing from hypertension to hair loss.",
       "score_components": {
-        "gene_score": 0.1445,
+        "gene_score": 0.1443,
         "pathway_score": 0.1680672268907563,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2899,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -850,7 +876,7 @@
           "Hair follicle cycling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "finasteride",
@@ -858,12 +884,12 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5932,
-      "calibrated_score": 0.5932,
-      "rank": 40,
+      "raw_score": 0.5323,
+      "calibrated_score": 0.5323,
+      "rank": 53,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
-      "rank_pass": true,
+      "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -873,24 +899,24 @@
       ],
       "notes": "Approved for androgenetic alopecia.",
       "score_components": {
-        "gene_score": 0.1941,
+        "gene_score": 0.1937,
         "pathway_score": 0.6823529411764705,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3113,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "SRD5A2",
-          "AR"
+          "AR",
+          "SRD5A2"
         ],
         "shared_pathways": [
           "Hair follicle cycling",
-          "5-alpha reductase pathway",
-          "Androgen receptor signaling"
+          "Androgen receptor signaling",
+          "5-alpha reductase pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "aspirin",
@@ -898,9 +924,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2834,
-      "calibrated_score": 0.2834,
-      "rank": 238,
+      "raw_score": 0.3368,
+      "calibrated_score": 0.3368,
+      "rank": 243,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -913,29 +939,29 @@
       ],
       "notes": "Standard antiplatelet in secondary prevention.",
       "score_components": {
-        "gene_score": 0.1376,
+        "gene_score": 0.1299,
         "pathway_score": 0.032345013477088944,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3807,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NAT2",
-          "TGFB1",
-          "PTGS2",
-          "LPA",
           "PTGS1",
           "ITGA2B",
-          "ACE",
-          "PPARG",
+          "PTGS2",
+          "TGFB1",
+          "HMGCR",
           "CDH13",
-          "HMGCR"
+          "ACE",
+          "NAT2",
+          "PPARG",
+          "LPA"
         ],
         "shared_pathways": [
           "NF-kappa B signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atorvastatin",
@@ -943,9 +969,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7626,
-      "calibrated_score": 0.7626,
-      "rank": 14,
+      "raw_score": 0.6461,
+      "calibrated_score": 0.6461,
+      "rank": 23,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -960,7 +986,7 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.045822102425876005,
-        "ppi_score": 0.0,
+        "ppi_score": 0.304,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -972,7 +998,7 @@
           "Cholesterol metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "tamoxifen",
@@ -980,9 +1006,9 @@
       "disease_area": "other",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4276,
-      "calibrated_score": 0.4276,
-      "rank": 91,
+      "raw_score": 0.6496,
+      "calibrated_score": 0.6496,
+      "rank": 34,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -995,32 +1021,34 @@
       ],
       "notes": "Definitive for ER+ breast cancer.",
       "score_components": {
-        "gene_score": 0.1817,
+        "gene_score": 0.216,
         "pathway_score": 0.326530612244898,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4695,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "NRG1",
-          "CCND1",
-          "TP53",
           "BRCA1",
-          "PIK3CA",
           "ESR1",
-          "NF1",
-          "CYP19A1",
           "ERBB2",
+          "CYP19A1",
+          "NRG1",
+          "TP53",
+          "NF1",
+          "NTRK1",
+          "CCND1",
+          "IDH1",
+          "PIK3CA",
           "TYMS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Estrogen receptor signaling",
           "Homologous recombination",
           "Nuclear receptor signaling",
-          "Estrogen receptor signaling"
+          "EGFR tyrosine kinase inhibitor resistance"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "raloxifene",
@@ -1028,12 +1056,12 @@
       "disease_area": "other",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.421,
-      "calibrated_score": 0.421,
-      "rank": 94,
+      "raw_score": 0.7078,
+      "calibrated_score": 0.7078,
+      "rank": 22,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -1043,20 +1071,21 @@
       ],
       "notes": "STAR trial vs tamoxifen.",
       "score_components": {
-        "gene_score": 0.4697,
+        "gene_score": 1.0,
         "pathway_score": 0.06802721088435375,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3761,
         "similarity_score": 0.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "ESR1"
+          "ESR1",
+          "ESR2"
         ],
         "shared_pathways": [
           "Estrogen receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "amantadine",
@@ -1064,9 +1093,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7401,
-      "calibrated_score": 0.7401,
-      "rank": 11,
+      "raw_score": 0.655,
+      "calibrated_score": 0.655,
+      "rank": 20,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -1081,22 +1110,22 @@
       "score_components": {
         "gene_score": 0.8046,
         "pathway_score": 0.14765625,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3215,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "DRD2",
           "GRIN2A",
-          "GRIN1",
-          "DRD2"
+          "GRIN1"
         ],
         "shared_pathways": [
-          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling"
+          "Glutamate signaling",
+          "NMDA receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "rasagiline",
@@ -1104,9 +1133,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8189,
-      "calibrated_score": 0.8189,
-      "rank": 3,
+      "raw_score": 0.8304,
+      "calibrated_score": 0.8304,
+      "rank": 4,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": true,
@@ -1121,13 +1150,13 @@
       "score_components": {
         "gene_score": 0.5471,
         "pathway_score": 0.12031249999999999,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3268,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "COMT",
           "MAOB",
+          "COMT",
           "DRD2"
         ],
         "shared_pathways": [
@@ -1136,7 +1165,7 @@
           "Signaling pathways regulating pluripotency of stem cells"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
@@ -1144,12 +1173,12 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4861,
-      "calibrated_score": 0.4861,
-      "rank": 66,
+      "raw_score": 0.6558,
+      "calibrated_score": 0.6558,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.4,
@@ -1161,24 +1190,24 @@
       "score_components": {
         "gene_score": 0.249,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4011,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "HNF1B",
-          "SLC22A3",
-          "TCF7L2",
-          "SLC2A2",
           "PTEN",
+          "KCNJ11",
+          "SLC22A3",
           "BDNF",
+          "SLC2A2",
           "PPARA",
+          "HNF1B",
           "PPARG",
-          "KCNJ11"
+          "TCF7L2"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "pioglitazone",
@@ -1186,9 +1215,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6457,
-      "calibrated_score": 0.6457,
-      "rank": 9,
+      "raw_score": 0.6514,
+      "calibrated_score": 0.6514,
+      "rank": 4,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -1203,35 +1232,35 @@
       "score_components": {
         "gene_score": 0.7077,
         "pathway_score": 0.11590909090909092,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3451,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARA",
-          "PPARG"
+          "PPARG",
+          "PPARA"
         ],
         "shared_pathways": [
           "Glucose metabolism",
           "PPAR signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "sirolimus",
       "disease": "tuberous sclerosis",
       "disease_area": "rare_disease",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2778,
-      "calibrated_score": 0.2778,
-      "rank": 71,
+      "raw_score": 0.6585,
+      "calibrated_score": 0.6585,
+      "rank": 42,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.35,
       "mechanism": "mTOR (MTOR) inhibitor \u2014 targets hyperactivated TSC1/TSC2-mTOR pathway",
       "sources": [
@@ -1239,35 +1268,40 @@
       ],
       "notes": "EXIST-1/EXIST-2 trials. Directly targets TSC pathway.",
       "score_components": {
-        "gene_score": 0.142,
+        "gene_score": 0.1766,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3939,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
+          "PTEN",
+          "FKBP1A",
+          "TP53",
+          "NF1",
+          "WT1",
           "TSC2",
-          "TSC1",
-          "FKBP1A"
+          "HRAS",
+          "TSC1"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "valproic acid",
       "disease": "epilepsy",
       "disease_area": "neurological",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2797,
-      "calibrated_score": 0.2797,
-      "rank": 188,
+      "raw_score": 0.4834,
+      "calibrated_score": 0.4834,
+      "rank": 134,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.3,
       "mechanism": "Sodium channel blocker + GABA potentiator + HDAC inhibitor \u2014 broad anticonvulsant",
       "sources": [
@@ -1275,24 +1309,27 @@
       ],
       "notes": "Broad-spectrum AED for multiple seizure types.",
       "score_components": {
-        "gene_score": 0.1366,
+        "gene_score": 0.1934,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4021,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "ABAT",
-          "CACNA1C",
-          "CACNA1D",
-          "GRIN2B",
-          "SCN1A",
           "ALDH5A1",
-          "CACNA1F"
+          "POLG",
+          "CACNA1F",
+          "ATM",
+          "CACNA1C",
+          "SCN1A",
+          "ABAT",
+          "GRIN2B",
+          "SMN1",
+          "CACNA1D"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "gabapentin",
@@ -1300,12 +1337,12 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.585,
-      "calibrated_score": 0.585,
-      "rank": 92,
+      "raw_score": 0.8634,
+      "calibrated_score": 0.8634,
+      "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -1315,57 +1352,62 @@
       ],
       "notes": "Approved adjunctive AED.",
       "score_components": {
-        "gene_score": 0.6419,
+        "gene_score": 0.7671,
         "pathway_score": 0.06230529595015576,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3704,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNA1G",
-          "CACNB4",
-          "CACNG5",
-          "CACNG2",
-          "KCNQ3",
-          "CACNB1",
-          "CACNA1S",
-          "CACNA1I",
-          "CACNB3",
-          "CACNA1D",
-          "CACNA2D3",
-          "CACNA1H",
-          "CACNA2D1",
-          "CACNG1",
           "CACNA1F",
           "CACNA1C",
-          "CACNA1B",
-          "CACNA1E",
-          "CACNG7",
           "CACNA2D2",
-          "CACNG3",
+          "CACNB4",
+          "CACNA1B",
+          "CACNA2D3",
+          "CACNA1E",
+          "CACNB1",
+          "KCNQ5",
+          "CACNA1H",
+          "CACNA1D",
+          "CACNG6",
+          "CACNA2D1",
+          "CACNA1S",
+          "ABCB1",
+          "CACNB3",
+          "CACNA2D4",
+          "CACNG1",
+          "CACNG7",
           "CACNB2",
-          "CACNA1A"
+          "CACNG2",
+          "CACNA1I",
+          "CACNG4",
+          "CACNG5",
+          "KCNQ3",
+          "CACNA1A",
+          "CACNG3",
+          "CACNA1G"
         ],
         "shared_pathways": [
           "cGMP-PKG signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "eculizumab",
       "disease": "paroxysmal nocturnal hemoglobinuria",
       "disease_area": "rare_disease",
-      "status": "found",
+      "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3515,
-      "calibrated_score": 0.3515,
-      "rank": 1,
+      "raw_score": 0.3394,
+      "calibrated_score": 0.3394,
+      "rank": 37,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
-      "rank_pass": true,
-      "score_pass": true,
-      "pass": true,
+      "rank_pass": false,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.35,
       "mechanism": "Anti-C5 monoclonal antibody \u2014 blocks terminal complement activation",
       "sources": [
@@ -1373,9 +1415,9 @@
       ],
       "notes": "Landmark TRIUMPH trial. C5 is the principal PNH gene.",
       "score_components": {
-        "gene_score": 0.1206,
+        "gene_score": 0.0735,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3263,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
@@ -1384,7 +1426,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "ivacaftor",
@@ -1392,8 +1434,8 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8199,
-      "calibrated_score": 0.8199,
+      "raw_score": 0.9416,
+      "calibrated_score": 0.9416,
       "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
@@ -1409,19 +1451,19 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.06405693950177936,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3412,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CFTR",
-          "SLC26A9"
+          "SLC26A9",
+          "CFTR"
         ],
         "shared_pathways": [
           "Chloride ion transport"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "hydroxychloroquine",
@@ -1429,12 +1471,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.449,
-      "calibrated_score": 0.449,
-      "rank": 87,
+      "raw_score": 0.6007,
+      "calibrated_score": 0.6007,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.28,
@@ -1444,29 +1486,30 @@
       ],
       "notes": "Cornerstone drug for SLE \u2014 reduces flares and improves survival.",
       "score_components": {
-        "gene_score": 0.1519,
+        "gene_score": 0.2254,
         "pathway_score": 0.6215384615384616,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3692,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "TLR9",
-          "TLR7",
-          "PTGS2"
+          "TNF",
+          "PTGS2",
+          "TLR7"
         ],
         "shared_pathways": [
           "Measles",
           "Neutrophil extracellular trap formation",
           "Chagas disease",
+          "African trypanosomiasis",
+          "Lysosome biogenesis",
           "Toll-like receptor signaling pathway",
           "Salmonella infection",
-          "Lysosome biogenesis",
-          "Influenza A",
-          "African trypanosomiasis"
+          "Influenza A"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "colchicine",
@@ -1474,9 +1517,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4511,
-      "calibrated_score": 0.4511,
-      "rank": 91,
+      "raw_score": 0.5655,
+      "calibrated_score": 0.5655,
+      "rank": 49,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -1489,34 +1532,34 @@
       ],
       "notes": "Acute and chronic gout prophylaxis. Also for pericarditis.",
       "score_components": {
-        "gene_score": 0.3791,
+        "gene_score": 0.3718,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3555,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NRG1",
-          "TUBB2B",
-          "TUBB2A",
-          "TUBB8",
-          "TUBB4A",
-          "TUBB3",
-          "TUBB1",
-          "TUBA1A",
-          "BDNF",
-          "TUBA4A",
-          "TUBA1C",
-          "TUBB4B",
-          "TUBA3C",
-          "TUBA3E",
           "TUBB",
           "TUBB6",
-          "TUBA1B"
+          "TUBA4A",
+          "TUBA3E",
+          "NRG1",
+          "TUBB4A",
+          "TUBB2A",
+          "BDNF",
+          "TUBA1A",
+          "TUBB3",
+          "TUBB2B",
+          "TUBB8",
+          "TUBA1B",
+          "TUBB1",
+          "TUBA3C",
+          "TUBA1C",
+          "TUBB4B"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "allopurinol",
@@ -1524,9 +1567,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5557,
-      "calibrated_score": 0.5557,
-      "rank": 80,
+      "raw_score": 0.7035,
+      "calibrated_score": 0.7035,
+      "rank": 22,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1539,28 +1582,29 @@
       ],
       "notes": "First-line ULT for gout.",
       "score_components": {
-        "gene_score": 0.0928,
+        "gene_score": 0.1374,
         "pathway_score": 0.46046511627906983,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3248,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "GCKR",
+          "UGT1A1",
+          "PKD2",
           "XDH",
-          "PKD2"
+          "GCKR"
         ],
         "shared_pathways": [
-          "Drug metabolism - other enzymes",
-          "Serotonergic synapse",
-          "Nucleotide metabolism",
-          "Purine metabolism",
           "Arachidonic acid metabolism",
           "Caffeine metabolism",
-          "Ascorbate and aldarate metabolism"
+          "Purine metabolism",
+          "Ascorbate and aldarate metabolism",
+          "Nucleotide metabolism",
+          "Serotonergic synapse",
+          "Drug metabolism - other enzymes"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "colchicine",
@@ -1568,12 +1612,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4113,
-      "calibrated_score": 0.4113,
-      "rank": 53,
+      "raw_score": 0.526,
+      "calibrated_score": 0.526,
+      "rank": 18,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -1583,33 +1627,34 @@
       ],
       "notes": "COPE trial. Halves recurrence rate in pericarditis.",
       "score_components": {
-        "gene_score": 0.3622,
+        "gene_score": 0.3511,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3459,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TUBB2B",
-          "TUBB2A",
-          "TUBB8",
-          "TUBB4A",
-          "TUBB3",
-          "TUBB1",
-          "TUB",
-          "TUBA1A",
-          "TUBA4A",
-          "TUBA1C",
-          "TUBB4B",
-          "TUBA3C",
-          "TUBA3E",
           "TUBB",
           "TUBB6",
-          "TUBA1B"
+          "TUBA4A",
+          "TUBA3E",
+          "TUBB4A",
+          "TUBB2A",
+          "NLRP3",
+          "TUB",
+          "TUBA1A",
+          "TUBB3",
+          "TUBB2B",
+          "TUBB8",
+          "TUBA1B",
+          "TUBB1",
+          "TUBA3C",
+          "TUBA1C",
+          "TUBB4B"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "spironolactone",
@@ -1617,9 +1662,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2552,
-      "calibrated_score": 0.2552,
-      "rank": 320,
+      "raw_score": 0.3,
+      "calibrated_score": 0.3,
+      "rank": 363,
       "total_candidates": 3003,
       "expected_rank_top_n": 35,
       "rank_pass": false,
@@ -1632,9 +1677,9 @@
       ],
       "notes": "RALES trial. Reduces mortality in HFrEF.",
       "score_components": {
-        "gene_score": 0.1546,
+        "gene_score": 0.1544,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.355,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -1645,7 +1690,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "donepezil",
@@ -1653,9 +1698,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4987,
-      "calibrated_score": 0.4987,
-      "rank": 81,
+      "raw_score": 0.6077,
+      "calibrated_score": 0.6077,
+      "rank": 25,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1670,23 +1715,23 @@
       "score_components": {
         "gene_score": 0.3379,
         "pathway_score": 0.1861720067453626,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3462,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BCHE",
+          "APOE",
           "ACHE",
-          "APOE"
+          "BCHE"
         ],
         "shared_pathways": [
-          "Alzheimer disease",
           "Cholinergic signaling",
+          "Acetylcholine degradation",
           "cGMP-PKG signaling pathway",
-          "Acetylcholine degradation"
+          "Alzheimer disease"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "memantine",
@@ -1694,9 +1739,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8315,
-      "calibrated_score": 0.8315,
-      "rank": 1,
+      "raw_score": 0.7608,
+      "calibrated_score": 0.7608,
+      "rank": 2,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -1711,22 +1756,22 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.12748735244519394,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3092,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "GRIN2B",
           "GRIN2A",
-          "GRIN1",
-          "GRIN2B"
+          "GRIN1"
         ],
         "shared_pathways": [
-          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling"
+          "Glutamate signaling",
+          "NMDA receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atorvastatin",
@@ -1734,9 +1779,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.9888,
-      "calibrated_score": 0.9888,
-      "rank": 2,
+      "raw_score": 0.8812,
+      "calibrated_score": 0.8812,
+      "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": true,
@@ -1751,8 +1796,8 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.06273062730627306,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3027,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
@@ -1763,7 +1808,7 @@
           "Cholesterol metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "finasteride",
@@ -1771,9 +1816,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3941,
-      "calibrated_score": 0.3941,
-      "rank": 79,
+      "raw_score": 0.544,
+      "calibrated_score": 0.544,
+      "rank": 34,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1786,25 +1831,25 @@
       ],
       "notes": "First approved 5-ARI for BPH.",
       "score_components": {
-        "gene_score": 0.1986,
+        "gene_score": 0.195,
         "pathway_score": 0.29319371727748694,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3122,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "SRD5A2",
-          "AR"
+          "AR",
+          "SRD5A2"
         ],
         "shared_pathways": [
-          "Tryptophan metabolism",
           "Hair follicle cycling",
+          "Androgen receptor signaling",
           "5-alpha reductase pathway",
-          "Androgen receptor signaling"
+          "Tryptophan metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -1812,9 +1857,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6361,
-      "calibrated_score": 0.6361,
-      "rank": 28,
+      "raw_score": 0.5337,
+      "calibrated_score": 0.5337,
+      "rank": 58,
       "total_candidates": 3003,
       "expected_rank_top_n": 60,
       "rank_pass": true,
@@ -1829,7 +1874,7 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3125,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -1839,7 +1884,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -1847,9 +1892,9 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6581,
-      "calibrated_score": 0.6581,
-      "rank": 42,
+      "raw_score": 0.6886,
+      "calibrated_score": 0.6886,
+      "rank": 30,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -1862,43 +1907,45 @@
       ],
       "notes": "Transformed prognosis of GIST. KIT expressed in >85% GIST.",
       "score_components": {
-        "gene_score": 0.331,
+        "gene_score": 0.3456,
         "pathway_score": 0.3615819209039548,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4702,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BRAF",
-          "ALK",
-          "IKZF1",
-          "FLT3",
-          "CSF1R",
-          "KRAS",
-          "BCR",
-          "HGF",
-          "NTRK1",
-          "NF1",
-          "PTEN",
-          "PDGFRB",
-          "KIT",
-          "ABL1",
           "PDGFRA",
-          "FRK",
+          "JAK2",
+          "IKZF1",
           "RET",
+          "NF1",
+          "KIT",
+          "FRK",
+          "BRAF",
+          "BCR",
+          "ABL1",
+          "HGF",
+          "CSF1R",
+          "CTNNB1",
+          "PDGFRB",
+          "PTEN",
+          "FLT3",
+          "NTRK1",
+          "EGFR",
+          "ALK",
           "NF2",
-          "EGFR"
+          "KRAS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Hematopoietic cell lineage",
           "IgSF CAM signaling",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
           "ErbB signaling pathway",
-          "Hematopoietic cell lineage",
           "Apoptosis"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "natalizumab",
@@ -1906,12 +1953,12 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5446,
-      "calibrated_score": 0.5446,
-      "rank": 47,
+      "raw_score": 0.4707,
+      "calibrated_score": 0.4707,
+      "rank": 113,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
-      "rank_pass": true,
+      "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.22,
@@ -1923,7 +1970,7 @@
       "score_components": {
         "gene_score": 0.8113,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3115,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -1934,7 +1981,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "riluzole",
@@ -1942,9 +1989,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4373,
-      "calibrated_score": 0.4373,
-      "rank": 102,
+      "raw_score": 0.5132,
+      "calibrated_score": 0.5132,
+      "rank": 58,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -1957,28 +2004,28 @@
       ],
       "notes": "Only small-molecule ALS drug with survival benefit.",
       "score_components": {
-        "gene_score": 0.5268,
+        "gene_score": 0.5226,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3492,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "SCN9A",
           "TARDBP",
-          "SCN4A",
-          "SCN11A",
           "SCN3A",
-          "SCN7A",
-          "SCN8A",
+          "SCN4A",
+          "SCN1A",
+          "SCN11A",
           "SCN2A",
           "SCN5A",
+          "SCN8A",
           "SCN10A",
-          "SCN1A"
+          "SCN7A",
+          "SCN9A"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     }
   ],
   "negative_results": [
@@ -1990,7 +2037,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1370,
+      "rank": 2241,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2005,14 +2052,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3119,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -2022,7 +2069,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1141,
+      "rank": 2239,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2037,29 +2084,29 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3077,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
       "disease": "multiple myeloma",
       "disease_area": "oncology",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1164,
-      "calibrated_score": 0.1164,
-      "rank": 440,
+      "raw_score": 0.2532,
+      "calibrated_score": 0.2532,
+      "rank": 370,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "Biguanide \u2014 AMPK activation has no established anti-myeloma mechanism",
       "sources": [
@@ -2067,90 +2114,95 @@
       ],
       "notes": "Some in-vitro data but no clinical benefit in myeloma.",
       "score_components": {
-        "gene_score": 0.0967,
+        "gene_score": 0.1198,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4383,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
+          "PTEN",
+          "FLT3",
           "NRAS",
           "IDH1",
-          "FLT3",
           "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "aspirin",
       "disease": "parkinson disease",
       "disease_area": "neurological",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0865,
-      "calibrated_score": 0.0865,
-      "rank": 783,
+      "raw_score": 0.2535,
+      "calibrated_score": 0.2535,
+      "rank": 720,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "COX inhibitor \u2014 no established connection to dopaminergic neurodegeneration",
       "sources": [],
       "notes": "Aspirin targets COX pathway, unrelated to dopamine/synuclein.",
       "score_components": {
-        "gene_score": 0.0214,
+        "gene_score": 0.0574,
         "pathway_score": 0.05624999999999999,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3907,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
           "HMGCR",
-          "B4GALT2"
+          "TSC1",
+          "PIK3CA",
+          "B4GALT2",
+          "GFAP"
         ],
         "shared_pathways": [
-          "Protein processing in endoplasmic reticulum",
-          "Non-alcoholic fatty liver disease"
+          "Non-alcoholic fatty liver disease",
+          "Protein processing in endoplasmic reticulum"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "simvastatin",
       "disease": "cystic fibrosis",
       "disease_area": "rare_disease",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.079,
-      "calibrated_score": 0.079,
-      "rank": 651,
+      "raw_score": 0.2075,
+      "calibrated_score": 0.2075,
+      "rank": 545,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "HMGCR inhibitor \u2014 no established mechanism in CFTR dysfunction",
       "sources": [],
       "notes": "Statin targets cholesterol, not chloride channel biology.",
       "score_components": {
-        "gene_score": 0.0326,
+        "gene_score": 0.0499,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3807,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
           "PIK3CG",
-          "IL17A"
+          "IL17A",
+          "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "lisinopril",
@@ -2158,9 +2210,9 @@
       "disease_area": "neurological",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0,
-      "calibrated_score": 0.0,
-      "rank": 1295,
+      "raw_score": 0.0879,
+      "calibrated_score": 0.0879,
+      "rank": 1689,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2173,48 +2225,53 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2987,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "omeprazole",
       "disease": "multiple sclerosis",
       "disease_area": "neurological",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0595,
-      "calibrated_score": 0.0595,
-      "rank": 561,
+      "raw_score": 0.2906,
+      "calibrated_score": 0.2906,
+      "rank": 356,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.18,
       "mechanism": "Proton pump inhibitor \u2014 H+/K+ ATPase inhibition unrelated to MS autoimmunity",
       "sources": [],
       "notes": "Gastric acid suppression has no mechanism in MS.",
       "score_components": {
-        "gene_score": 0.0214,
+        "gene_score": 0.1743,
         "pathway_score": 0.06818181818181819,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3802,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PLK1"
+          "PLK1",
+          "MAPT",
+          "ATP4B",
+          "VDR",
+          "ATP4A",
+          "HEXB"
         ],
         "shared_pathways": [
           "Serotonergic synapse"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "furosemide",
@@ -2224,7 +2281,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1140,
+      "rank": 2242,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2237,14 +2294,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3418,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metoclopramide",
@@ -2254,7 +2311,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1389,
+      "rank": 2254,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2276,7 +2333,7 @@
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "warfarin",
@@ -2286,7 +2343,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1503,
+      "rank": 2429,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2299,50 +2356,50 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3654,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "digoxin",
       "disease": "rheumatoid arthritis",
       "disease_area": "autoimmune_inflammatory",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1126,
-      "calibrated_score": 0.1126,
-      "rank": 360,
+      "raw_score": 0.2056,
+      "calibrated_score": 0.2056,
+      "rank": 500,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.18,
       "mechanism": "Cardiac glycoside / Na+/K+ ATPase inhibitor \u2014 no autoimmune mechanism",
       "sources": [],
       "notes": "Cardiac drug with no immunomodulatory target in RA.",
       "score_components": {
-        "gene_score": 0.0556,
+        "gene_score": 0.0554,
         "pathway_score": 0.08053691275167785,
-        "ppi_score": 0.0,
+        "ppi_score": 0.369,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NR3C1",
-          "TNF"
+          "TNF",
+          "NR3C1"
         ],
         "shared_pathways": [
-          "Regulation of lipolysis in adipocytes",
-          "Arachidonic acid metabolism"
+          "Arachidonic acid metabolism",
+          "Regulation of lipolysis in adipocytes"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "allopurinol",
@@ -2350,9 +2407,9 @@
       "disease_area": "oncology",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0573,
-      "calibrated_score": 0.0573,
-      "rank": 678,
+      "raw_score": 0.1502,
+      "calibrated_score": 0.1502,
+      "rank": 697,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2365,7 +2422,7 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.16901408450704225,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3582,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -2374,7 +2431,7 @@
           "Endocrine resistance"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atenolol",
@@ -2384,7 +2441,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 918,
+      "rank": 2243,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2397,14 +2454,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3701,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "ondansetron",
@@ -2412,9 +2469,9 @@
       "disease_area": "cardiovascular",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0751,
-      "calibrated_score": 0.0751,
-      "rank": 872,
+      "raw_score": 0.1496,
+      "calibrated_score": 0.1496,
+      "rank": 1262,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2427,7 +2484,7 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.06037735849056604,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2683,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -2437,7 +2494,7 @@
           "Taste transduction"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "pantoprazole",
@@ -2445,9 +2502,9 @@
       "disease_area": "neurological",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0,
-      "calibrated_score": 0.0,
-      "rank": 1823,
+      "raw_score": 0.0854,
+      "calibrated_score": 0.0854,
+      "rank": 1977,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -2460,14 +2517,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2904,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     }
   ],
   "test_cases": [
@@ -2477,12 +2534,12 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5483,
-      "calibrated_score": 0.5483,
-      "rank": 93,
+      "raw_score": 0.734,
+      "calibrated_score": 0.734,
+      "rank": 16,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.4,
@@ -2492,16 +2549,17 @@
       ],
       "notes": "FDA-approved for PAH (Revatio). Landmark RCT.",
       "score_components": {
-        "gene_score": 0.2296,
+        "gene_score": 0.3464,
         "pathway_score": 0.1761006289308176,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3339,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PDE5A",
           "NOS3",
-          "VEGFA"
+          "VEGFA",
+          "PDE5A",
+          "COPA"
         ],
         "shared_pathways": [
           "cGMP-PKG signaling",
@@ -2509,7 +2567,7 @@
           "Pulmonary vascular remodeling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -2517,9 +2575,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4192,
-      "calibrated_score": 0.4192,
-      "rank": 118,
+      "raw_score": 0.5001,
+      "calibrated_score": 0.5001,
+      "rank": 156,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -2533,31 +2591,38 @@
       ],
       "notes": "Phase 2 data (IMPRES trial). PDGFRB expressed in PAH vessels.",
       "score_components": {
-        "gene_score": 0.1322,
+        "gene_score": 0.2321,
         "pathway_score": 0.28846960167714886,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3842,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PDGFRB",
-          "CSF1R",
+          "PDGFRA",
+          "BIRC5",
           "BCR",
           "KIT",
+          "NF1",
+          "RET",
           "ABL1",
-          "PDGFRA",
-          "BIRC5"
+          "CSF1R",
+          "EGFR",
+          "ALK",
+          "BRAF",
+          "PDGFRB",
+          "ABCA3",
+          "KRAS"
         ],
         "shared_pathways": [
-          "AMPK signaling pathway",
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Insulin signaling pathway",
           "IgSF CAM signaling",
-          "ErbB signaling pathway",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
-          "Insulin signaling pathway"
+          "AMPK signaling pathway",
+          "ErbB signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "bosentan",
@@ -2565,8 +2630,8 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 1.0,
-      "calibrated_score": 1.0,
+      "raw_score": 0.9882,
+      "calibrated_score": 0.9882,
       "rank": 2,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
@@ -2582,8 +2647,8 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.09559748427672955,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.294,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
@@ -2591,11 +2656,11 @@
           "EDNRA"
         ],
         "shared_pathways": [
-          "Endothelin signaling",
-          "Pulmonary vascular remodeling"
+          "Pulmonary vascular remodeling",
+          "Endothelin signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "rituximab",
@@ -2603,9 +2668,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5113,
-      "calibrated_score": 0.5113,
-      "rank": 76,
+      "raw_score": 0.5296,
+      "calibrated_score": 0.5296,
+      "rank": 72,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -2620,30 +2685,30 @@
       "score_components": {
         "gene_score": 0.2804,
         "pathway_score": 0.4510067114093961,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3886,
         "similarity_score": 0.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
           "JAK2",
-          "MS4A1",
-          "FCGR2A",
           "IL6",
-          "CXCL13"
+          "CXCL13",
+          "MS4A1",
+          "FCGR2A"
         ],
         "shared_pathways": [
-          "Viral protein interaction with cytokine and cytokine receptor",
-          "EGFR tyrosine kinase inhibitor resistance",
-          "JAK-STAT signaling pathway",
-          "Neutrophil extracellular trap formation",
-          "B-cell differentiation",
-          "JAK-STAT signaling",
           "NF-kappa B signaling pathway",
+          "Neutrophil extracellular trap formation",
+          "JAK-STAT signaling",
+          "JAK-STAT signaling pathway",
           "Chemokine signaling pathway",
-          "B-cell receptor signaling"
+          "EGFR tyrosine kinase inhibitor resistance",
+          "Viral protein interaction with cytokine and cytokine receptor",
+          "B-cell receptor signaling",
+          "B-cell differentiation"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "methotrexate",
@@ -2651,12 +2716,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4552,
-      "calibrated_score": 0.4552,
-      "rank": 89,
+      "raw_score": 0.6303,
+      "calibrated_score": 0.6303,
+      "rank": 17,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
@@ -2666,30 +2731,32 @@
       ],
       "notes": "Anchor DMARD for RA for decades.",
       "score_components": {
-        "gene_score": 0.1049,
+        "gene_score": 0.1177,
         "pathway_score": 0.13154362416107385,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3792,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "GATA3",
-          "DHFR",
-          "NR3C1",
-          "TNFAIP3",
-          "ALOX5",
-          "TLR4",
           "IKZF1",
+          "DHFR",
+          "TLR4",
+          "NR3C1",
           "NFATC1",
+          "IL1RN",
+          "ALOX5",
+          "SLC22A11",
+          "GATA3",
+          "TNFAIP3",
           "FLT3"
         ],
         "shared_pathways": [
-          "Lysosome biogenesis",
           "Arachidonic acid metabolism",
-          "Serotonergic synapse"
+          "Serotonergic synapse",
+          "Lysosome biogenesis"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "hydroxychloroquine",
@@ -2697,9 +2764,9 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5186,
-      "calibrated_score": 0.5186,
-      "rank": 75,
+      "raw_score": 0.5054,
+      "calibrated_score": 0.5054,
+      "rank": 87,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -2712,51 +2779,51 @@
       ],
       "notes": "Standard DMARD in RA triple therapy.",
       "score_components": {
-        "gene_score": 0.2297,
+        "gene_score": 0.2296,
         "pathway_score": 0.6586129753914989,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3538,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "TLR9",
-          "TLR7",
+          "TNF",
           "PTGS2",
-          "TNF"
+          "TLR7"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
-          "Serotonergic synapse",
-          "Measles",
-          "Neutrophil extracellular trap formation",
-          "Chagas disease",
           "Arachidonic acid metabolism",
+          "Measles",
+          "Chagas disease",
           "NF-kappa B signaling pathway",
-          "Efferocytosis",
-          "Toll-like receptor signaling pathway",
           "VEGF signaling pathway",
-          "Salmonella infection",
+          "African trypanosomiasis",
+          "Neutrophil extracellular trap formation",
+          "EGFR tyrosine kinase inhibitor resistance",
+          "Efferocytosis",
+          "Serotonergic synapse",
           "Lysosome biogenesis",
-          "Influenza A",
-          "African trypanosomiasis"
+          "Toll-like receptor signaling pathway",
+          "Salmonella infection",
+          "Influenza A"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
       "disease": "polycystic ovary syndrome",
       "disease_area": "metabolic",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.204,
-      "calibrated_score": 0.204,
-      "rank": 298,
+      "raw_score": 0.5323,
+      "calibrated_score": 0.5323,
+      "rank": 71,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.28,
       "mechanism": "AMPK activator \u2014 reduces insulin resistance and androgen excess in PCOS",
       "sources": [
@@ -2764,19 +2831,26 @@
       ],
       "notes": "Systematic review and meta-analysis of metformin in PCOS.",
       "score_components": {
-        "gene_score": 0.0411,
+        "gene_score": 0.2418,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3731,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
           "PTEN",
-          "PPARG"
+          "KCNJ11",
+          "NRAS",
+          "HRAS",
+          "HNF1B",
+          "PPARG",
+          "PIK3CA",
+          "MAP2K1",
+          "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "thalidomide",
@@ -2784,12 +2858,12 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3749,
-      "calibrated_score": 0.3749,
-      "rank": 151,
+      "raw_score": 0.6885,
+      "calibrated_score": 0.6885,
+      "rank": 8,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.35,
@@ -2799,41 +2873,41 @@
       ],
       "notes": "Landmark Singhal et al. N Engl J Med 1999 paper.",
       "score_components": {
-        "gene_score": 0.1998,
+        "gene_score": 0.1993,
         "pathway_score": 0.2535211267605634,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.4487,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CUL4A",
+          "RBX1",
           "DDB1",
+          "CRBN",
           "PTGS2",
           "FGFR2",
-          "CRBN",
-          "RBX1",
+          "CUL4A",
           "IRF4"
         ],
         "shared_pathways": [
           "Ubiquitin-proteasome system"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "dexamethasone",
       "disease": "multiple myeloma",
       "disease_area": "oncology",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.28,
-      "calibrated_score": 0.28,
-      "rank": 254,
+      "raw_score": 0.4421,
+      "calibrated_score": 0.4421,
+      "rank": 162,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.3,
       "mechanism": "Glucocorticoid receptor agonist \u2014 induces apoptosis in myeloma cells",
       "sources": [
@@ -2841,19 +2915,23 @@
       ],
       "notes": "Backbone of almost all myeloma regimens.",
       "score_components": {
-        "gene_score": 0.0221,
+        "gene_score": 0.0791,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.443,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CD86",
-          "NR3C1"
+          "RET",
+          "NR3C1",
+          "JAK3",
+          "KDR",
+          "RARA",
+          "CD86"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "bortezomib",
@@ -2861,12 +2939,12 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4994,
-      "calibrated_score": 0.4994,
-      "rank": 107,
+      "raw_score": 0.6557,
+      "calibrated_score": 0.6557,
+      "rank": 13,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.3,
@@ -2876,60 +2954,61 @@
       ],
       "notes": "FDA approved for myeloma 2003.",
       "score_components": {
-        "gene_score": 0.6333,
+        "gene_score": 0.6236,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.497,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "PSMD1",
-          "PSMA2",
-          "SEM1",
-          "PSMC4",
-          "PSMD7",
-          "PSMA1",
+          "ADRM1",
           "PSMA8",
-          "PSMB11",
-          "PSMC6",
-          "PSMA5",
-          "PSMD8",
-          "PSMB1",
-          "PSMA3",
-          "FLT3",
+          "TP53",
+          "PSMB8",
+          "PSMB4",
+          "BCL2",
+          "PSMD3",
+          "PSMC4",
           "PSMD2",
+          "PSMB3",
           "PSMA6",
+          "PSMA2",
+          "PSMD12",
+          "PSMD7",
+          "GATA2",
+          "PSMD4",
+          "SEM1",
+          "PSMC6",
+          "PSMD6",
+          "PSMD8",
+          "PSMD14",
+          "PSMB7",
+          "PSMA5",
+          "PSMA1",
+          "PSMB1",
+          "PSMB6",
+          "PSMA3",
+          "PSMC3",
+          "PSMB9",
+          "PSMC5",
+          "PSMB11",
+          "PSMA7",
+          "FLT3",
+          "PSMD1",
+          "PSMB5",
+          "PSMA4",
+          "CCND1",
+          "PSMB10",
+          "PSMD13",
+          "PSMC1",
           "PSMC2",
           "FGFR3",
-          "PSMB2",
-          "PSMB8",
-          "PSMB3",
-          "PSMB4",
-          "PSMD3",
-          "PSMD12",
-          "PSMB5",
-          "PSMB6",
-          "PSMC1",
-          "PSMC3",
-          "ADRM1",
-          "CCND1",
-          "PSMD13",
           "PSMD11",
-          "PSMD14",
-          "PSMB10",
-          "PSMD4",
-          "BCL2",
-          "TP53",
-          "PSMA7",
-          "PSMB7",
-          "PSMD6",
-          "PSMB9",
-          "PSMA4",
-          "PSMC5"
+          "PSMB2"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -2937,9 +3016,9 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7136,
-      "calibrated_score": 0.7136,
-      "rank": 9,
+      "raw_score": 0.7965,
+      "calibrated_score": 0.7965,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
       "rank_pass": true,
@@ -2952,47 +3031,51 @@
       ],
       "notes": "Prototype precision oncology. ABL1 is dominant CML gene.",
       "score_components": {
-        "gene_score": 0.4148,
+        "gene_score": 0.4497,
         "pathway_score": 0.4601769911504425,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4743,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "PDGFRA",
+          "JAK2",
+          "SMAD3",
+          "IKZF1",
+          "YES1",
+          "CSF3R",
+          "RET",
+          "NF1",
+          "KIT",
+          "FRK",
+          "MYC",
           "BRAF",
           "PRKCH",
-          "IKZF1",
-          "FLT3",
-          "IDH1",
-          "CSF1R",
-          "KRAS",
           "BCR",
-          "MYC",
-          "LCK",
-          "NF1",
-          "PTEN",
-          "PDGFRB",
-          "RUNX1",
-          "KIT",
           "ABL1",
-          "CSF3R",
-          "FRK",
-          "YES1",
-          "JAK2",
-          "LYN",
+          "CSF1R",
+          "RUNX1",
+          "IRAK1",
           "CTNNB1",
+          "PDGFRB",
+          "FLT3",
+          "PTEN",
+          "LCK",
+          "LYN",
+          "HCK",
           "EGFR",
-          "HCK"
+          "IDH1",
+          "KRAS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Hematopoietic cell lineage",
           "IgSF CAM signaling",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
-          "ErbB signaling pathway",
-          "Hematopoietic cell lineage"
+          "ErbB signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -3000,9 +3083,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.28,
-      "calibrated_score": 0.28,
-      "rank": 191,
+      "raw_score": 0.32,
+      "calibrated_score": 0.32,
+      "rank": 236,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -3017,14 +3100,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2922,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "minoxidil",
@@ -3032,9 +3115,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3013,
-      "calibrated_score": 0.3013,
-      "rank": 93,
+      "raw_score": 0.3199,
+      "calibrated_score": 0.3199,
+      "rank": 187,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": false,
@@ -3047,9 +3130,9 @@
       ],
       "notes": "Classic repurposing from hypertension to hair loss.",
       "score_components": {
-        "gene_score": 0.1445,
+        "gene_score": 0.1443,
         "pathway_score": 0.1680672268907563,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2899,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -3061,7 +3144,7 @@
           "Hair follicle cycling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "finasteride",
@@ -3069,12 +3152,12 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5932,
-      "calibrated_score": 0.5932,
-      "rank": 40,
+      "raw_score": 0.5323,
+      "calibrated_score": 0.5323,
+      "rank": 53,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
-      "rank_pass": true,
+      "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -3084,24 +3167,24 @@
       ],
       "notes": "Approved for androgenetic alopecia.",
       "score_components": {
-        "gene_score": 0.1941,
+        "gene_score": 0.1937,
         "pathway_score": 0.6823529411764705,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3113,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "SRD5A2",
-          "AR"
+          "AR",
+          "SRD5A2"
         ],
         "shared_pathways": [
           "Hair follicle cycling",
-          "5-alpha reductase pathway",
-          "Androgen receptor signaling"
+          "Androgen receptor signaling",
+          "5-alpha reductase pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "aspirin",
@@ -3109,9 +3192,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2834,
-      "calibrated_score": 0.2834,
-      "rank": 238,
+      "raw_score": 0.3368,
+      "calibrated_score": 0.3368,
+      "rank": 243,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3124,29 +3207,29 @@
       ],
       "notes": "Standard antiplatelet in secondary prevention.",
       "score_components": {
-        "gene_score": 0.1376,
+        "gene_score": 0.1299,
         "pathway_score": 0.032345013477088944,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3807,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NAT2",
-          "TGFB1",
-          "PTGS2",
-          "LPA",
           "PTGS1",
           "ITGA2B",
-          "ACE",
-          "PPARG",
+          "PTGS2",
+          "TGFB1",
+          "HMGCR",
           "CDH13",
-          "HMGCR"
+          "ACE",
+          "NAT2",
+          "PPARG",
+          "LPA"
         ],
         "shared_pathways": [
           "NF-kappa B signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atorvastatin",
@@ -3154,9 +3237,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7626,
-      "calibrated_score": 0.7626,
-      "rank": 14,
+      "raw_score": 0.6461,
+      "calibrated_score": 0.6461,
+      "rank": 23,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -3171,7 +3254,7 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.045822102425876005,
-        "ppi_score": 0.0,
+        "ppi_score": 0.304,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -3183,7 +3266,7 @@
           "Cholesterol metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "tamoxifen",
@@ -3191,9 +3274,9 @@
       "disease_area": "other",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4276,
-      "calibrated_score": 0.4276,
-      "rank": 91,
+      "raw_score": 0.6496,
+      "calibrated_score": 0.6496,
+      "rank": 34,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
       "rank_pass": false,
@@ -3206,32 +3289,34 @@
       ],
       "notes": "Definitive for ER+ breast cancer.",
       "score_components": {
-        "gene_score": 0.1817,
+        "gene_score": 0.216,
         "pathway_score": 0.326530612244898,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4695,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "NRG1",
-          "CCND1",
-          "TP53",
           "BRCA1",
-          "PIK3CA",
           "ESR1",
-          "NF1",
-          "CYP19A1",
           "ERBB2",
+          "CYP19A1",
+          "NRG1",
+          "TP53",
+          "NF1",
+          "NTRK1",
+          "CCND1",
+          "IDH1",
+          "PIK3CA",
           "TYMS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Estrogen receptor signaling",
           "Homologous recombination",
           "Nuclear receptor signaling",
-          "Estrogen receptor signaling"
+          "EGFR tyrosine kinase inhibitor resistance"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "raloxifene",
@@ -3239,12 +3324,12 @@
       "disease_area": "other",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.421,
-      "calibrated_score": 0.421,
-      "rank": 94,
+      "raw_score": 0.7078,
+      "calibrated_score": 0.7078,
+      "rank": 22,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -3254,20 +3339,21 @@
       ],
       "notes": "STAR trial vs tamoxifen.",
       "score_components": {
-        "gene_score": 0.4697,
+        "gene_score": 1.0,
         "pathway_score": 0.06802721088435375,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3761,
         "similarity_score": 0.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "ESR1"
+          "ESR1",
+          "ESR2"
         ],
         "shared_pathways": [
           "Estrogen receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "amantadine",
@@ -3275,9 +3361,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.7401,
-      "calibrated_score": 0.7401,
-      "rank": 11,
+      "raw_score": 0.655,
+      "calibrated_score": 0.655,
+      "rank": 20,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
       "rank_pass": true,
@@ -3292,22 +3378,22 @@
       "score_components": {
         "gene_score": 0.8046,
         "pathway_score": 0.14765625,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3215,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "DRD2",
           "GRIN2A",
-          "GRIN1",
-          "DRD2"
+          "GRIN1"
         ],
         "shared_pathways": [
-          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling"
+          "Glutamate signaling",
+          "NMDA receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "rasagiline",
@@ -3315,9 +3401,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8189,
-      "calibrated_score": 0.8189,
-      "rank": 3,
+      "raw_score": 0.8304,
+      "calibrated_score": 0.8304,
+      "rank": 4,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": true,
@@ -3332,13 +3418,13 @@
       "score_components": {
         "gene_score": 0.5471,
         "pathway_score": 0.12031249999999999,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3268,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "COMT",
           "MAOB",
+          "COMT",
           "DRD2"
         ],
         "shared_pathways": [
@@ -3347,7 +3433,7 @@
           "Signaling pathways regulating pluripotency of stem cells"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
@@ -3355,12 +3441,12 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4861,
-      "calibrated_score": 0.4861,
-      "rank": 66,
+      "raw_score": 0.6558,
+      "calibrated_score": 0.6558,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.4,
@@ -3372,24 +3458,24 @@
       "score_components": {
         "gene_score": 0.249,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.4011,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "HNF1B",
-          "SLC22A3",
-          "TCF7L2",
-          "SLC2A2",
           "PTEN",
+          "KCNJ11",
+          "SLC22A3",
           "BDNF",
+          "SLC2A2",
           "PPARA",
+          "HNF1B",
           "PPARG",
-          "KCNJ11"
+          "TCF7L2"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "pioglitazone",
@@ -3397,9 +3483,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6457,
-      "calibrated_score": 0.6457,
-      "rank": 9,
+      "raw_score": 0.6514,
+      "calibrated_score": 0.6514,
+      "rank": 4,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -3414,35 +3500,35 @@
       "score_components": {
         "gene_score": 0.7077,
         "pathway_score": 0.11590909090909092,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3451,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "PPARA",
-          "PPARG"
+          "PPARG",
+          "PPARA"
         ],
         "shared_pathways": [
           "Glucose metabolism",
           "PPAR signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "sirolimus",
       "disease": "tuberous sclerosis",
       "disease_area": "rare_disease",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2778,
-      "calibrated_score": 0.2778,
-      "rank": 71,
+      "raw_score": 0.6585,
+      "calibrated_score": 0.6585,
+      "rank": 42,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.35,
       "mechanism": "mTOR (MTOR) inhibitor \u2014 targets hyperactivated TSC1/TSC2-mTOR pathway",
       "sources": [
@@ -3450,35 +3536,40 @@
       ],
       "notes": "EXIST-1/EXIST-2 trials. Directly targets TSC pathway.",
       "score_components": {
-        "gene_score": 0.142,
+        "gene_score": 0.1766,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3939,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
+          "PTEN",
+          "FKBP1A",
+          "TP53",
+          "NF1",
+          "WT1",
           "TSC2",
-          "TSC1",
-          "FKBP1A"
+          "HRAS",
+          "TSC1"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "valproic acid",
       "disease": "epilepsy",
       "disease_area": "neurological",
-      "status": "false_negative",
+      "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2797,
-      "calibrated_score": 0.2797,
-      "rank": 188,
+      "raw_score": 0.4834,
+      "calibrated_score": 0.4834,
+      "rank": 134,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
-      "score_pass": false,
-      "pass": false,
+      "score_pass": true,
+      "pass": true,
       "min_score_threshold": 0.3,
       "mechanism": "Sodium channel blocker + GABA potentiator + HDAC inhibitor \u2014 broad anticonvulsant",
       "sources": [
@@ -3486,24 +3577,27 @@
       ],
       "notes": "Broad-spectrum AED for multiple seizure types.",
       "score_components": {
-        "gene_score": 0.1366,
+        "gene_score": 0.1934,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4021,
         "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "ABAT",
-          "CACNA1C",
-          "CACNA1D",
-          "GRIN2B",
-          "SCN1A",
           "ALDH5A1",
-          "CACNA1F"
+          "POLG",
+          "CACNA1F",
+          "ATM",
+          "CACNA1C",
+          "SCN1A",
+          "ABAT",
+          "GRIN2B",
+          "SMN1",
+          "CACNA1D"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "gabapentin",
@@ -3511,12 +3605,12 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.585,
-      "calibrated_score": 0.585,
-      "rank": 92,
+      "raw_score": 0.8634,
+      "calibrated_score": 0.8634,
+      "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -3526,57 +3620,62 @@
       ],
       "notes": "Approved adjunctive AED.",
       "score_components": {
-        "gene_score": 0.6419,
+        "gene_score": 0.7671,
         "pathway_score": 0.06230529595015576,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3704,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CACNA1G",
-          "CACNB4",
-          "CACNG5",
-          "CACNG2",
-          "KCNQ3",
-          "CACNB1",
-          "CACNA1S",
-          "CACNA1I",
-          "CACNB3",
-          "CACNA1D",
-          "CACNA2D3",
-          "CACNA1H",
-          "CACNA2D1",
-          "CACNG1",
           "CACNA1F",
           "CACNA1C",
-          "CACNA1B",
-          "CACNA1E",
-          "CACNG7",
           "CACNA2D2",
-          "CACNG3",
+          "CACNB4",
+          "CACNA1B",
+          "CACNA2D3",
+          "CACNA1E",
+          "CACNB1",
+          "KCNQ5",
+          "CACNA1H",
+          "CACNA1D",
+          "CACNG6",
+          "CACNA2D1",
+          "CACNA1S",
+          "ABCB1",
+          "CACNB3",
+          "CACNA2D4",
+          "CACNG1",
+          "CACNG7",
           "CACNB2",
-          "CACNA1A"
+          "CACNG2",
+          "CACNA1I",
+          "CACNG4",
+          "CACNG5",
+          "KCNQ3",
+          "CACNA1A",
+          "CACNG3",
+          "CACNA1G"
         ],
         "shared_pathways": [
           "cGMP-PKG signaling pathway"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "eculizumab",
       "disease": "paroxysmal nocturnal hemoglobinuria",
       "disease_area": "rare_disease",
-      "status": "found",
+      "status": "false_negative",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3515,
-      "calibrated_score": 0.3515,
-      "rank": 1,
+      "raw_score": 0.3394,
+      "calibrated_score": 0.3394,
+      "rank": 37,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
-      "rank_pass": true,
-      "score_pass": true,
-      "pass": true,
+      "rank_pass": false,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.35,
       "mechanism": "Anti-C5 monoclonal antibody \u2014 blocks terminal complement activation",
       "sources": [
@@ -3584,9 +3683,9 @@
       ],
       "notes": "Landmark TRIUMPH trial. C5 is the principal PNH gene.",
       "score_components": {
-        "gene_score": 0.1206,
+        "gene_score": 0.0735,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3263,
         "similarity_score": 0.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
@@ -3595,7 +3694,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "ivacaftor",
@@ -3603,8 +3702,8 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8199,
-      "calibrated_score": 0.8199,
+      "raw_score": 0.9416,
+      "calibrated_score": 0.9416,
       "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 10,
@@ -3620,19 +3719,19 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.06405693950177936,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
-        "mechanism_score": 0.6,
+        "ppi_score": 0.3412,
+        "similarity_score": 1.0,
+        "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "CFTR",
-          "SLC26A9"
+          "SLC26A9",
+          "CFTR"
         ],
         "shared_pathways": [
           "Chloride ion transport"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "hydroxychloroquine",
@@ -3640,12 +3739,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.449,
-      "calibrated_score": 0.449,
-      "rank": 87,
+      "raw_score": 0.6007,
+      "calibrated_score": 0.6007,
+      "rank": 3,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.28,
@@ -3655,29 +3754,30 @@
       ],
       "notes": "Cornerstone drug for SLE \u2014 reduces flares and improves survival.",
       "score_components": {
-        "gene_score": 0.1519,
+        "gene_score": 0.2254,
         "pathway_score": 0.6215384615384616,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3692,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
           "TLR9",
-          "TLR7",
-          "PTGS2"
+          "TNF",
+          "PTGS2",
+          "TLR7"
         ],
         "shared_pathways": [
           "Measles",
           "Neutrophil extracellular trap formation",
           "Chagas disease",
+          "African trypanosomiasis",
+          "Lysosome biogenesis",
           "Toll-like receptor signaling pathway",
           "Salmonella infection",
-          "Lysosome biogenesis",
-          "Influenza A",
-          "African trypanosomiasis"
+          "Influenza A"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "colchicine",
@@ -3685,9 +3785,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4511,
-      "calibrated_score": 0.4511,
-      "rank": 91,
+      "raw_score": 0.5655,
+      "calibrated_score": 0.5655,
+      "rank": 49,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": false,
@@ -3700,34 +3800,34 @@
       ],
       "notes": "Acute and chronic gout prophylaxis. Also for pericarditis.",
       "score_components": {
-        "gene_score": 0.3791,
+        "gene_score": 0.3718,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3555,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "NRG1",
-          "TUBB2B",
-          "TUBB2A",
-          "TUBB8",
-          "TUBB4A",
-          "TUBB3",
-          "TUBB1",
-          "TUBA1A",
-          "BDNF",
-          "TUBA4A",
-          "TUBA1C",
-          "TUBB4B",
-          "TUBA3C",
-          "TUBA3E",
           "TUBB",
           "TUBB6",
-          "TUBA1B"
+          "TUBA4A",
+          "TUBA3E",
+          "NRG1",
+          "TUBB4A",
+          "TUBB2A",
+          "BDNF",
+          "TUBA1A",
+          "TUBB3",
+          "TUBB2B",
+          "TUBB8",
+          "TUBA1B",
+          "TUBB1",
+          "TUBA3C",
+          "TUBA1C",
+          "TUBB4B"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "allopurinol",
@@ -3735,9 +3835,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5557,
-      "calibrated_score": 0.5557,
-      "rank": 80,
+      "raw_score": 0.7035,
+      "calibrated_score": 0.7035,
+      "rank": 22,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3750,28 +3850,29 @@
       ],
       "notes": "First-line ULT for gout.",
       "score_components": {
-        "gene_score": 0.0928,
+        "gene_score": 0.1374,
         "pathway_score": 0.46046511627906983,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3248,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "GCKR",
+          "UGT1A1",
+          "PKD2",
           "XDH",
-          "PKD2"
+          "GCKR"
         ],
         "shared_pathways": [
-          "Drug metabolism - other enzymes",
-          "Serotonergic synapse",
-          "Nucleotide metabolism",
-          "Purine metabolism",
           "Arachidonic acid metabolism",
           "Caffeine metabolism",
-          "Ascorbate and aldarate metabolism"
+          "Purine metabolism",
+          "Ascorbate and aldarate metabolism",
+          "Nucleotide metabolism",
+          "Serotonergic synapse",
+          "Drug metabolism - other enzymes"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "colchicine",
@@ -3779,12 +3880,12 @@
       "disease_area": "autoimmune_inflammatory",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4113,
-      "calibrated_score": 0.4113,
-      "rank": 53,
+      "raw_score": 0.526,
+      "calibrated_score": 0.526,
+      "rank": 18,
       "total_candidates": 3003,
       "expected_rank_top_n": 30,
-      "rank_pass": false,
+      "rank_pass": true,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.25,
@@ -3794,33 +3895,34 @@
       ],
       "notes": "COPE trial. Halves recurrence rate in pericarditis.",
       "score_components": {
-        "gene_score": 0.3622,
+        "gene_score": 0.3511,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3459,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "TUBB2B",
-          "TUBB2A",
-          "TUBB8",
-          "TUBB4A",
-          "TUBB3",
-          "TUBB1",
-          "TUB",
-          "TUBA1A",
-          "TUBA4A",
-          "TUBA1C",
-          "TUBB4B",
-          "TUBA3C",
-          "TUBA3E",
           "TUBB",
           "TUBB6",
-          "TUBA1B"
+          "TUBA4A",
+          "TUBA3E",
+          "TUBB4A",
+          "TUBB2A",
+          "NLRP3",
+          "TUB",
+          "TUBA1A",
+          "TUBB3",
+          "TUBB2B",
+          "TUBB8",
+          "TUBA1B",
+          "TUBB1",
+          "TUBA3C",
+          "TUBA1C",
+          "TUBB4B"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "spironolactone",
@@ -3828,9 +3930,9 @@
       "disease_area": "cardiovascular",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.2552,
-      "calibrated_score": 0.2552,
-      "rank": 320,
+      "raw_score": 0.3,
+      "calibrated_score": 0.3,
+      "rank": 363,
       "total_candidates": 3003,
       "expected_rank_top_n": 35,
       "rank_pass": false,
@@ -3843,9 +3945,9 @@
       ],
       "notes": "RALES trial. Reduces mortality in HFrEF.",
       "score_components": {
-        "gene_score": 0.1546,
+        "gene_score": 0.1544,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.355,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
@@ -3856,7 +3958,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "donepezil",
@@ -3864,9 +3966,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4987,
-      "calibrated_score": 0.4987,
-      "rank": 81,
+      "raw_score": 0.6077,
+      "calibrated_score": 0.6077,
+      "rank": 25,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3881,23 +3983,23 @@
       "score_components": {
         "gene_score": 0.3379,
         "pathway_score": 0.1861720067453626,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3462,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BCHE",
+          "APOE",
           "ACHE",
-          "APOE"
+          "BCHE"
         ],
         "shared_pathways": [
-          "Alzheimer disease",
           "Cholinergic signaling",
+          "Acetylcholine degradation",
           "cGMP-PKG signaling pathway",
-          "Acetylcholine degradation"
+          "Alzheimer disease"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "memantine",
@@ -3905,9 +4007,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.8315,
-      "calibrated_score": 0.8315,
-      "rank": 1,
+      "raw_score": 0.7608,
+      "calibrated_score": 0.7608,
+      "rank": 2,
       "total_candidates": 3003,
       "expected_rank_top_n": 25,
       "rank_pass": true,
@@ -3922,22 +4024,22 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.12748735244519394,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3092,
+        "similarity_score": 1.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
+          "GRIN2B",
           "GRIN2A",
-          "GRIN1",
-          "GRIN2B"
+          "GRIN1"
         ],
         "shared_pathways": [
-          "NMDA receptor signaling",
           "Synaptic plasticity",
-          "Glutamate signaling"
+          "Glutamate signaling",
+          "NMDA receptor signaling"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atorvastatin",
@@ -3945,9 +4047,9 @@
       "disease_area": "metabolic",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.9888,
-      "calibrated_score": 0.9888,
-      "rank": 2,
+      "raw_score": 0.8812,
+      "calibrated_score": 0.8812,
+      "rank": 1,
       "total_candidates": 3003,
       "expected_rank_top_n": 15,
       "rank_pass": true,
@@ -3962,8 +4064,8 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.06273062730627306,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3027,
+        "similarity_score": 1.0,
         "mechanism_score": 1.0,
         "literature_score": 0.0,
         "shared_genes": [
@@ -3974,7 +4076,7 @@
           "Cholesterol metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "finasteride",
@@ -3982,9 +4084,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.3941,
-      "calibrated_score": 0.3941,
-      "rank": 79,
+      "raw_score": 0.544,
+      "calibrated_score": 0.544,
+      "rank": 34,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -3997,25 +4099,25 @@
       ],
       "notes": "First approved 5-ARI for BPH.",
       "score_components": {
-        "gene_score": 0.1986,
+        "gene_score": 0.195,
         "pathway_score": 0.29319371727748694,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3122,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
           "SRD5A1",
-          "SRD5A2",
-          "AR"
+          "AR",
+          "SRD5A2"
         ],
         "shared_pathways": [
-          "Tryptophan metabolism",
           "Hair follicle cycling",
+          "Androgen receptor signaling",
           "5-alpha reductase pathway",
-          "Androgen receptor signaling"
+          "Tryptophan metabolism"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -4023,9 +4125,9 @@
       "disease_area": "rare_disease",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6361,
-      "calibrated_score": 0.6361,
-      "rank": 28,
+      "raw_score": 0.5337,
+      "calibrated_score": 0.5337,
+      "rank": 58,
       "total_candidates": 3003,
       "expected_rank_top_n": 60,
       "rank_pass": true,
@@ -4040,7 +4142,7 @@
       "score_components": {
         "gene_score": 1.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3125,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -4050,7 +4152,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "imatinib",
@@ -4058,9 +4160,9 @@
       "disease_area": "oncology",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.6581,
-      "calibrated_score": 0.6581,
-      "rank": 42,
+      "raw_score": 0.6886,
+      "calibrated_score": 0.6886,
+      "rank": 30,
       "total_candidates": 3003,
       "expected_rank_top_n": 20,
       "rank_pass": false,
@@ -4073,43 +4175,45 @@
       ],
       "notes": "Transformed prognosis of GIST. KIT expressed in >85% GIST.",
       "score_components": {
-        "gene_score": 0.331,
+        "gene_score": 0.3456,
         "pathway_score": 0.3615819209039548,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4702,
         "similarity_score": 0.0,
         "mechanism_score": 0.6,
         "literature_score": 0.0,
         "shared_genes": [
-          "BRAF",
-          "ALK",
-          "IKZF1",
-          "FLT3",
-          "CSF1R",
-          "KRAS",
-          "BCR",
-          "HGF",
-          "NTRK1",
-          "NF1",
-          "PTEN",
-          "PDGFRB",
-          "KIT",
-          "ABL1",
           "PDGFRA",
-          "FRK",
+          "JAK2",
+          "IKZF1",
           "RET",
+          "NF1",
+          "KIT",
+          "FRK",
+          "BRAF",
+          "BCR",
+          "ABL1",
+          "HGF",
+          "CSF1R",
+          "CTNNB1",
+          "PDGFRB",
+          "PTEN",
+          "FLT3",
+          "NTRK1",
+          "EGFR",
+          "ALK",
           "NF2",
-          "EGFR"
+          "KRAS"
         ],
         "shared_pathways": [
-          "EGFR tyrosine kinase inhibitor resistance",
+          "Hematopoietic cell lineage",
           "IgSF CAM signaling",
+          "EGFR tyrosine kinase inhibitor resistance",
           "Cell cycle",
           "ErbB signaling pathway",
-          "Hematopoietic cell lineage",
           "Apoptosis"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "natalizumab",
@@ -4117,12 +4221,12 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.5446,
-      "calibrated_score": 0.5446,
-      "rank": 47,
+      "raw_score": 0.4707,
+      "calibrated_score": 0.4707,
+      "rank": 113,
       "total_candidates": 3003,
       "expected_rank_top_n": 50,
-      "rank_pass": true,
+      "rank_pass": false,
       "score_pass": true,
       "pass": true,
       "min_score_threshold": 0.22,
@@ -4134,7 +4238,7 @@
       "score_components": {
         "gene_score": 0.8113,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3115,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -4145,7 +4249,7 @@
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "riluzole",
@@ -4153,9 +4257,9 @@
       "disease_area": "neurological",
       "status": "found",
       "expected_status": "TRUE_POSITIVE",
-      "raw_score": 0.4373,
-      "calibrated_score": 0.4373,
-      "rank": 102,
+      "raw_score": 0.5132,
+      "calibrated_score": 0.5132,
+      "rank": 58,
       "total_candidates": 3003,
       "expected_rank_top_n": 40,
       "rank_pass": false,
@@ -4168,28 +4272,28 @@
       ],
       "notes": "Only small-molecule ALS drug with survival benefit.",
       "score_components": {
-        "gene_score": 0.5268,
+        "gene_score": 0.5226,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
-        "similarity_score": 0.0,
+        "ppi_score": 0.3492,
+        "similarity_score": 1.0,
         "mechanism_score": 0.3,
         "literature_score": 0.0,
         "shared_genes": [
-          "SCN9A",
           "TARDBP",
-          "SCN4A",
-          "SCN11A",
           "SCN3A",
-          "SCN7A",
-          "SCN8A",
+          "SCN4A",
+          "SCN1A",
+          "SCN11A",
           "SCN2A",
           "SCN5A",
+          "SCN8A",
           "SCN10A",
-          "SCN1A"
+          "SCN7A",
+          "SCN9A"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     }
   ],
   "negative_cases": [
@@ -4201,7 +4305,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1370,
+      "rank": 2241,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4216,14 +4320,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3119,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "propranolol",
@@ -4233,7 +4337,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1141,
+      "rank": 2239,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4248,29 +4352,29 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3077,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metformin",
       "disease": "multiple myeloma",
       "disease_area": "oncology",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1164,
-      "calibrated_score": 0.1164,
-      "rank": 440,
+      "raw_score": 0.2532,
+      "calibrated_score": 0.2532,
+      "rank": 370,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "Biguanide \u2014 AMPK activation has no established anti-myeloma mechanism",
       "sources": [
@@ -4278,90 +4382,95 @@
       ],
       "notes": "Some in-vitro data but no clinical benefit in myeloma.",
       "score_components": {
-        "gene_score": 0.0967,
+        "gene_score": 0.1198,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.4383,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
+          "PTEN",
+          "FLT3",
           "NRAS",
           "IDH1",
-          "FLT3",
           "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "aspirin",
       "disease": "parkinson disease",
       "disease_area": "neurological",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0865,
-      "calibrated_score": 0.0865,
-      "rank": 783,
+      "raw_score": 0.2535,
+      "calibrated_score": 0.2535,
+      "rank": 720,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "COX inhibitor \u2014 no established connection to dopaminergic neurodegeneration",
       "sources": [],
       "notes": "Aspirin targets COX pathway, unrelated to dopamine/synuclein.",
       "score_components": {
-        "gene_score": 0.0214,
+        "gene_score": 0.0574,
         "pathway_score": 0.05624999999999999,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3907,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
           "HMGCR",
-          "B4GALT2"
+          "TSC1",
+          "PIK3CA",
+          "B4GALT2",
+          "GFAP"
         ],
         "shared_pathways": [
-          "Protein processing in endoplasmic reticulum",
-          "Non-alcoholic fatty liver disease"
+          "Non-alcoholic fatty liver disease",
+          "Protein processing in endoplasmic reticulum"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "simvastatin",
       "disease": "cystic fibrosis",
       "disease_area": "rare_disease",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.079,
-      "calibrated_score": 0.079,
-      "rank": 651,
+      "raw_score": 0.2075,
+      "calibrated_score": 0.2075,
+      "rank": 545,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.2,
       "mechanism": "HMGCR inhibitor \u2014 no established mechanism in CFTR dysfunction",
       "sources": [],
       "notes": "Statin targets cholesterol, not chloride channel biology.",
       "score_components": {
-        "gene_score": 0.0326,
+        "gene_score": 0.0499,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3807,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
           "PIK3CG",
-          "IL17A"
+          "IL17A",
+          "KRAS"
         ],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "lisinopril",
@@ -4369,9 +4478,9 @@
       "disease_area": "neurological",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0,
-      "calibrated_score": 0.0,
-      "rank": 1295,
+      "raw_score": 0.0879,
+      "calibrated_score": 0.0879,
+      "rank": 1689,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4384,48 +4493,53 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2987,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "omeprazole",
       "disease": "multiple sclerosis",
       "disease_area": "neurological",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0595,
-      "calibrated_score": 0.0595,
-      "rank": 561,
+      "raw_score": 0.2906,
+      "calibrated_score": 0.2906,
+      "rank": 356,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.18,
       "mechanism": "Proton pump inhibitor \u2014 H+/K+ ATPase inhibition unrelated to MS autoimmunity",
       "sources": [],
       "notes": "Gastric acid suppression has no mechanism in MS.",
       "score_components": {
-        "gene_score": 0.0214,
+        "gene_score": 0.1743,
         "pathway_score": 0.06818181818181819,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3802,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "PLK1"
+          "PLK1",
+          "MAPT",
+          "ATP4B",
+          "VDR",
+          "ATP4A",
+          "HEXB"
         ],
         "shared_pathways": [
           "Serotonergic synapse"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "furosemide",
@@ -4435,7 +4549,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1140,
+      "rank": 2242,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4448,14 +4562,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3418,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "metoclopramide",
@@ -4465,7 +4579,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1389,
+      "rank": 2254,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4487,7 +4601,7 @@
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "warfarin",
@@ -4497,7 +4611,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 1503,
+      "rank": 2429,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4510,50 +4624,50 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3654,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "digoxin",
       "disease": "rheumatoid arthritis",
       "disease_area": "autoimmune_inflammatory",
-      "status": "true_negative_low_score",
+      "status": "false_positive",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.1126,
-      "calibrated_score": 0.1126,
-      "rank": 360,
+      "raw_score": 0.2056,
+      "calibrated_score": 0.2056,
+      "rank": 500,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
-      "score_pass": true,
-      "pass": true,
+      "score_pass": false,
+      "pass": false,
       "min_score_threshold": 0.18,
       "mechanism": "Cardiac glycoside / Na+/K+ ATPase inhibitor \u2014 no autoimmune mechanism",
       "sources": [],
       "notes": "Cardiac drug with no immunomodulatory target in RA.",
       "score_components": {
-        "gene_score": 0.0556,
+        "gene_score": 0.0554,
         "pathway_score": 0.08053691275167785,
-        "ppi_score": 0.0,
+        "ppi_score": 0.369,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [
-          "NR3C1",
-          "TNF"
+          "TNF",
+          "NR3C1"
         ],
         "shared_pathways": [
-          "Regulation of lipolysis in adipocytes",
-          "Arachidonic acid metabolism"
+          "Arachidonic acid metabolism",
+          "Regulation of lipolysis in adipocytes"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "allopurinol",
@@ -4561,9 +4675,9 @@
       "disease_area": "oncology",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0573,
-      "calibrated_score": 0.0573,
-      "rank": 678,
+      "raw_score": 0.1502,
+      "calibrated_score": 0.1502,
+      "rank": 697,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4576,7 +4690,7 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.16901408450704225,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3582,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -4585,7 +4699,7 @@
           "Endocrine resistance"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "atenolol",
@@ -4595,7 +4709,7 @@
       "expected_status": "TRUE_NEGATIVE",
       "raw_score": 0.0,
       "calibrated_score": 0.0,
-      "rank": 918,
+      "rank": 2243,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4608,14 +4722,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.3701,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "ondansetron",
@@ -4623,9 +4737,9 @@
       "disease_area": "cardiovascular",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0751,
-      "calibrated_score": 0.0751,
-      "rank": 872,
+      "raw_score": 0.1496,
+      "calibrated_score": 0.1496,
+      "rank": 1262,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4638,7 +4752,7 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.06037735849056604,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2683,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
@@ -4648,7 +4762,7 @@
           "Taste transduction"
         ]
       },
-      "fast_mode": true
+      "fast_mode": false
     },
     {
       "drug": "pantoprazole",
@@ -4656,9 +4770,9 @@
       "disease_area": "neurological",
       "status": "true_negative_low_score",
       "expected_status": "TRUE_NEGATIVE",
-      "raw_score": 0.0,
-      "calibrated_score": 0.0,
-      "rank": 1823,
+      "raw_score": 0.0854,
+      "calibrated_score": 0.0854,
+      "rank": 1977,
       "total_candidates": 3003,
       "expected_rank_top_n": 0,
       "rank_pass": false,
@@ -4671,14 +4785,14 @@
       "score_components": {
         "gene_score": 0.0,
         "pathway_score": 0.0,
-        "ppi_score": 0.0,
+        "ppi_score": 0.2904,
         "similarity_score": 0.0,
         "mechanism_score": 0.0,
         "literature_score": 0.0,
         "shared_genes": [],
         "shared_pathways": []
       },
-      "fast_mode": true
+      "fast_mode": false
     }
   ],
   "out_of_scope_cases": [
