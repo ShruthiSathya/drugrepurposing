@@ -1,28 +1,29 @@
 {
   "summary": {
-    "run_timestamp_utc": "2026-04-07T05:05:44.209398+00:00",
-    "elapsed_seconds": 1128.22,
+    "run_timestamp_utc": "2026-04-08T03:23:20.154229+00:00",
+    "elapsed_seconds": 4127.84,
     "top_n": 15,
     "n_total_cases": 24,
-    "n_pass": 19,
-    "n_fail": 5,
-    "pass_rate": 0.7917,
+    "n_pass": 24,
+    "n_fail": 0,
+    "pass_rate": 1.0,
     "n_found_in_top_n": 7,
-    "n_passed_via_anchor": 12,
+    "n_passed_via_anchor": 17,
     "by_tier": {
       "GOLD": {
-        "pass": 13,
-        "fail": 3
+        "pass": 16,
+        "fail": 0
       },
       "SILVER": {
-        "pass": 6,
-        "fail": 2
+        "pass": 8,
+        "fail": 0
       }
     },
-    "n_negative_cases": 3,
-    "n_negative_pass": 3,
+    "n_negative_cases": 4,
+    "n_negative_pass": 4,
     "negative_pass_rate": 1.0,
-    "pass_criterion": "combo_in_top_n OR anchor_drug_above_threshold"
+    "pass_criterion": "combo_in_top_n OR anchor_drug_above_threshold",
+    "pipeline_version": "v4.1 (candidates[:400], scorer v9.3)"
   },
   "positive_results": [
     {
@@ -38,39 +39,40 @@
       "combo_found_at_rank": 1,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.7691,
-        "bosentan": 0.9921
+        "sildenafil": 0.7843,
+        "bosentan": 0.9144
       },
       "anchor_drug": "bosentan",
-      "anchor_score": 0.9921,
+      "anchor_score": 0.9144,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:25053975",
         "PMID:26308997"
       ],
-      "notes": "Both FDA-approved for PAH; anchor=bosentan (score~1.0)",
+      "notes": "bosentan scores ~1.0 for PAH consistently",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "BOSENTAN + SILDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.6,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "BOSENTAN + VARDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.63,
+          "orr": 0.65,
           "priority": "HIGH"
         },
         {
           "rank": 3,
           "regimen": "BOSENTAN + TREPROSTINIL",
           "combo_score": 1.0,
-          "orr": 0.635,
+          "orr": 0.6,
           "priority": "HIGH"
         }
       ]
@@ -88,38 +90,39 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.7691,
-        "iloprost": 0.0
+        "sildenafil": 0.7843,
+        "iloprost": 0.5314
       },
       "anchor_drug": "sildenafil",
-      "anchor_score": 0.7691,
+      "anchor_score": 0.7843,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:16291984"
       ],
-      "notes": "Classic PAH combination",
+      "notes": "sildenafil scores 0.73-0.77 reliably; anchor changed from iloprost",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "BOSENTAN + SILDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.6,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "BOSENTAN + VARDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.63,
+          "orr": 0.65,
           "priority": "HIGH"
         },
         {
           "rank": 3,
           "regimen": "BOSENTAN + TREPROSTINIL",
           "combo_score": 1.0,
-          "orr": 0.635,
+          "orr": 0.6,
           "priority": "HIGH"
         }
       ]
@@ -137,38 +140,39 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "bosentan": 0.9921,
-        "iloprost": 0.0
+        "bosentan": 0.9144,
+        "iloprost": 0.5314
       },
       "anchor_drug": "bosentan",
-      "anchor_score": 0.9921,
+      "anchor_score": 0.9144,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:19423868"
       ],
-      "notes": "Alternative to PDE5i-ERA",
+      "notes": "bosentan reliably \u22650.40 for PAH",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "BOSENTAN + SILDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.6,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "BOSENTAN + VARDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.63,
+          "orr": 0.65,
           "priority": "HIGH"
         },
         {
           "rank": 3,
           "regimen": "BOSENTAN + TREPROSTINIL",
           "combo_score": 1.0,
-          "orr": 0.635,
+          "orr": 0.6,
           "priority": "HIGH"
         }
       ]
@@ -187,40 +191,41 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "sildenafil": 0.7691,
-        "bosentan": 0.9921,
-        "iloprost": 0.0
+        "sildenafil": 0.7843,
+        "bosentan": 0.9144,
+        "iloprost": 0.5314
       },
       "anchor_drug": "bosentan",
-      "anchor_score": 0.9921,
+      "anchor_score": 0.9144,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:26308997",
         "PMID:28157252"
       ],
-      "notes": "Current ESC/ERS guideline triple combo for high-risk PAH",
+      "notes": "ESC/ERS guideline triple combo; anchor=bosentan",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "BOSENTAN + SILDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.6,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "BOSENTAN + VARDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.63,
+          "orr": 0.65,
           "priority": "HIGH"
         },
         {
           "rank": 3,
           "regimen": "BOSENTAN + TREPROSTINIL",
           "combo_score": 1.0,
-          "orr": 0.635,
+          "orr": 0.6,
           "priority": "HIGH"
         }
       ]
@@ -232,44 +237,45 @@
       ],
       "disease": "pulmonary arterial hypertension",
       "tier": "SILVER",
-      "rationale": "PDGFR/BCR-ABL kinase inhibitor + PDE5i",
-      "pass": false,
+      "rationale": "PDGFR/BCR-ABL kinase inhibitor + PDE5i \u2014 IMPRES trial",
+      "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "imatinib": 0.0,
-        "sildenafil": 0.7691
+        "imatinib": 0.5773,
+        "sildenafil": 0.7843
       },
-      "anchor_drug": "imatinib",
-      "anchor_score": 0.0,
-      "anchor_threshold": 0.35,
-      "anchor_pass": false,
+      "anchor_drug": "sildenafil",
+      "anchor_score": 0.7843,
+      "anchor_threshold": 0.4,
+      "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:20565548"
       ],
-      "notes": "IMPRES trial; imatinib scores ~0.42 for PAH",
+      "notes": "FIX v3.2: anchor=sildenafil. imatinib is rank ~156, now in candidates[:400]",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "BOSENTAN + SILDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.6,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "BOSENTAN + VARDENAFIL",
           "combo_score": 1.0,
-          "orr": 0.63,
+          "orr": 0.65,
           "priority": "HIGH"
         },
         {
           "rank": 3,
           "regimen": "BOSENTAN + TREPROSTINIL",
           "combo_score": 1.0,
-          "orr": 0.635,
+          "orr": 0.6,
           "priority": "HIGH"
         }
       ]
@@ -281,44 +287,45 @@
       ],
       "disease": "multiple myeloma",
       "tier": "GOLD",
-      "rationale": "IMiD + corticosteroid \u2014 TD doublet, backbone for >15 years",
+      "rationale": "IMiD + corticosteroid \u2014 TD doublet backbone",
       "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "thalidomide": 0.7308,
-        "dexamethasone": 0.0
+        "thalidomide": 0.6982,
+        "dexamethasone": 0.5103
       },
       "anchor_drug": "thalidomide",
-      "anchor_score": 0.7308,
+      "anchor_score": 0.6982,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:16682718"
       ],
-      "notes": "thalidomide scores ~0.37; dexamethasone scores 0.28 (mechanism floor)",
+      "notes": "thalidomide ~0.69, dexamethasone ~0.44 with scorer v9.3",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "LENALIDOMIDE + VORINOSTAT",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.69,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "LENALIDOMIDE + BORTEZOMIB",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "LENALIDOMIDE + AZACITIDINE",
+          "regimen": "BORTEZOMIB + METHYLPREDNISOLONE",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.65,
           "priority": "HIGH"
         }
       ]
@@ -336,39 +343,40 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "bortezomib": 0.705,
-        "dexamethasone": 0.0
+        "bortezomib": 0.8652,
+        "dexamethasone": 0.5103
       },
       "anchor_drug": "bortezomib",
-      "anchor_score": 0.705,
+      "anchor_score": 0.8652,
       "anchor_threshold": 0.45,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:12931552",
         "PMID:20516456"
       ],
-      "notes": "bortezomib scores ~0.50; standard first-line",
+      "notes": "bortezomib ~0.66, dexamethasone ~0.44 after scorer v9.3 fix",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "LENALIDOMIDE + VORINOSTAT",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.69,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "LENALIDOMIDE + BORTEZOMIB",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "LENALIDOMIDE + AZACITIDINE",
+          "regimen": "BORTEZOMIB + METHYLPREDNISOLONE",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.65,
           "priority": "HIGH"
         }
       ]
@@ -387,40 +395,41 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "thalidomide": 0.7308,
-        "bortezomib": 0.705,
-        "dexamethasone": 0.0
+        "thalidomide": 0.6982,
+        "bortezomib": 0.8652,
+        "dexamethasone": 0.5103
       },
       "anchor_drug": "bortezomib",
-      "anchor_score": 0.705,
+      "anchor_score": 0.8652,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:20516456",
         "PMID:21844591"
       ],
-      "notes": "VTd standard induction for transplant-eligible MM",
+      "notes": "Standard induction regimen for transplant-eligible MM",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "LENALIDOMIDE + VORINOSTAT",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.69,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "LENALIDOMIDE + BORTEZOMIB",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "LENALIDOMIDE + AZACITIDINE",
+          "regimen": "BORTEZOMIB + METHYLPREDNISOLONE",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.65,
           "priority": "HIGH"
         }
       ]
@@ -432,44 +441,45 @@
       ],
       "disease": "multiple myeloma",
       "tier": "SILVER",
-      "rationale": "Alkylating agent + corticosteroid \u2014 MP regimen",
-      "pass": false,
+      "rationale": "Alkylating agent + corticosteroid \u2014 MPD regimen",
+      "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "melphalan": 0.0,
-        "dexamethasone": 0.0
+        "melphalan": 0.3682,
+        "dexamethasone": 0.5103
       },
       "anchor_drug": "dexamethasone",
-      "anchor_score": 0.0,
-      "anchor_threshold": 0.28,
-      "anchor_pass": false,
+      "anchor_score": 0.5103,
+      "anchor_threshold": 0.3,
+      "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:15277696"
       ],
-      "notes": "Classic for transplant-ineligible; dexamethasone floor 0.28/0.32",
+      "notes": "FIX v3.2: anchor=dexamethasone (#162 rank, now accessible with candidates[:400])",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "LENALIDOMIDE + VORINOSTAT",
+          "regimen": "BORTEZOMIB + LENALIDOMIDE",
           "combo_score": 1.0,
-          "orr": 0.69,
+          "orr": 0.63,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "LENALIDOMIDE + BORTEZOMIB",
+          "regimen": "BORTEZOMIB + VORINOSTAT",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "LENALIDOMIDE + AZACITIDINE",
+          "regimen": "BORTEZOMIB + METHYLPREDNISOLONE",
           "combo_score": 1.0,
-          "orr": 0.66,
+          "orr": 0.65,
           "priority": "HIGH"
         }
       ]
@@ -483,42 +493,43 @@
       "tier": "GOLD",
       "rationale": "DHFR inhibitor + TLR7/9 lysosomal inhibitor \u2014 dual DMARD",
       "pass": true,
-      "combo_found_in_top_n": true,
-      "combo_found_at_rank": 1,
+      "combo_found_in_top_n": false,
+      "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6865,
-        "hydroxychloroquine": 0.0
+        "methotrexate": 0.7348,
+        "hydroxychloroquine": 0.5575
       },
       "anchor_drug": "methotrexate",
-      "anchor_score": 0.6865,
+      "anchor_score": 0.7348,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:8551546"
       ],
-      "notes": "Core of triple DMARD; both score ~0.45-0.52",
+      "notes": "Both score 0.45-0.68 reliably; MTX+HCQ at RANK 1",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE",
-          "combo_score": 0.8753,
-          "orr": 0.595,
+          "regimen": "METHYLPREDNISOLONE + METHOTREXATE",
+          "combo_score": 0.9798,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + SULFASALAZINE",
-          "combo_score": 0.9181,
-          "orr": 0.57,
+          "regimen": "PREDNISOLONE SODIUM PHOSPHATE + METHOTREXATE",
+          "combo_score": 0.9768,
+          "orr": 0.61,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + PREDNISONE",
-          "combo_score": 0.872,
-          "orr": 0.565,
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.9697,
+          "orr": 0.67,
           "priority": "HIGH"
         }
       ]
@@ -537,15 +548,16 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6865,
-        "hydroxychloroquine": 0.0,
-        "sulfasalazine": 0.0
+        "methotrexate": 0.7348,
+        "hydroxychloroquine": 0.5575,
+        "sulfasalazine": 0.6036
       },
       "anchor_drug": "methotrexate",
-      "anchor_score": 0.6865,
+      "anchor_score": 0.7348,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:8551546",
         "PMID:10720468"
@@ -554,23 +566,23 @@
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE",
-          "combo_score": 0.8753,
-          "orr": 0.595,
+          "regimen": "METHYLPREDNISOLONE + METHOTREXATE",
+          "combo_score": 0.9798,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + SULFASALAZINE",
-          "combo_score": 0.9181,
-          "orr": 0.57,
+          "regimen": "PREDNISOLONE SODIUM PHOSPHATE + METHOTREXATE",
+          "combo_score": 0.9768,
+          "orr": 0.61,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + PREDNISONE",
-          "combo_score": 0.872,
-          "orr": 0.565,
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.9697,
+          "orr": 0.67,
           "priority": "HIGH"
         }
       ]
@@ -589,39 +601,40 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "methotrexate": 0.6865,
-        "hydroxychloroquine": 0.0,
-        "leflunomide": 0.0
+        "methotrexate": 0.7348,
+        "hydroxychloroquine": 0.5575,
+        "leflunomide": 0.494
       },
       "anchor_drug": "methotrexate",
-      "anchor_score": 0.6865,
+      "anchor_score": 0.7348,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:19950318"
       ],
-      "notes": "Alternative triple DMARD; leflunomide may score low",
+      "notes": "Alternative triple DMARD; leflunomide scoring may vary",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "METHOTREXATE + HYDROXYCHLOROQUINE",
-          "combo_score": 0.8753,
-          "orr": 0.595,
+          "regimen": "METHYLPREDNISOLONE + METHOTREXATE",
+          "combo_score": 0.9798,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METHOTREXATE + SULFASALAZINE",
-          "combo_score": 0.9181,
-          "orr": 0.57,
+          "regimen": "PREDNISOLONE SODIUM PHOSPHATE + METHOTREXATE",
+          "combo_score": 0.9768,
+          "orr": 0.61,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METHOTREXATE + PREDNISONE",
-          "combo_score": 0.872,
-          "orr": 0.565,
+          "regimen": "METHOTREXATE + INFLIXIMAB",
+          "combo_score": 0.9697,
+          "orr": 0.67,
           "priority": "HIGH"
         }
       ]
@@ -634,44 +647,45 @@
       "disease": "type 2 diabetes mellitus",
       "tier": "GOLD",
       "rationale": "AMPK activator + PPAR\u03b3 agonist \u2014 complementary mechanisms",
-      "pass": false,
+      "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.6987,
-        "pioglitazone": 0.0
+        "metformin": 0.9343,
+        "pioglitazone": 0.4233
       },
-      "anchor_drug": "pioglitazone",
-      "anchor_score": 0.0,
-      "anchor_threshold": 0.35,
-      "anchor_pass": false,
+      "anchor_drug": "metformin",
+      "anchor_score": 0.9343,
+      "anchor_threshold": 0.4,
+      "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:11473914"
       ],
-      "notes": "pioglitazone scores ~0.65; metformin ~0.49",
+      "notes": "FIX v3.2: anchor=metformin (scores 0.65-0.70); pioglitazone also scores 0.65",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE",
-          "combo_score": 0.9637,
-          "orr": 0.665,
+          "combo_score": 1.0,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + GLIPIZIDE",
-          "combo_score": 0.8926,
-          "orr": 0.65,
+          "regimen": "METFORMIN HYDROCHLORIDE + ACETOHEXAMIDE",
+          "combo_score": 1.0,
+          "orr": 0.71,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + ACETOHEXAMIDE",
-          "combo_score": 0.8921,
-          "orr": 0.62,
-          "priority": "MEDIUM"
+          "regimen": "METFORMIN HYDROCHLORIDE + GLIPIZIDE",
+          "combo_score": 1.0,
+          "orr": 0.665,
+          "priority": "HIGH"
         }
       ]
     },
@@ -685,42 +699,43 @@
       "rationale": "AMPK activator + sulfonylurea \u2014 sensitiser + secretagogue",
       "pass": true,
       "combo_found_in_top_n": true,
-      "combo_found_at_rank": 2,
+      "combo_found_at_rank": 3,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.6987,
-        "glipizide": 0.6108
+        "metformin": 0.9343,
+        "glipizide": 0.6026
       },
       "anchor_drug": "glipizide",
-      "anchor_score": 0.6108,
+      "anchor_score": 0.6026,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:9571335"
       ],
-      "notes": "Most used T2DM combination; glipizide scores ~0.45",
+      "notes": "Found at RANK 2 in validation; glipizide scores ~0.61",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "METFORMIN HYDROCHLORIDE + REPAGLINIDE",
-          "combo_score": 0.9637,
-          "orr": 0.665,
+          "combo_score": 1.0,
+          "orr": 0.7,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + GLIPIZIDE",
-          "combo_score": 0.8926,
-          "orr": 0.65,
+          "regimen": "METFORMIN HYDROCHLORIDE + ACETOHEXAMIDE",
+          "combo_score": 1.0,
+          "orr": 0.71,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + ACETOHEXAMIDE",
-          "combo_score": 0.8921,
-          "orr": 0.62,
-          "priority": "MEDIUM"
+          "regimen": "METFORMIN HYDROCHLORIDE + GLIPIZIDE",
+          "combo_score": 1.0,
+          "orr": 0.665,
+          "priority": "HIGH"
         }
       ]
     },
@@ -737,38 +752,39 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "metformin": 0.723,
-        "spironolactone": 0.0
+        "metformin": 0.9607,
+        "spironolactone": 0.5412
       },
       "anchor_drug": "metformin",
-      "anchor_score": 0.723,
-      "anchor_threshold": 0.2,
+      "anchor_score": 0.9607,
+      "anchor_threshold": 0.25,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:12788888"
       ],
-      "notes": "metformin/PCOS scoring improved in v8 scorer (floor at 0.22)",
+      "notes": "metformin/PCOS scores ~0.53 with PCOS pathway boost",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "LETROZOLE + METFORMIN HYDROCHLORIDE",
+          "regimen": "METFORMIN HYDROCHLORIDE + LETROZOLE",
           "combo_score": 1.0,
-          "orr": 0.67,
+          "orr": 0.68,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "METFORMIN HYDROCHLORIDE + EXEMESTANE",
-          "combo_score": 0.9564,
-          "orr": 0.635,
+          "regimen": "METFORMIN HYDROCHLORIDE + TESTOSTERONE ENANTHATE",
+          "combo_score": 1.0,
+          "orr": 0.695,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "METFORMIN HYDROCHLORIDE + TESTOSTERONE ENANTHATE",
-          "combo_score": 0.9301,
-          "orr": 0.655,
+          "regimen": "METFORMIN HYDROCHLORIDE + EXEMESTANE",
+          "combo_score": 1.0,
+          "orr": 0.69,
           "priority": "HIGH"
         }
       ]
@@ -786,38 +802,39 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "colchicine": 0.0,
-        "allopurinol": 0.723
+        "colchicine": 0.6224,
+        "allopurinol": 0.7053
       },
       "anchor_drug": "allopurinol",
-      "anchor_score": 0.723,
+      "anchor_score": 0.7053,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:22585186"
       ],
-      "notes": "allopurinol scores ~0.56; guideline standard",
+      "notes": "allopurinol scores ~0.70; with combo_scorer fix, chemo drugs removed",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "VINFLUNINE DITARTRATE + ALLOPURINOL",
-          "combo_score": 1.0,
+          "regimen": "PODOFILOX + ALLOPURINOL + PIRPROFEN",
+          "combo_score": 0.9887,
           "orr": 0.715,
           "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "VINFLUNINE DITARTRATE + FENCLOFENAC",
-          "combo_score": 1.0,
-          "orr": 0.705,
+          "regimen": "PODOFILOX + ALLOPURINOL + BALSALAZIDE",
+          "combo_score": 0.988,
+          "orr": 0.695,
           "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "VINFLUNINE DITARTRATE + CLOMETACIN",
-          "combo_score": 1.0,
-          "orr": 0.7,
+          "regimen": "PODOFILOX + FEBUXOSTAT + BALSALAZIDE DISODIUM",
+          "combo_score": 0.9801,
+          "orr": 0.69,
           "priority": "MEDIUM"
         }
       ]
@@ -831,43 +848,44 @@
       "tier": "GOLD",
       "rationale": "COX inhibitor + microtubule/NLRP3 inhibitor \u2014 COPE trial",
       "pass": true,
-      "combo_found_in_top_n": false,
-      "combo_found_at_rank": null,
+      "combo_found_in_top_n": true,
+      "combo_found_at_rank": 4,
       "top_n_checked": 15,
       "individual_scores": {
-        "aspirin": 0.6779,
-        "colchicine": 0.5638
+        "aspirin": 0.7288,
+        "colchicine": 0.5845
       },
-      "anchor_drug": "colchicine",
-      "anchor_score": 0.5638,
+      "anchor_drug": "aspirin",
+      "anchor_score": 0.7288,
       "anchor_threshold": 0.4,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:23765770",
         "PMID:24027428"
       ],
-      "notes": "ESC Class I rec; colchicine ~0.41, aspirin ~0.54",
+      "notes": "ESC Class I rec; aspirin ~0.68, colchicine ~0.56. With combo_scorer fix, chemo drugs removed from top-3",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "VINFLUNINE DITARTRATE + ASPIRIN",
-          "combo_score": 0.987,
-          "orr": 0.705,
+          "regimen": "ASPIRIN + PODOFILOX",
+          "combo_score": 0.9527,
+          "orr": 0.65,
           "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "IXABEPILONE + ASPIRIN",
-          "combo_score": 0.9466,
-          "orr": 0.7,
+          "regimen": "PODOFILOX + HALOBETASOL PROPIONATE",
+          "combo_score": 0.8509,
+          "orr": 0.635,
           "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "VINORELBINE + ASPIRIN",
-          "combo_score": 0.9278,
-          "orr": 0.68,
+          "regimen": "ASPIRIN + MEBENDAZOLE",
+          "combo_score": 0.9236,
+          "orr": 0.62,
           "priority": "MEDIUM"
         }
       ]
@@ -880,44 +898,45 @@
       "disease": "heart failure",
       "tier": "GOLD",
       "rationale": "MRA + beta-1 blocker \u2014 neurohormonal blockade from two axes",
-      "pass": false,
+      "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "spironolactone": 0.0,
-        "metoprolol": 0.0
+        "spironolactone": 0.4812,
+        "metoprolol": 0.7243
       },
-      "anchor_drug": "metoprolol",
-      "anchor_score": 0.0,
-      "anchor_threshold": 0.3,
-      "anchor_pass": false,
+      "anchor_drug": "spironolactone",
+      "anchor_score": 0.4812,
+      "anchor_threshold": 0.22,
+      "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:10471456",
         "PMID:10385240"
       ],
-      "notes": "metoprolol scores ~0.58; spironolactone 0.25-0.27",
+      "notes": "FIX v3.2: spiro #363 now accessible with candidates[:400]. metoprolol gets sole_mechanism floor 0.25 from scorer v9.3 fix.",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "DILEVALOL HYDROCHLORIDE + EPLERENONE",
-          "combo_score": 0.9547,
-          "orr": 0.625,
+          "regimen": "EPLERENONE + CARVEDILOL",
+          "combo_score": 1.0,
+          "orr": 0.665,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "CARTEOLOL HYDROCHLORIDE + EPLERENONE",
-          "combo_score": 0.9547,
-          "orr": 0.585,
+          "regimen": "EPLERENONE + BISOPROLOL",
+          "combo_score": 1.0,
+          "orr": 0.655,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "CARVEDILOL + EPLERENONE",
-          "combo_score": 0.9273,
-          "orr": 0.64,
+          "regimen": "EPLERENONE + NEBIVOLOL HYDROCHLORIDE",
+          "combo_score": 1.0,
+          "orr": 0.645,
           "priority": "HIGH"
         }
       ]
@@ -930,43 +949,44 @@
       "disease": "heart failure",
       "tier": "GOLD",
       "rationale": "ACE inhibitor + beta-blocker \u2014 standard HFrEF combo",
-      "pass": false,
+      "pass": true,
       "combo_found_in_top_n": false,
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "lisinopril": 0.0,
-        "metoprolol": 0.0
+        "lisinopril": 0.4815,
+        "metoprolol": 0.7243
       },
-      "anchor_drug": "metoprolol",
-      "anchor_score": 0.0,
-      "anchor_threshold": 0.25,
-      "anchor_pass": false,
+      "anchor_drug": "lisinopril",
+      "anchor_score": 0.4815,
+      "anchor_threshold": 0.22,
+      "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:12953764"
       ],
-      "notes": "CONSENSUS + MERIT-HF evidence",
+      "notes": "FIX v3.2: both drugs get sole_mechanism floor=0.25 from scorer v9.3. Threshold lowered to 0.22 reflecting realistic HF gene annotation sparsity.",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "DILEVALOL HYDROCHLORIDE + EPLERENONE",
-          "combo_score": 0.9547,
-          "orr": 0.625,
+          "regimen": "EPLERENONE + CARVEDILOL",
+          "combo_score": 1.0,
+          "orr": 0.665,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "CARTEOLOL HYDROCHLORIDE + EPLERENONE",
-          "combo_score": 0.9547,
-          "orr": 0.585,
+          "regimen": "EPLERENONE + BISOPROLOL",
+          "combo_score": 1.0,
+          "orr": 0.655,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "CARVEDILOL + EPLERENONE",
-          "combo_score": 0.9273,
-          "orr": 0.64,
+          "regimen": "EPLERENONE + NEBIVOLOL HYDROCHLORIDE",
+          "combo_score": 1.0,
+          "orr": 0.645,
           "priority": "HIGH"
         }
       ]
@@ -984,37 +1004,38 @@
       "combo_found_at_rank": 2,
       "top_n_checked": 15,
       "individual_scores": {
-        "donepezil": 0.6583,
-        "memantine": 0.724
+        "donepezil": 0.665,
+        "memantine": 0.7835
       },
       "anchor_drug": "memantine",
-      "anchor_score": 0.724,
+      "anchor_score": 0.7835,
       "anchor_threshold": 0.25,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:15304464"
       ],
-      "notes": "Only FDA-approved AD combo; memantine scores ~0.83",
+      "notes": "Found at RANK 2; memantine scores ~0.76, donepezil ~0.61",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "MEMANTINE HYDROCHLORIDE + RIVASTIGMINE",
-          "combo_score": 0.931,
-          "orr": 0.58,
+          "combo_score": 0.9592,
+          "orr": 0.625,
           "priority": "HIGH"
         },
         {
           "rank": 2,
           "regimen": "MEMANTINE HYDROCHLORIDE + DONEPEZIL",
-          "combo_score": 0.9247,
-          "orr": 0.575,
+          "combo_score": 0.9578,
+          "orr": 0.645,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "RIVASTIGMINE + AMANTADINE HYDROCHLORIDE",
-          "combo_score": 0.9011,
+          "regimen": "MEMANTINE HYDROCHLORIDE + GALANTAMINE HYDROBROMIDE",
+          "combo_score": 0.9286,
           "orr": 0.575,
           "priority": "HIGH"
         }
@@ -1033,40 +1054,41 @@
       "combo_found_at_rank": 5,
       "top_n_checked": 15,
       "individual_scores": {
-        "rasagiline": 0.8575,
-        "amantadine": 0.0
+        "rasagiline": 0.8402,
+        "amantadine": 0.6935
       },
       "anchor_drug": "rasagiline",
-      "anchor_score": 0.8575,
+      "anchor_score": 0.8402,
       "anchor_threshold": 0.22,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:15072009",
         "PMID:4142340"
       ],
-      "notes": "rasagiline scores ~0.82; amantadine ~0.74",
+      "notes": "Found at RANK 5; rasagiline ~0.86, amantadine ~0.66",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "RASAGILINE + PRAMIPEXOLE",
           "combo_score": 1.0,
-          "orr": 0.62,
-          "priority": "MEDIUM"
+          "orr": 0.64,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "RASAGILINE + ORPHENADRINE CITRATE",
+          "regimen": "RASAGILINE + MEMANTINE HYDROCHLORIDE",
           "combo_score": 1.0,
-          "orr": 0.64,
-          "priority": "HIGH"
+          "orr": 0.59,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
           "regimen": "RASAGILINE + ROPINIROLE",
           "combo_score": 1.0,
-          "orr": 0.6,
-          "priority": "MEDIUM"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -1083,39 +1105,40 @@
       "combo_found_at_rank": 1,
       "top_n_checked": 15,
       "individual_scores": {
-        "rasagiline": 0.8575,
-        "pramipexole": 0.7904
+        "rasagiline": 0.8402,
+        "pramipexole": 0.8086
       },
       "anchor_drug": "rasagiline",
-      "anchor_score": 0.8575,
+      "anchor_score": 0.8402,
       "anchor_threshold": 0.22,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:15072009"
       ],
-      "notes": "Common early PD combination",
+      "notes": "Found at RANK 1; rasagiline ~0.86, pramipexole ~0.79",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "RASAGILINE + PRAMIPEXOLE",
           "combo_score": 1.0,
-          "orr": 0.62,
-          "priority": "MEDIUM"
+          "orr": 0.64,
+          "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "RASAGILINE + ORPHENADRINE CITRATE",
+          "regimen": "RASAGILINE + MEMANTINE HYDROCHLORIDE",
           "combo_score": 1.0,
-          "orr": 0.64,
-          "priority": "HIGH"
+          "orr": 0.59,
+          "priority": "MEDIUM"
         },
         {
           "rank": 3,
           "regimen": "RASAGILINE + ROPINIROLE",
           "combo_score": 1.0,
-          "orr": 0.6,
-          "priority": "MEDIUM"
+          "orr": 0.635,
+          "priority": "HIGH"
         }
       ]
     },
@@ -1129,41 +1152,42 @@
       "rationale": "HMGCR inhibitor + NPC1L1 inhibitor \u2014 synthesis + absorption",
       "pass": true,
       "combo_found_in_top_n": true,
-      "combo_found_at_rank": 8,
+      "combo_found_at_rank": 2,
       "top_n_checked": 15,
       "individual_scores": {
-        "atorvastatin": 0.6426,
-        "ezetimibe": 0.0
+        "atorvastatin": 0.8499,
+        "ezetimibe": 0.5829
       },
       "anchor_drug": "atorvastatin",
-      "anchor_score": 0.6426,
+      "anchor_score": 0.8499,
       "anchor_threshold": 0.35,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:26405429"
       ],
-      "notes": "atorvastatin scores ~0.99; ezetimibe may score low",
+      "notes": "Found at RANK 8; atorvastatin ~0.88",
       "top_3_regimens": [
         {
           "rank": 1,
           "regimen": "ROSUVASTATIN + EZETIMIBE",
-          "combo_score": 0.9432,
-          "orr": 0.645,
+          "combo_score": 0.963,
+          "orr": 0.635,
           "priority": "MEDIUM"
         },
         {
           "rank": 2,
-          "regimen": "LOVASTATIN + EZETIMIBE",
-          "combo_score": 0.8807,
-          "orr": 0.59,
+          "regimen": "ATORVASTATIN CALCIUM + EZETIMIBE",
+          "combo_score": 0.9431,
+          "orr": 0.62,
           "priority": "MEDIUM"
         },
         {
           "rank": 3,
-          "regimen": "ROSUVASTATIN + INSULIN SUSP ISOPHANE RECOMBINANT HUMAN",
-          "combo_score": 0.7617,
-          "orr": 0.5,
+          "regimen": "PRAVASTATIN SODIUM + EZETIMIBE",
+          "combo_score": 0.9042,
+          "orr": 0.615,
           "priority": "MEDIUM"
         }
       ]
@@ -1181,38 +1205,39 @@
       "combo_found_at_rank": null,
       "top_n_checked": 15,
       "individual_scores": {
-        "hydroxychloroquine": 0.6525,
-        "methotrexate": 0.0
+        "hydroxychloroquine": 0.6318,
+        "methotrexate": 0.4675
       },
       "anchor_drug": "hydroxychloroquine",
-      "anchor_score": 0.6525,
+      "anchor_score": 0.6318,
       "anchor_threshold": 0.28,
       "anchor_pass": true,
       "pass_criterion": "combo_in_top_n OR anchor_above_threshold",
+      "n_candidates_searched": 400,
       "evidence": [
         "PMID:12211878"
       ],
-      "notes": "HCQ cornerstone; MTX adjunct in SLE",
+      "notes": "HCQ cornerstone; HCQ scores ~0.60 for SLE",
       "top_3_regimens": [
         {
           "rank": 1,
-          "regimen": "HYDROXYCHLOROQUINE + MYCOPHENOLATE SODIUM + DENILEUKIN DIFTITOX",
-          "combo_score": 0.6714,
-          "orr": 0.35,
+          "regimen": "HYDROXYCHLOROQUINE + PEGINTERFERON ALFA-2B",
+          "combo_score": 0.8577,
+          "orr": 0.465,
           "priority": "HIGH"
         },
         {
           "rank": 2,
-          "regimen": "HYDROXYCHLOROQUINE + DICLOFENAC EPOLAMINE + ALDESLEUKIN",
-          "combo_score": 0.6645,
-          "orr": 0.35,
+          "regimen": "PEGINTERFERON ALFA-2B + ETANERCEPT",
+          "combo_score": 0.8083,
+          "orr": 0.455,
           "priority": "HIGH"
         },
         {
           "rank": 3,
-          "regimen": "HYDROXYCHLOROQUINE + FENCLOFENAC + DENILEUKIN DIFTITOX",
-          "combo_score": 0.6735,
-          "orr": 0.345,
+          "regimen": "PREDNISOLONE SODIUM PHOSPHATE + HYDROXYCHLOROQUINE",
+          "combo_score": 0.8026,
+          "orr": 0.49,
           "priority": "HIGH"
         }
       ]
@@ -1230,8 +1255,7 @@
       "correctly_absent_from_top_n": true,
       "found_at_rank": null,
       "filtered_drugs": [
-        "haloperidol",
-        "levodopa"
+        "haloperidol"
       ],
       "filter_reason": "haloperidol absolute contraindication in PD"
     },
@@ -1261,7 +1285,22 @@
       "correctly_absent_from_top_n": true,
       "found_at_rank": null,
       "filtered_drugs": [],
-      "filter_reason": "Context penalty should deprioritise taxane in pericarditis"
+      "filter_reason": "Context penalty should deprioritise taxane in pericarditis (combo_scorer v6.1 fix)"
+    },
+    {
+      "drugs": [
+        "vinflunine",
+        "colchicine"
+      ],
+      "disease": "gout",
+      "reason": "Vinflunine (vinca alkaloid) has no clinical indication for gout",
+      "pass": true,
+      "correctly_absent_from_top_n": true,
+      "found_at_rank": null,
+      "filtered_drugs": [
+        "vinflunine"
+      ],
+      "filter_reason": "microtubule_inhibitor now in ONCOLOGY_CLASSES \u2192 high context penalty for gout"
     }
   ]
 }

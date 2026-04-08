@@ -353,7 +353,7 @@ class ProductionPipeline:
         if use_efo:
             try:
                 from .efo_ontology import EFOOntologyExpander
-                expander = EFOOntologyExpander(session=self.data_fetcher.session)
+                expander = EFOOntologyExpander(session=self.data_fetcher.session, descendant_depth=3)
                 disease_data = await expander.expand_disease_genes(disease_data)
                 stats = disease_data.get("efo_expansion_stats", {})
                 logger.info(
