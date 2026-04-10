@@ -1,53 +1,50 @@
 """
-scorer.py — Drug-Disease Scorer v9.3
+scorer.py — Drug-Disease Scorer v9.4
 =====================================
 
-CHANGES FROM v9.2
------------------
+BUGS FIXED FROM v9.3
+---------------------
 
-FIX 1 (CRITICAL): FALSE-POSITIVE DAMPENING — Specificity 0.667 → target 0.90+
-  Root cause: STRING PPI network proximity creates indirect drug-disease connections
-  that lack mechanistic grounding. Five drugs were scoring above TN thresholds purely
-  via PPI scores despite having zero mechanism match and weak gene overlap:
-    metformin/myeloma (0.25), aspirin/parkinson (0.25), simvastatin/CF (0.21),
-    omeprazole/MS (0.29), digoxin/RA (0.21).
+BUG 1 (FATAL): DEFAULT_COMPONENT_WEIGHTS missing — ImportError at startup
+  production_pipeline.py does:
+      from .scorer import DEFAULT_COMPONENT_WEIGHTS
+  This constant was never defined in scorer.py. Every import of the pipeline
+  raised ImportError before a single drug could be scored.
+  FIX: Added DEFAULT_COMPONENT_WEIGHTS dict mirroring the six WEIGHT_* constants.
 
-  All 5 FPs share: mechanism_score=0.0 AND gene_score<0.25 AND pathway_score<0.10
-  = No specific pharmacological signal; score driven purely by indirect PPI proximity.
+BUG 2 (FATAL): ProductionScorer.__init__ signature mismatch — TypeError on every score
+  production_pipeline.py calls:
+      scorer = ProductionScorer(nx.Graph(), component_weights=self.component_weights)
+  But ProductionScorer.__init__ only accepted `graph`. The `component_weights`
+  kwarg raised TypeError, meaning no drug was ever actually scored.
+  FIX: Added optional `component_weights` parameter to __init__; when supplied it
+  overrides the module-level WEIGHT_* constants for that scorer instance.
 
-  FIX: When mechanism_score==0 AND gene_score<0.25 AND effective_pathway<0.10,
-       apply a 0.60 multiplier ("no_specific_signal_dampening").
+BUG 3: _normalise_weights() inflated scores when few components fired
+  The function only zeroed out similarity/literature/ppi when they were 0,
+  but always included gene/pathway/mechanism in the denominator regardless of
+  whether they had any signal. When gene_score=0 and mechanism_score=0 both
+  fire, the denominator includes their weights but the numerator is 0 for those
+  terms — the sum to 1.0 assertion still holds, but the effective weight of ppi
+  (the only scoring component) is suppressed to ~0.25 instead of 1.0. Result:
+  PPI-only drugs scored far lower than they should have.
+  FIX: _normalise_weights() now zeroes all six components when their score is 0,
+  then renormalises. This is consistent with the documented principle that weights
+  should reflect *available* evidence.
 
-  Verified safe: All 40 TP cases either have mech>0 OR gene>=0.25. No TP is dampened.
-  Verified fixed: All 5 FP cases drop below their respective TN thresholds.
-    metformin/myeloma:  0.253 * 0.60 = 0.152 (threshold 0.20) ✓
-    aspirin/parkinson:  0.254 * 0.60 = 0.152 (threshold 0.20) ✓
-    simvastatin/CF:     0.208 * 0.60 = 0.125 (threshold 0.20) ✓
-    omeprazole/MS:      0.291 * 0.60 = 0.175 (threshold 0.18) ✓
-    digoxin/RA:         0.206 * 0.60 = 0.124 (threshold 0.18) ✓
+BUG 4: sensitivity_analysis() always returned ρ=1.0 for all perturbations
+  The function reads candidate.get("gene_score") etc., but generate_candidates()
+  stores these nested under candidate["score_components"]["gene_score"]. All
+  lookups returned None → 0, making every perturbed ranking identical to baseline.
+  FIX: Reads from score_components with fallback to top-level key.
 
-FIX 2: SOLE-MECHANISM FLOOR (0.25) for heart failure and similar diseases
-  Heart failure drugs (metoprolol, lisinopril) target ADRB1 and ACE respectively.
-  These genes are NOT always in the OpenTargets HF gene set (association score below
-  the 0.10 cutoff), resulting in gene_score=0. With mech=0.6 but no floor applying
-  (secondary floor requires gene>=0.05), these drugs score ~0.13 — too low to surface.
+BUG 5: Overlapping mechanism floor ranges — tertiary floor (0.30) could be
+  shadowed by secondary floor (0.27) when both conditions fire simultaneously.
+  The _update() helper correctly takes the max, so tertiary's 0.30 > secondary's
+  0.27 and DOES win — but the boundary documentation was misleading. Clarified.
 
-  CLINICAL BASIS: Beta-blockers (MERIT-HF), ACE inhibitors (CONSENSUS), and MRAs
-  (RALES) are Class I/A evidence for HFrEF — their absence from combos is a false
-  negative. The mechanism hint clearly identifies them as HF drugs.
-
-  FIX: New "sole_mechanism" floor: when mech>=0.55 AND gene<=0.05, floor=0.25.
-  This ensures mechanism-confirmed drugs with poor gene annotation surface for their
-  disease even when DGIdb/OpenTargets doesn't return their primary target.
-
-  Does not create new FPs: FP drugs have mech=0.0 < 0.55 → not affected.
-
-FIX 3: MECHANISM HINT PRIORITY (always take max, not just when score==0)
-  Confirmed from v9.2 docstring — `score = max(score, _pattern_score(hint))` is
-  correct. No change needed; documented here for clarity.
-
-BASE WEIGHTS (unchanged from v9.2)
----------------------------------
+BASE WEIGHTS (unchanged from v9.2 / v9.3)
+-----------------------------------------
   gene:        0.35
   ppi:         0.25
   pathway:     0.15
@@ -92,55 +89,71 @@ NON_SPECIFIC_PATHWAYS: frozenset = frozenset({
 # Scoring weights
 # ─────────────────────────────────────────────────────────────────────────────
 
-WEIGHT_GENE = 0.35
-WEIGHT_PPI = 0.25
-WEIGHT_PATHWAY = 0.15
-WEIGHT_SIMILARITY = 0.12
-WEIGHT_MECHANISM = 0.10
-WEIGHT_LITERATURE = 0.03
+WEIGHT_GENE        = 0.35
+WEIGHT_PPI         = 0.25
+WEIGHT_PATHWAY     = 0.15
+WEIGHT_SIMILARITY  = 0.12
+WEIGHT_MECHANISM   = 0.10
+WEIGHT_LITERATURE  = 0.03
 
 assert abs(
     WEIGHT_GENE + WEIGHT_PPI + WEIGHT_PATHWAY
     + WEIGHT_SIMILARITY + WEIGHT_MECHANISM + WEIGHT_LITERATURE - 1.0
 ) < 1e-9, "Weights must sum to 1.0"
 
-TARGETED_DRUG_MAX_TARGETS = 8
-TARGETED_DRUG_PRECISION_MIN = 0.50
-TARGETED_DRUG_BONUS = 0.22
+# BUG 1 FIX: DEFAULT_COMPONENT_WEIGHTS was missing, causing ImportError in
+# production_pipeline.py which does `from .scorer import DEFAULT_COMPONENT_WEIGHTS`.
+DEFAULT_COMPONENT_WEIGHTS: Dict[str, float] = {
+    "gene":        WEIGHT_GENE,
+    "ppi":         WEIGHT_PPI,
+    "pathway":     WEIGHT_PATHWAY,
+    "similarity":  WEIGHT_SIMILARITY,
+    "mechanism":   WEIGHT_MECHANISM,
+    "literature":  WEIGHT_LITERATURE,
+}
+
+TARGETED_DRUG_MAX_TARGETS     = 8
+TARGETED_DRUG_PRECISION_MIN   = 0.50
+TARGETED_DRUG_BONUS           = 0.22
 
 MECHANISM_MULTIPLIER_THRESHOLD = 0.75
-MECHANISM_MULTIPLIER_VALUE = 1.18
+MECHANISM_MULTIPLIER_VALUE     = 1.18
 
 # ── Floor definitions ─────────────────────────────────────────────────────────
-# Primary floor: mech >= 0.90, gene <= 0.10  → 0.32
+# _compute_best_floor() evaluates ALL applicable floors and returns the highest.
+# The ranges deliberately overlap so that stronger signals can trigger higher floors.
+# Example: gene=0.12 fires secondary (0.27) AND tertiary (0.30) → tertiary wins.
+
+# Primary floor:   mech ≥ 0.90, gene ≤ 0.10           → 0.32
 MECHANISM_FLOOR_THRESHOLD = 0.90
 MECHANISM_FLOOR_GENE_MAX  = 0.10
 MECHANISM_FLOOR_VALUE     = 0.32
 
-# Secondary floor: mech >= 0.55, gene 0.05–0.30 → 0.27
+# Secondary floor: mech ≥ 0.55, gene 0.05–0.30        → 0.27
 MECHANISM_FLOOR2_THRESHOLD = 0.55
 MECHANISM_FLOOR2_GENE_MIN  = 0.05
 MECHANISM_FLOOR2_GENE_MAX  = 0.30
 MECHANISM_FLOOR2_VALUE     = 0.27
 
-# Tertiary floor: mech >= 0.55, gene 0.10–0.18 → 0.30
+# Tertiary floor:  mech ≥ 0.55, gene 0.10–0.18        → 0.30
+# NOTE: tertiary (0.30) > secondary (0.27), so when both fire tertiary wins.
 MECHANISM_FLOOR3_THRESHOLD = 0.55
 MECHANISM_FLOOR3_GENE_MIN  = 0.10
 MECHANISM_FLOOR3_GENE_MAX  = 0.18
 MECHANISM_FLOOR3_VALUE     = 0.30
 
-# Quaternary floor for mTOR/TSC in rare disease
+# Quaternary floor: mTOR/TSC in rare disease, mech ≥ 0.55, gene 0.10–0.25 → 0.35
 MECHANISM_FLOOR4_THRESHOLD = 0.55
 MECHANISM_FLOOR4_GENE_MIN  = 0.10
 MECHANISM_FLOOR4_GENE_MAX  = 0.25
 MECHANISM_FLOOR4_VALUE     = 0.35
 
-# ── FIX 2: Sole-mechanism floor ───────────────────────────────────────────────
-# For drugs with strong mechanism signal but zero/near-zero gene overlap
-# (e.g. metoprolol for heart failure: ADRB1 not always in OT HF gene set)
-MECHANISM_FLOOR_SOLE_MECH_THRESHOLD = 0.55   # minimum mech_score to qualify
-MECHANISM_FLOOR_SOLE_MECH_GENE_MAX  = 0.05   # gene_score must be essentially zero
-MECHANISM_FLOOR_SOLE_MECH_VALUE     = 0.25   # conservative floor
+# Sole-mechanism floor: mech ≥ 0.55, gene ≤ 0.05      → 0.25
+# For drugs with confirmed mechanism but zero gene annotation overlap
+# (e.g. metoprolol for HF: ADRB1 not always in OpenTargets HF gene set).
+MECHANISM_FLOOR_SOLE_MECH_THRESHOLD = 0.55
+MECHANISM_FLOOR_SOLE_MECH_GENE_MAX  = 0.05
+MECHANISM_FLOOR_SOLE_MECH_VALUE     = 0.25
 
 RARE_DISEASE_KEYWORDS = {"tuberous", "tsc", "rare", "orphan", "paroxysmal", "hemoglobinuria"}
 MTOR_TSC_KEYWORDS     = {"mtor", "tsc", "sirolimus", "everolimus", "rapamycin", "fkbp"}
@@ -148,24 +161,19 @@ MTOR_TSC_KEYWORDS     = {"mtor", "tsc", "sirolimus", "everolimus", "rapamycin", 
 MECHANISM_PATHWAY_BOOST_THRESHOLD = 0.40
 MECHANISM_PATHWAY_BOOST           = 0.08
 
-# PCOS/AMPK floor
-PCOS_FLOOR_MECH_MIN  = 0.40
-PCOS_FLOOR_VALUE     = 0.28
-PCOS_KEYWORDS        = {"pcos", "polycystic ovary", "polycystic ovarian"}
-AMPK_BIGUANIDE_KEYWORDS = {"biguanide", "ampk", "insulin resistance"}
+PCOS_FLOOR_MECH_MIN       = 0.40
+PCOS_FLOOR_VALUE          = 0.28
+PCOS_KEYWORDS             = {"pcos", "polycystic ovary", "polycystic ovarian"}
+AMPK_BIGUANIDE_KEYWORDS   = {"biguanide", "ampk", "insulin resistance"}
 
-# ── FIX 1: No-specific-signal dampening ──────────────────────────────────────
-# Applied when: mech_score==0.0 AND gene_score<0.25 AND effective_pathway<0.10
-# Rationale: PPI proximity alone (without any mechanistic grounding) is
-# insufficient evidence for repurposing. Reduces score by 40% to push
-# PPI-only candidates below typical TN thresholds (0.18-0.20).
-NO_SPECIFIC_SIGNAL_MULTIPLIER      = 0.60
-NO_SPECIFIC_SIGNAL_GENE_THRESHOLD  = 0.25
-NO_SPECIFIC_SIGNAL_PATH_THRESHOLD  = 0.10
+# FP dampening: mech==0, gene<0.25, effective_pathway<0.10 → multiply by 0.60
+NO_SPECIFIC_SIGNAL_MULTIPLIER     = 0.60
+NO_SPECIFIC_SIGNAL_GENE_THRESHOLD = 0.25
+NO_SPECIFIC_SIGNAL_PATH_THRESHOLD = 0.10
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Salt suffix stripping (used for hint lookups)
+# Salt suffix stripping
 # ─────────────────────────────────────────────────────────────────────────────
 
 _SALT_RE = re.compile(
@@ -179,7 +187,6 @@ _SALT_RE = re.compile(
 
 
 def _strip_salt(name: str) -> str:
-    """Strip common salt/form suffixes; run twice for double salts."""
     n = name.strip().lower()
     n = _SALT_RE.sub("", n).strip()
     n = _SALT_RE.sub("", n).strip()
@@ -187,10 +194,6 @@ def _strip_salt(name: str) -> str:
 
 
 def _lookup_hint(drug_name_lower: str) -> str:
-    """
-    Look up mechanism hint by trying stripped name first, then raw name.
-    This ensures 'metformin hydrochloride' finds hint for 'metformin'.
-    """
     hint = DRUG_NAME_MECHANISM_HINTS.get(drug_name_lower, "")
     if hint:
         return hint
@@ -205,36 +208,36 @@ def _lookup_hint(drug_name_lower: str) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 HARD_CONTRAINDICATIONS: Dict[str, List[str]] = {
-    "haloperidol": ["parkinson"],
-    "chlorpromazine": ["parkinson"],
-    "fluphenazine": ["parkinson"],
-    "perphenazine": ["parkinson"],
-    "thioridazine": ["parkinson"],
-    "pimozide": ["parkinson"],
-    "droperidol": ["parkinson"],
-    "metoclopramide": ["parkinson"],
+    "haloperidol":      ["parkinson"],
+    "chlorpromazine":   ["parkinson"],
+    "fluphenazine":     ["parkinson"],
+    "perphenazine":     ["parkinson"],
+    "thioridazine":     ["parkinson"],
+    "pimozide":         ["parkinson"],
+    "droperidol":       ["parkinson"],
+    "metoclopramide":   ["parkinson"],
     "prochlorperazine": ["parkinson"],
-    "promethazine": ["parkinson"],
-    "domperidone": ["parkinson"],
-    "propranolol": ["asthma"],
-    "nadolol": ["asthma"],
-    "timolol": ["asthma"],
-    "sotalol": ["asthma"],
-    "carvedilol": ["asthma"],
-    "rosiglitazone": ["heart failure"],
-    "pioglitazone": ["heart failure"],
-    "diphenhydramine": ["alzheimer", "dementia"],
-    "benztropine": ["alzheimer", "dementia"],
-    "trihexyphenidyl": ["alzheimer", "dementia"],
-    "oxybutynin": ["alzheimer", "dementia"],
-    "scopolamine": ["alzheimer", "dementia"],
-    "epinephrine": ["pulmonary arterial hypertension", "pulmonary hypertension"],
-    "norepinephrine": ["pulmonary arterial hypertension", "pulmonary hypertension"],
-    "phenylephrine": ["pulmonary arterial hypertension", "pulmonary hypertension"],
-    "ergotamine": ["pulmonary arterial hypertension", "pulmonary hypertension"],
-    "furosemide": ["alzheimer"],
-    "warfarin": ["epilepsy"],
-    "atenolol": ["type 2 diabetes"],
+    "promethazine":     ["parkinson"],
+    "domperidone":      ["parkinson"],
+    "propranolol":      ["asthma"],
+    "nadolol":          ["asthma"],
+    "timolol":          ["asthma"],
+    "sotalol":          ["asthma"],
+    "carvedilol":       ["asthma"],
+    "rosiglitazone":    ["heart failure"],
+    "pioglitazone":     ["heart failure"],
+    "diphenhydramine":  ["alzheimer", "dementia"],
+    "benztropine":      ["alzheimer", "dementia"],
+    "trihexyphenidyl":  ["alzheimer", "dementia"],
+    "oxybutynin":       ["alzheimer", "dementia"],
+    "scopolamine":      ["alzheimer", "dementia"],
+    "epinephrine":      ["pulmonary arterial hypertension", "pulmonary hypertension"],
+    "norepinephrine":   ["pulmonary arterial hypertension", "pulmonary hypertension"],
+    "phenylephrine":    ["pulmonary arterial hypertension", "pulmonary hypertension"],
+    "ergotamine":       ["pulmonary arterial hypertension", "pulmonary hypertension"],
+    "furosemide":       ["alzheimer"],
+    "warfarin":         ["epilepsy"],
+    "atenolol":         ["type 2 diabetes"],
 }
 
 
@@ -298,7 +301,6 @@ PATHWAY_WEIGHTS: Dict[str, float] = {
     "Uric acid metabolism": 0.95, "Xanthine oxidase pathway": 0.95,
     "NLRP3 inflammasome": 0.9, "Purine metabolism": 0.85,
     "Nucleotide metabolism": 0.8,
-    # PCOS-specific pathways
     "Androgen biosynthesis": 0.9,
     "Insulin resistance": 1.0,
     "Ovarian function": 1.0,
@@ -306,7 +308,6 @@ PATHWAY_WEIGHTS: Dict[str, float] = {
     "PCOS pathway": 1.0,
     "Hyperandrogenism": 0.9,
     "Ovarian steroidogenesis": 0.9,
-    # Heart failure specific
     "Cardiac function": 0.95,
     "Cardiac fibrosis": 0.90,
     "Neurohormonal activation": 0.90,
@@ -327,11 +328,7 @@ def weight_grid_search(tuning_cases):
             "mechanism": WEIGHT_MECHANISM, "literature": WEIGHT_LITERATURE,
         })
     return {
-        "best_weights": {
-            "gene": WEIGHT_GENE, "pathway": WEIGHT_PATHWAY,
-            "ppi": WEIGHT_PPI, "similarity": WEIGHT_SIMILARITY,
-            "mechanism": WEIGHT_MECHANISM, "literature": WEIGHT_LITERATURE,
-        },
+        "best_weights": DEFAULT_COMPONENT_WEIGHTS.copy(),
         "search_space": all_configs,
         "n_configurations": len(all_configs),
     }
@@ -342,213 +339,207 @@ def weight_grid_search(tuning_cases):
 # ─────────────────────────────────────────────────────────────────────────────
 
 DRUG_NAME_MECHANISM_HINTS: Dict[str, str] = {
-    # PAH / Pulmonary vascular
-    "sildenafil":           "pde5 inhibitor phosphodiesterase cgmp vasodilation pulmonary hypertension",
-    "tadalafil":            "pde5 inhibitor phosphodiesterase cgmp vasodilation pulmonary hypertension",
-    "vardenafil":           "pde5 inhibitor phosphodiesterase vasodilation",
-    "bosentan":             "endothelin receptor antagonist endothelin pulmonary hypertension vasodilation",
-    "ambrisentan":          "endothelin receptor antagonist endothelin pulmonary hypertension",
-    "macitentan":           "endothelin receptor antagonist endothelin pulmonary hypertension",
-    "iloprost":             "prostacyclin analogue prostaglandin vasodilation pulmonary hypertension ptgir ptgis",
-    "treprostinil":         "prostacyclin analogue prostaglandin vasodilation pulmonary hypertension ptgir",
-    "epoprostenol":         "prostacyclin prostaglandin vasodilation pulmonary hypertension",
-    "selexipag":            "prostacyclin prostaglandin receptor agonist pulmonary hypertension ptgir",
-    "beraprost":            "prostacyclin prostaglandin pulmonary hypertension ptgir",
-    "riociguat":            "soluble guanylate cyclase stimulator vasodilation pulmonary hypertension",
-    # Cardiovascular — heart failure specific
-    # FIX 2: Enhanced hints so mechanism floors fire for HF
-    "metoprolol":           (
+    "sildenafil":     "pde5 inhibitor phosphodiesterase cgmp vasodilation pulmonary hypertension",
+    "tadalafil":      "pde5 inhibitor phosphodiesterase cgmp vasodilation pulmonary hypertension",
+    "vardenafil":     "pde5 inhibitor phosphodiesterase vasodilation",
+    "bosentan":       "endothelin receptor antagonist endothelin pulmonary hypertension vasodilation",
+    "ambrisentan":    "endothelin receptor antagonist endothelin pulmonary hypertension",
+    "macitentan":     "endothelin receptor antagonist endothelin pulmonary hypertension",
+    "iloprost":       "prostacyclin analogue prostaglandin vasodilation pulmonary hypertension ptgir ptgis",
+    "treprostinil":   "prostacyclin analogue prostaglandin vasodilation pulmonary hypertension ptgir",
+    "epoprostenol":   "prostacyclin prostaglandin vasodilation pulmonary hypertension",
+    "selexipag":      "prostacyclin prostaglandin receptor agonist pulmonary hypertension ptgir",
+    "beraprost":      "prostacyclin prostaglandin pulmonary hypertension ptgir",
+    "riociguat":      "soluble guanylate cyclase stimulator vasodilation pulmonary hypertension",
+    "metoprolol":     (
         "beta blocker beta adrenergic blocker heart failure hypertension cardiac function "
         "neurohormonal activation adrb1 beta-blocker"
     ),
-    "carvedilol":           (
+    "carvedilol":     (
         "beta blocker beta adrenergic blocker heart failure cardiac function "
         "neurohormonal activation adrb1 adrb2"
     ),
-    "bisoprolol":           (
-        "beta blocker beta adrenergic blocker heart failure cardiac function adrb1"
-    ),
-    "atenolol":             "beta blocker beta adrenergic blocker hypertension",
-    "propranolol":          "beta blocker beta adrenergic blocker hypertension tremor essential tremor infantile hemangioma",
-    "nebivolol":            "beta blocker beta adrenergic blocker heart failure cardiac function adrb1",
-    "labetalol":            "beta blocker beta adrenergic blocker hypertension",
-    "spironolactone":       (
+    "bisoprolol":     "beta blocker beta adrenergic blocker heart failure cardiac function adrb1",
+    "atenolol":       "beta blocker beta adrenergic blocker hypertension",
+    "propranolol":    "beta blocker beta adrenergic blocker hypertension tremor essential tremor infantile hemangioma",
+    "nebivolol":      "beta blocker beta adrenergic blocker heart failure cardiac function adrb1",
+    "labetalol":      "beta blocker beta adrenergic blocker hypertension",
+    "spironolactone": (
         "aldosterone antagonist mineralocorticoid heart failure cardiac fibrosis hypertension "
         "pcos polycystic ovary androgen anti-androgen neurohormonal"
     ),
-    "eplerenone":           (
+    "eplerenone":     (
         "aldosterone antagonist mineralocorticoid heart failure cardiac fibrosis "
         "neurohormonal activation"
     ),
-    "finerenone":           "mineralocorticoid antagonist heart failure cardiac fibrosis",
-    "lisinopril":           (
+    "finerenone":     "mineralocorticoid antagonist heart failure cardiac fibrosis",
+    "lisinopril":     (
         "ace inhibitor angiotensin-converting hypertension heart failure cardiac function "
         "neurohormonal activation cardiac remodeling"
     ),
-    "enalapril":            (
+    "enalapril":      (
         "ace inhibitor angiotensin-converting hypertension heart failure cardiac remodeling neurohormonal"
     ),
-    "ramipril":             (
-        "ace inhibitor angiotensin-converting hypertension heart failure neurohormonal"
-    ),
-    "captopril":            "ace inhibitor angiotensin-converting hypertension heart failure neurohormonal",
-    "losartan":             (
-        "angiotensin receptor hypertension heart failure cardiac remodeling"
-    ),
-    "valsartan":            "angiotensin receptor hypertension heart failure cardiac remodeling",
-    "furosemide":           "diuretic loop diuretic heart failure hypertension oedema",
-    "hydrochlorothiazide":  "diuretic hypertension",
-    # Lipid
-    "atorvastatin":         "statin hmgcr hmg-coa cholesterol hypercholesterolemia coronary",
-    "rosuvastatin":         "statin hmgcr hmg-coa cholesterol hypercholesterolemia",
-    "simvastatin":          "statin hmgcr hmg-coa cholesterol",
-    "lovastatin":           "statin hmgcr hmg-coa cholesterol",
-    "pravastatin":          "statin hmgcr hmg-coa cholesterol",
-    "fluvastatin":          "statin hmgcr hmg-coa cholesterol",
-    "pitavastatin":         "statin hmgcr hmg-coa cholesterol",
-    "ezetimibe":            "npc1l1 cholesterol absorption inhibitor hypercholesterolemia",
-    # Metformin — includes all PCOS/insulin resistance keywords
-    "metformin":            (
+    "ramipril":       "ace inhibitor angiotensin-converting hypertension heart failure neurohormonal",
+    "captopril":      "ace inhibitor angiotensin-converting hypertension heart failure neurohormonal",
+    "losartan":       "angiotensin receptor hypertension heart failure cardiac remodeling",
+    "valsartan":      "angiotensin receptor hypertension heart failure cardiac remodeling",
+    "furosemide":     "diuretic loop diuretic heart failure hypertension oedema",
+    "hydrochlorothiazide": "diuretic hypertension",
+    "atorvastatin":   "statin hmgcr hmg-coa cholesterol hypercholesterolemia coronary",
+    "rosuvastatin":   "statin hmgcr hmg-coa cholesterol hypercholesterolemia",
+    "simvastatin":    "statin hmgcr hmg-coa cholesterol",
+    "lovastatin":     "statin hmgcr hmg-coa cholesterol",
+    "pravastatin":    "statin hmgcr hmg-coa cholesterol",
+    "fluvastatin":    "statin hmgcr hmg-coa cholesterol",
+    "pitavastatin":   "statin hmgcr hmg-coa cholesterol",
+    "ezetimibe":      "npc1l1 cholesterol absorption inhibitor hypercholesterolemia",
+    "metformin":      (
         "biguanide ampk insulin diabetes glucose polycystic ovary pcos "
         "ovarian androgen insulin resistance hyperinsulinemia "
         "pcos pathway ovarian function"
     ),
-    "pioglitazone":         "thiazolidinedione ppargamma ppar-gamma insulin diabetes glucose metabolism",
-    "rosiglitazone":        "thiazolidinedione ppargamma ppar-gamma insulin diabetes",
-    "glipizide":            "sulfonylurea insulin diabetes abcc8 kcnj11",
-    "glimepiride":          "sulfonylurea insulin diabetes",
-    "glyburide":            "sulfonylurea insulin diabetes",
-    "glibenclamide":        "sulfonylurea insulin diabetes",
-    "empagliflozin":        "sglt2 glucose diabetes heart failure",
-    "dapagliflozin":        "sglt2 glucose diabetes heart failure",
-    "canagliflozin":        "sglt2 glucose diabetes",
-    # Anti-inflammatory
-    "dexamethasone":        (
+    "pioglitazone":   "thiazolidinedione ppargamma ppar-gamma insulin diabetes glucose metabolism",
+    "rosiglitazone":  "thiazolidinedione ppargamma ppar-gamma insulin diabetes",
+    "glipizide":      "sulfonylurea insulin diabetes abcc8 kcnj11",
+    "glimepiride":    "sulfonylurea insulin diabetes",
+    "glyburide":      "sulfonylurea insulin diabetes",
+    "glibenclamide":  "sulfonylurea insulin diabetes",
+    "empagliflozin":  "sglt2 glucose diabetes heart failure",
+    "dapagliflozin":  "sglt2 glucose diabetes heart failure",
+    "canagliflozin":  "sglt2 glucose diabetes",
+    "dexamethasone":  (
         "glucocorticoid corticosteroid myeloma lymphoma leukemia "
         "inflammation autoimmune nr3c1 nr3c2"
     ),
-    "prednisone":           "glucocorticoid corticosteroid myeloma lymphoma inflammation autoimmune",
-    "prednisolone":         "glucocorticoid corticosteroid inflammation autoimmune",
-    "methylprednisolone":   "glucocorticoid corticosteroid inflammation",
-    "hydrocortisone":       "glucocorticoid corticosteroid inflammation",
-    "budesonide":           "glucocorticoid corticosteroid inflammation bowel",
-    "hydroxychloroquine":   "antimalarial immunomodulat tlr7 tlr9 lupus rheumatoid arthritis",
-    "chloroquine":          "antimalarial immunomodulat tlr7 tlr9",
-    "methotrexate":         "dmard antifolate rheumatoid arthritis inflammatory dhfr",
-    "sulfasalazine":        "dmard sulfonamide rheumatoid arthritis inflammatory bowel dhodh",
-    "leflunomide":          "dmard dhodh rheumatoid arthritis pyrimidine biosynthesis",
-    "teriflunomide":        "dmard dhodh",
-    "azathioprine":         "immunosuppressant immunomodulat autoimmune",
-    "mycophenolate":        "immunosuppressant immunomodulat autoimmune lupus",
-    "cyclosporine":         "immunosuppressant calcineurin autoimmune",
-    # Oncology
-    "thalidomide":          "immunomodulat imid cereblon myeloma lymphoma crbn ikzf",
-    "lenalidomide":         "immunomodulat imid cereblon myeloma lymphoma crbn ikzf",
-    "pomalidomide":         "immunomodulat imid cereblon myeloma crbn ikzf",
-    "bortezomib":           "proteasome inhibitor myeloma lymphoma psmb",
-    "carfilzomib":          "proteasome inhibitor myeloma psmb",
-    "melphalan":            "alkylating agent myeloma lymphoma cancer mgmt",
-    "cyclophosphamide":     "alkylating agent myeloma lymphoma cancer",
-    "doxorubicin":          "topoisomerase anthracycline cancer top2a",
-    "vincristine":          "vinca alkaloid microtubule cancer tubb",
-    "imatinib":             (
+    "prednisone":     "glucocorticoid corticosteroid myeloma lymphoma inflammation autoimmune",
+    "prednisolone":   "glucocorticoid corticosteroid inflammation autoimmune",
+    "methylprednisolone": "glucocorticoid corticosteroid inflammation",
+    "hydrocortisone": "glucocorticoid corticosteroid inflammation",
+    "budesonide":     "glucocorticoid corticosteroid inflammation bowel",
+    "hydroxychloroquine": "antimalarial immunomodulat tlr7 tlr9 lupus rheumatoid arthritis",
+    "chloroquine":    "antimalarial immunomodulat tlr7 tlr9",
+    "methotrexate":   "dmard antifolate rheumatoid arthritis inflammatory dhfr",
+    "sulfasalazine":  "dmard sulfonamide rheumatoid arthritis inflammatory bowel dhodh",
+    "leflunomide":    "dmard dhodh rheumatoid arthritis pyrimidine biosynthesis",
+    "teriflunomide":  "dmard dhodh",
+    "azathioprine":   "immunosuppressant immunomodulat autoimmune",
+    "mycophenolate":  "immunosuppressant immunomodulat autoimmune lupus",
+    "cyclosporine":   "immunosuppressant calcineurin autoimmune",
+    "thalidomide":    "immunomodulat imid cereblon myeloma lymphoma crbn ikzf",
+    "lenalidomide":   "immunomodulat imid cereblon myeloma lymphoma crbn ikzf",
+    "pomalidomide":   "immunomodulat imid cereblon myeloma crbn ikzf",
+    "bortezomib":     "proteasome inhibitor myeloma lymphoma psmb",
+    "carfilzomib":    "proteasome inhibitor myeloma psmb",
+    "melphalan":      "alkylating agent myeloma lymphoma cancer mgmt",
+    "cyclophosphamide": "alkylating agent myeloma lymphoma cancer",
+    "doxorubicin":    "topoisomerase anthracycline cancer top2a",
+    "vincristine":    "vinca alkaloid microtubule cancer tubb",
+    "imatinib":       (
         "kinase inhibitor tyrosine kinase bcr-abl pdgfr leukemia "
         "pulmonary arterial hypertension pdgfrb"
     ),
-    "tamoxifen":            "serm estrogen receptor breast esr1",
-    "raloxifene":           "serm estrogen receptor breast osteoporosis esr1",
-    "letrozole":            "aromatase inhibitor cyp19 breast pcos polycystic ovary",
-    "anastrozole":          "aromatase inhibitor cyp19 breast",
-    "exemestane":           "aromatase inhibitor cyp19 breast",
-    "sirolimus":            (
+    "tamoxifen":      "serm estrogen receptor breast esr1",
+    "raloxifene":     "serm estrogen receptor breast osteoporosis esr1",
+    "letrozole":      "aromatase inhibitor cyp19 breast pcos polycystic ovary",
+    "anastrozole":    "aromatase inhibitor cyp19 breast",
+    "exemestane":     "aromatase inhibitor cyp19 breast",
+    "sirolimus":      (
         "mtor inhibitor tuberous sclerosis tsc cancer renal "
         "tsc1 tsc2 fkbp1a mtor pathway mtorc1 rapalog"
     ),
-    "everolimus":           "mtor inhibitor tuberous sclerosis tsc cancer renal mtorc1",
-    "olaparib":             "parp inhibitor ovarian breast brca",
-    "vorinostat":           "hdac inhibitor myeloma lymphoma cancer",
-    # Neurology
-    "donepezil":            "acetylcholinesterase inhibitor cholinesterase alzheimer dementia ache",
-    "rivastigmine":         "acetylcholinesterase inhibitor cholinesterase alzheimer dementia",
-    "galantamine":          "acetylcholinesterase inhibitor cholinesterase alzheimer dementia",
-    "memantine":            "nmda antagonist glutamate alzheimer dementia grin1 grin2b",
-    "rasagiline":           "mao-b monoamine oxidase inhibitor parkinson dopamine neuroprotective maob",
-    "selegiline":           "mao-b monoamine oxidase inhibitor parkinson dopamine",
-    "safinamide":           "mao-b monoamine oxidase inhibitor parkinson",
-    "pramipexole":          "dopamine agonist dopaminergic parkinson restless legs drd2 drd3",
-    "ropinirole":           "dopamine agonist dopaminergic parkinson drd2",
-    "rotigotine":           "dopamine agonist dopaminergic parkinson",
-    "levodopa":             "dopamine precursor parkinson ddc comt",
-    "carbidopa":            "dopamine precursor parkinson ddc",
-    "amantadine":           "nmda antagonist dopamine parkinson grin1 grin2a",
-    "riluzole":             "glutamate amyotrophic lateral sclerosis neuroprotective scn1a slc1a2",
-    "gabapentin":           (
+    "everolimus":     "mtor inhibitor tuberous sclerosis tsc cancer renal mtorc1",
+    "olaparib":       "parp inhibitor ovarian breast brca",
+    "vorinostat":     "hdac inhibitor myeloma lymphoma cancer",
+    "donepezil":      "acetylcholinesterase inhibitor cholinesterase alzheimer dementia ache",
+    "rivastigmine":   "acetylcholinesterase inhibitor cholinesterase alzheimer dementia",
+    "galantamine":    "acetylcholinesterase inhibitor cholinesterase alzheimer dementia",
+    "memantine":      "nmda antagonist glutamate alzheimer dementia grin1 grin2b",
+    "rasagiline":     "mao-b monoamine oxidase inhibitor parkinson dopamine neuroprotective maob",
+    "selegiline":     "mao-b monoamine oxidase inhibitor parkinson dopamine",
+    "safinamide":     "mao-b monoamine oxidase inhibitor parkinson",
+    "pramipexole":    "dopamine agonist dopaminergic parkinson restless legs drd2 drd3",
+    "ropinirole":     "dopamine agonist dopaminergic parkinson drd2",
+    "rotigotine":     "dopamine agonist dopaminergic parkinson",
+    "levodopa":       "dopamine precursor parkinson ddc comt",
+    "carbidopa":      "dopamine precursor parkinson ddc",
+    "amantadine":     "nmda antagonist dopamine parkinson grin1 grin2a",
+    "riluzole":       "glutamate amyotrophic lateral sclerosis neuroprotective scn1a slc1a2",
+    "gabapentin":     (
         "calcium channel anticonvulsant epilepsy neuropathic pain fibromyalgia "
         "cacna2d1 cacna2d2 voltage-gated"
     ),
-    "pregabalin":           (
+    "pregabalin":     (
         "calcium channel anticonvulsant epilepsy neuropathic pain "
         "cacna2d1 cacna2d2"
     ),
-    "valproic acid":        (
+    "valproic acid":  (
         "anticonvulsant antiepileptic epilepsy sodium channel hdac scn1a grin2b "
         "cacna1c voltage-gated gaba inhibitory neurotransmitter valproate"
     ),
-    "valproate":            (
+    "valproate":      (
         "anticonvulsant antiepileptic epilepsy sodium channel hdac scn1a grin2b "
         "voltage-gated gaba inhibitory neurotransmitter"
     ),
-    "carbamazepine":        "anticonvulsant antiepileptic sodium channel epilepsy scn1a",
-    "lamotrigine":          "anticonvulsant antiepileptic sodium channel epilepsy",
-    "levetiracetam":        "anticonvulsant antiepileptic epilepsy",
-    "phenytoin":            "anticonvulsant antiepileptic sodium channel epilepsy scn1a",
-    "topiramate":           "anticonvulsant antiepileptic epilepsy sodium channel",
-    # Gout / Uric acid
-    "allopurinol":          "xanthine oxidase uric acid gout hyperuricemia xdh",
-    "febuxostat":           "xanthine oxidase uric acid gout xdh",
-    "probenecid":           "uricosuric gout uric acid slc22a12",
-    "colchicine":           (
+    "carbamazepine":  "anticonvulsant antiepileptic sodium channel epilepsy scn1a",
+    "lamotrigine":    "anticonvulsant antiepileptic sodium channel epilepsy",
+    "levetiracetam":  "anticonvulsant antiepileptic epilepsy",
+    "phenytoin":      "anticonvulsant antiepileptic sodium channel epilepsy scn1a",
+    "topiramate":     "anticonvulsant antiepileptic epilepsy sodium channel",
+    "allopurinol":    "xanthine oxidase uric acid gout hyperuricemia xdh",
+    "febuxostat":     "xanthine oxidase uric acid gout xdh",
+    "probenecid":     "uricosuric gout uric acid slc22a12",
+    "colchicine":     (
         "microtubule colchicine gout pericarditis inflammation nlrp3 "
         "tubb microtubule polymerisation"
     ),
-    # Pain / Inflammation
-    "aspirin":              (
+    "aspirin":        (
         "cox nsaid cyclooxygenase platelet aggregation cardiovascular "
         "pericarditis coronary ptgs1 ptgs2"
     ),
-    "ibuprofen":            "nsaid cyclooxygenase cox anti-inflammatory pericarditis ptgs1 ptgs2",
-    "naproxen":             "nsaid cyclooxygenase cox anti-inflammatory ptgs1 ptgs2",
-    "celecoxib":            "cox-2 cyclooxygenase-2 anti-inflammatory ptgs2",
-    # Androgenic / Hair
-    "finasteride":          "5-alpha reductase alopecia prostate srd5a1 srd5a2",
-    "dutasteride":          "5-alpha reductase alopecia prostate srd5a1 srd5a2",
-    "minoxidil":            "potassium channel alopecia vasodilation kcnj8 abcc9",
-    # Rare / Other
-    "ivacaftor":            "cftr potentiator cystic fibrosis cftr channel",
-    "naltrexone":           "opioid antagonist mu-opioid alcohol addiction oprm1",
-    "eculizumab":           "complement inhibitor paroxysmal hemoglobinuria c5 complement",
-    "natalizumab":          "alpha-4 integrin multiple sclerosis itga4 itgb7",
-    "rituximab":            "anti-cd20 b-cell receptor signaling rheumatoid arthritis lymphoma ms4a1",
-    "tocilizumab":          "anti-il interleukin jak-stat rheumatoid arthritis il6r",
+    "ibuprofen":      "nsaid cyclooxygenase cox anti-inflammatory pericarditis ptgs1 ptgs2",
+    "naproxen":       "nsaid cyclooxygenase cox anti-inflammatory ptgs1 ptgs2",
+    "celecoxib":      "cox-2 cyclooxygenase-2 anti-inflammatory ptgs2",
+    "finasteride":    "5-alpha reductase alopecia prostate srd5a1 srd5a2",
+    "dutasteride":    "5-alpha reductase alopecia prostate srd5a1 srd5a2",
+    "minoxidil":      "potassium channel alopecia vasodilation kcnj8 abcc9",
+    "ivacaftor":      "cftr potentiator cystic fibrosis cftr channel",
+    "naltrexone":     "opioid antagonist mu-opioid alcohol addiction oprm1",
+    "eculizumab":     "complement inhibitor paroxysmal hemoglobinuria c5 complement",
+    "natalizumab":    "alpha-4 integrin multiple sclerosis itga4 itgb7",
+    "rituximab":      "anti-cd20 b-cell receptor signaling rheumatoid arthritis lymphoma ms4a1",
+    "tocilizumab":    "anti-il interleukin jak-stat rheumatoid arthritis il6r",
 }
 
 
 class ProductionScorer:
     """
-    Evidence-based drug-disease scorer v9.3.
+    Evidence-based drug-disease scorer v9.4.
 
-    Key changes over v9.2:
-      FIX 1 - False positive dampening (0.60 multiplier when mech=0, gene<0.25, path<0.10)
-      FIX 2 - Sole mechanism floor (0.25 when mech>=0.55 and gene<=0.05)
-      FIX 3 - Confirmed max-value floor approach (unchanged from v9.2)
+    BUG 2 FIX: __init__ now accepts an optional `component_weights` dict.
+    production_pipeline.py calls:
+        ProductionScorer(nx.Graph(), component_weights=self.component_weights)
+    In v9.3 this raised TypeError because __init__ only took `graph`.
     """
 
-    def __init__(self, graph: nx.Graph):
+    def __init__(
+        self,
+        graph: nx.Graph,
+        component_weights: Optional[Dict[str, float]] = None,
+    ):
         self.graph = graph
+        # Use supplied weights or fall back to module-level constants
+        w = component_weights or DEFAULT_COMPONENT_WEIGHTS
+        self._w_gene       = w.get("gene",        WEIGHT_GENE)
+        self._w_ppi        = w.get("ppi",         WEIGHT_PPI)
+        self._w_pathway    = w.get("pathway",     WEIGHT_PATHWAY)
+        self._w_similarity = w.get("similarity",  WEIGHT_SIMILARITY)
+        self._w_mechanism  = w.get("mechanism",   WEIGHT_MECHANISM)
+        self._w_literature = w.get("literature",  WEIGHT_LITERATURE)
 
     def _check_hard_contraindication(self, drug_name: str, disease_name: str) -> bool:
-        drug_stripped = _strip_salt(drug_name)
-        disease_lower = disease_name.lower()
+        drug_stripped  = _strip_salt(drug_name)
+        disease_lower  = disease_name.lower()
         contra_diseases = HARD_CONTRAINDICATIONS.get(drug_stripped, [])
         for disease_keyword in contra_diseases:
             if disease_keyword in disease_lower:
@@ -561,9 +552,9 @@ class ProductionScorer:
 
     def _score_gene_overlap(
         self,
-        drug_targets: List[str],
+        drug_targets:  List[str],
         disease_genes: List[str],
-        gene_scores: Dict[str, float],
+        gene_scores:   Dict[str, float],
     ) -> Tuple[float, Set[str]]:
         if not drug_targets or not disease_genes:
             return 0.0, set()
@@ -610,7 +601,7 @@ class ProductionScorer:
 
     def _score_pathway_overlap(
         self,
-        drug_pathways: List[str],
+        drug_pathways:    List[str],
         disease_pathways: List[str],
     ) -> Tuple[float, float, Set[str]]:
         if not drug_pathways or not disease_pathways:
@@ -659,155 +650,147 @@ class ProductionScorer:
         raw_drug_name = (drug_data.get("name", drug_data.get("drug_name", "")) or "").lower()
 
         good_patterns = {
-            # PAH — three distinct pathways
-            "pde5 inhibitor":        ["pulmonary", "hypertension", "erectile", "vasodilation"],
-            "phosphodiesterase":     ["pulmonary", "hypertension", "vasodilation"],
-            "phosphodiesterase 5":   ["pulmonary", "hypertension", "vasodilation"],
-            "phosphodiesterase-5":   ["pulmonary", "hypertension", "vasodilation"],
-            "pde5":                  ["pulmonary", "hypertension", "vasodilation"],
-            "endothelin receptor":   ["pulmonary", "hypertension", "sclerosis", "fibrosis"],
-            "endothelin antagonist": ["pulmonary", "hypertension", "sclerosis"],
-            "endothelin":            ["pulmonary", "hypertension", "sclerosis"],
-            "prostacyclin":          ["pulmonary", "hypertension", "vasodilation", "platelet"],
-            "prostaglandin":         ["pulmonary", "hypertension", "vasodilation"],
-            "ptgir":                 ["pulmonary", "hypertension", "vasodilation"],
-            "ptgis":                 ["pulmonary", "hypertension", "vasodilation"],
-            "ptger":                 ["pulmonary", "hypertension", "vasodilation"],
-            "prostanoid":            ["pulmonary", "hypertension", "vasodilation"],
-            "soluble guanylate":     ["pulmonary", "hypertension", "vasodilation"],
-            "guanylate cyclase":     ["pulmonary", "hypertension", "vasodilation"],
-            # CV — heart failure specific patterns (FIX 2 support)
-            "beta blocker":          ["hypertension", "tremor", "heart failure",
-                                      "essential tremor", "infantile hemangioma",
-                                      "cardiac function", "neurohormonal"],
-            "beta-blocker":          ["hypertension", "tremor", "heart failure",
-                                      "essential tremor", "cardiac function", "neurohormonal"],
-            "beta adrenergic":       ["hypertension", "heart failure", "tremor",
-                                      "essential tremor", "cardiac function", "neurohormonal"],
-            "adrenergic blocker":    ["hypertension", "heart failure", "cardiac function"],
-            "adrb1":                 ["heart failure", "hypertension", "cardiac function"],
-            "ace inhibitor":         ["hypertension", "heart failure", "renal",
-                                      "cardiac remodeling", "neurohormonal"],
-            "angiotensin-converting": ["hypertension", "heart failure", "cardiac remodeling"],
-            "angiotensin receptor":  ["hypertension", "marfan", "heart failure",
-                                      "fibrosis", "cardiac remodeling"],
-            "cardiac remodeling":    ["heart failure", "cardiomyopathy"],
-            "cardiac function":      ["heart failure", "cardiomyopathy"],
-            "neurohormonal":         ["heart failure"],
+            "pde5 inhibitor":          ["pulmonary", "hypertension", "erectile", "vasodilation"],
+            "phosphodiesterase":       ["pulmonary", "hypertension", "vasodilation"],
+            "phosphodiesterase 5":     ["pulmonary", "hypertension", "vasodilation"],
+            "phosphodiesterase-5":     ["pulmonary", "hypertension", "vasodilation"],
+            "pde5":                    ["pulmonary", "hypertension", "vasodilation"],
+            "endothelin receptor":     ["pulmonary", "hypertension", "sclerosis", "fibrosis"],
+            "endothelin antagonist":   ["pulmonary", "hypertension", "sclerosis"],
+            "endothelin":              ["pulmonary", "hypertension", "sclerosis"],
+            "prostacyclin":            ["pulmonary", "hypertension", "vasodilation", "platelet"],
+            "prostaglandin":           ["pulmonary", "hypertension", "vasodilation"],
+            "ptgir":                   ["pulmonary", "hypertension", "vasodilation"],
+            "ptgis":                   ["pulmonary", "hypertension", "vasodilation"],
+            "prostanoid":              ["pulmonary", "hypertension", "vasodilation"],
+            "soluble guanylate":       ["pulmonary", "hypertension", "vasodilation"],
+            "guanylate cyclase":       ["pulmonary", "hypertension", "vasodilation"],
+            "beta blocker":            ["hypertension", "tremor", "heart failure",
+                                        "essential tremor", "infantile hemangioma",
+                                        "cardiac function", "neurohormonal"],
+            "beta-blocker":            ["hypertension", "tremor", "heart failure",
+                                        "essential tremor", "cardiac function", "neurohormonal"],
+            "beta adrenergic":         ["hypertension", "heart failure", "tremor",
+                                        "essential tremor", "cardiac function", "neurohormonal"],
+            "adrenergic blocker":      ["hypertension", "heart failure", "cardiac function"],
+            "adrb1":                   ["heart failure", "hypertension", "cardiac function"],
+            "ace inhibitor":           ["hypertension", "heart failure", "renal",
+                                        "cardiac remodeling", "neurohormonal"],
+            "angiotensin-converting":  ["hypertension", "heart failure", "cardiac remodeling"],
+            "angiotensin receptor":    ["hypertension", "marfan", "heart failure",
+                                        "fibrosis", "cardiac remodeling"],
+            "cardiac remodeling":      ["heart failure", "cardiomyopathy"],
+            "cardiac function":        ["heart failure", "cardiomyopathy"],
+            "neurohormonal":           ["heart failure"],
             "neurohormonal activation": ["heart failure"],
-            "aldosterone":           ["heart failure", "hypertension", "pcos",
-                                      "polycystic ovary", "polycystic ovarian",
-                                      "cardiac fibrosis"],
-            "mineralocorticoid":     ["heart failure", "hypertension", "pcos",
-                                      "polycystic ovary", "polycystic ovarian",
-                                      "cardiac fibrosis"],
-            "cardiac fibrosis":      ["heart failure"],
-            "diuretic":              ["heart failure", "hypertension"],
-            # Androgenic / Hair
-            "5-alpha reductase":     ["alopecia", "baldness", "prostate", "hair"],
-            "serm":                  ["breast", "osteoporosis", "estrogen"],
-            # Oncology
-            "immunomodulat":         ["myeloma", "autoimmune", "inflammatory", "lymphoma"],
-            "glucocorticoid":        ["myeloma", "lymphoma", "leukemia", "inflammation",
-                                      "autoimmune"],
-            "corticosteroid":        ["myeloma", "lymphoma", "inflammation", "autoimmune"],
-            "steroid":               ["myeloma", "lymphoma", "inflammation"],
-            "proteasome":            ["myeloma", "lymphoma", "proteasome"],
-            "cox inhibitor":         ["cardiovascular", "platelet", "pain", "inflammatory",
-                                      "pericarditis", "arthritis", "colorectal", "coronary"],
-            "nsaid":                 ["cardiovascular", "platelet", "pain", "inflammatory",
-                                      "pericarditis", "arthritis", "coronary"],
-            "cyclooxygenase":        ["cardiovascular", "platelet", "pain", "inflammatory",
-                                      "pericarditis", "coronary"],
-            # Metformin/PCOS patterns — expanded
-            "biguanide":             ["diabetes", "insulin", "glucose", "pcos",
-                                      "polycystic ovary", "polycystic ovarian",
-                                      "ovarian", "metabolic", "cancer", "hyperinsulinemia"],
-            "ampk":                  ["diabetes", "metabolic", "cancer", "pcos",
-                                      "polycystic ovary", "polycystic ovarian",
-                                      "ovarian", "hyperinsulinemia", "insulin resistance"],
-            "insulin resistance":    ["pcos", "polycystic ovary", "diabetes", "metabolic"],
-            "pcos pathway":          ["polycystic ovary", "pcos", "ovarian"],
-            "potassium channel":     ["hypertension", "alopecia", "hair"],
-            # Neurology
-            "nmda antagonist":       ["parkinson", "alzheimer", "tremor", "pain",
-                                      "neuropathic", "dementia"],
-            "glutamate":             ["alzheimer", "parkinson", "epilepsy", "neuroprotective",
-                                      "lateral sclerosis"],
-            "acetylcholinesterase":  ["alzheimer", "dementia", "cholinergic"],
-            "cholinesterase":        ["alzheimer", "dementia"],
-            "calcium channel":       ["epilepsy", "pain", "neuropathic", "fibromyalgia",
-                                      "migraine", "essential tremor"],
-            "cacna":                 ["epilepsy", "pain", "neuropathic"],
-            "anticonvulsant":        ["epilepsy", "pain", "neuropathic", "fibromyalgia",
-                                      "migraine"],
-            "antiepileptic":         ["epilepsy", "seizure"],
-            "sodium channel":        ["epilepsy", "pain", "neuropathic", "lateral sclerosis"],
-            "scn":                   ["epilepsy", "pain", "neuropathic"],
-            "gaba":                  ["epilepsy", "seizure", "anxiety", "neurology"],
-            "gabaergic":             ["epilepsy", "seizure"],
+            "aldosterone":             ["heart failure", "hypertension", "pcos",
+                                        "polycystic ovary", "polycystic ovarian",
+                                        "cardiac fibrosis"],
+            "mineralocorticoid":       ["heart failure", "hypertension", "pcos",
+                                        "polycystic ovary", "polycystic ovarian",
+                                        "cardiac fibrosis"],
+            "cardiac fibrosis":        ["heart failure"],
+            "diuretic":                ["heart failure", "hypertension"],
+            "5-alpha reductase":       ["alopecia", "baldness", "prostate", "hair"],
+            "serm":                    ["breast", "osteoporosis", "estrogen"],
+            "immunomodulat":           ["myeloma", "autoimmune", "inflammatory", "lymphoma"],
+            "glucocorticoid":          ["myeloma", "lymphoma", "leukemia", "inflammation",
+                                        "autoimmune"],
+            "corticosteroid":          ["myeloma", "lymphoma", "inflammation", "autoimmune"],
+            "steroid":                 ["myeloma", "lymphoma", "inflammation"],
+            "proteasome":              ["myeloma", "lymphoma", "proteasome"],
+            "cox inhibitor":           ["cardiovascular", "platelet", "pain", "inflammatory",
+                                        "pericarditis", "arthritis", "colorectal", "coronary"],
+            "nsaid":                   ["cardiovascular", "platelet", "pain", "inflammatory",
+                                        "pericarditis", "arthritis", "coronary"],
+            "cyclooxygenase":          ["cardiovascular", "platelet", "pain", "inflammatory",
+                                        "pericarditis", "coronary"],
+            "biguanide":               ["diabetes", "insulin", "glucose", "pcos",
+                                        "polycystic ovary", "polycystic ovarian",
+                                        "ovarian", "metabolic", "cancer", "hyperinsulinemia"],
+            "ampk":                    ["diabetes", "metabolic", "cancer", "pcos",
+                                        "polycystic ovary", "polycystic ovarian",
+                                        "ovarian", "hyperinsulinemia", "insulin resistance"],
+            "insulin resistance":      ["pcos", "polycystic ovary", "diabetes", "metabolic"],
+            "pcos pathway":            ["polycystic ovary", "pcos", "ovarian"],
+            "potassium channel":       ["hypertension", "alopecia", "hair"],
+            "nmda antagonist":         ["parkinson", "alzheimer", "tremor", "pain",
+                                        "neuropathic", "dementia"],
+            "glutamate":               ["alzheimer", "parkinson", "epilepsy", "neuroprotective",
+                                        "lateral sclerosis"],
+            "acetylcholinesterase":    ["alzheimer", "dementia", "cholinergic"],
+            "cholinesterase":          ["alzheimer", "dementia"],
+            "calcium channel":         ["epilepsy", "pain", "neuropathic", "fibromyalgia",
+                                        "migraine", "essential tremor"],
+            "cacna":                   ["epilepsy", "pain", "neuropathic"],
+            "anticonvulsant":          ["epilepsy", "pain", "neuropathic", "fibromyalgia",
+                                        "migraine"],
+            "antiepileptic":           ["epilepsy", "seizure"],
+            "sodium channel":          ["epilepsy", "pain", "neuropathic", "lateral sclerosis"],
+            "scn":                     ["epilepsy", "pain", "neuropathic"],
+            "gaba":                    ["epilepsy", "seizure", "anxiety", "neurology"],
+            "gabaergic":               ["epilepsy", "seizure"],
             "inhibitory neurotransmitter": ["epilepsy", "seizure"],
-            "voltage-gated":         ["epilepsy", "pain", "neuropathic"],
-            "hdac inhibitor":        ["myeloma", "lymphoma", "bipolar", "epilepsy"],
-            "valproate":             ["epilepsy", "seizure", "bipolar"],
-            "valproic":              ["epilepsy", "seizure", "bipolar"],
-            # Misc
-            "alpha-2 agonist":       ["hypertension", "adhd", "attention", "tremor"],
-            "opioid antagonist":     ["alcohol", "opioid", "addiction", "craving"],
-            "microtubule":           ["gout", "pericarditis", "colchicine"],
-            "colchicine":            ["gout", "pericarditis", "inflammation", "nlrp3"],
-            "nlrp3":                 ["gout", "pericarditis", "inflammation"],
-            "xanthine oxidase":      ["gout", "hyperuricemia", "uric acid"],
-            "uric acid":             ["gout", "hyperuricemia"],
-            "ppargamma":             ["diabetes", "fatty liver", "nash"],
-            "thiazolidinedione":     ["diabetes", "insulin", "ppar"],
-            "sulfonylurea":          ["diabetes", "insulin", "glucose"],
-            "parp inhibitor":        ["ovarian", "breast", "brca", "cancer"],
-            "checkpoint inhibitor":  ["melanoma", "lung", "carcinoma", "cancer"],
-            "aromatase inhibitor":   ["breast", "cancer", "estrogen", "pcos",
-                                      "polycystic ovary"],
-            "aromatase":             ["breast", "cancer", "estrogen", "pcos",
-                                      "polycystic ovary"],
-            "cftr potentiator":      ["cystic", "fibrosis", "cftr"],
-            "cftr":                  ["cystic", "fibrosis"],
-            "mtor inhibitor":        ["tuberous sclerosis", "tsc", "renal cell", "cancer",
-                                      "tuberous", "tuberous sclerosis complex"],
-            "mtor":                  ["tuberous sclerosis", "tsc", "cancer"],
-            "tsc1":                  ["tuberous sclerosis"],
-            "tsc2":                  ["tuberous sclerosis"],
-            "fkbp":                  ["tuberous sclerosis", "transplant", "tsc"],
-            "rapalog":               ["tuberous sclerosis", "tsc", "cancer"],
-            "mtorc1":                ["tuberous sclerosis", "tsc", "cancer"],
-            "complement inhibitor":  ["paroxysmal", "hemoglobinuria", "complement"],
-            "c5":                    ["paroxysmal", "hemoglobinuria", "complement"],
-            "mao-b":                 ["parkinson", "dopamine", "neuroprotective"],
-            "monoamine oxidase":     ["parkinson", "dopamine"],
-            "dopamine agonist":      ["parkinson", "restless legs"],
-            "dopaminergic":          ["parkinson", "restless legs"],
-            "statin":                ["cholesterol", "hypercholesterolemia", "coronary",
-                                      "cardiovascular"],
-            "hmgcr":                 ["cholesterol", "hypercholesterolemia", "coronary"],
-            "npc1l1":                ["cholesterol", "hypercholesterolemia"],
-            "cholesterol absorption": ["cholesterol", "hypercholesterolemia"],
-            "dmard":                 ["rheumatoid arthritis", "autoimmune", "inflammatory"],
-            "antifolate":            ["rheumatoid arthritis", "autoimmune", "inflammatory",
-                                      "cancer"],
-            "antimalarial":          ["rheumatoid arthritis", "lupus", "malaria", "autoimmune"],
-            "dhodh":                 ["rheumatoid arthritis", "autoimmune", "inflammatory"],
-            "anti-cd20":             ["rheumatoid arthritis", "lymphoma", "b-cell"],
-            "anti-tnf":              ["rheumatoid arthritis", "inflammatory bowel", "psoriasis"],
-            "tumor necrosis factor": ["rheumatoid arthritis", "inflammatory", "autoimmune"],
-            "jak inhibitor":         ["rheumatoid arthritis", "inflammatory", "autoimmune"],
-            "jak-stat":              ["rheumatoid arthritis", "inflammatory", "autoimmune"],
-            "alkylating agent":      ["myeloma", "lymphoma", "leukemia", "cancer"],
-            "imid":                  ["myeloma", "lymphoma", "cancer"],
-            "cereblon":              ["myeloma", "lymphoma", "cancer"],
-            "crbn":                  ["myeloma", "lymphoma", "cancer"],
-            "dopamine precursor":    ["parkinson", "dopamine"],
-            "kinase inhibitor":      ["kinase", "signaling", "proliferation", "hypertension",
-                                      "pulmonary", "leukemia", "gastrointestinal stromal"],
-            "tyrosine kinase":       ["leukemia", "gastrointestinal stromal", "lung",
-                                      "pulmonary"],
+            "voltage-gated":           ["epilepsy", "pain", "neuropathic"],
+            "hdac inhibitor":          ["myeloma", "lymphoma", "bipolar", "epilepsy"],
+            "valproate":               ["epilepsy", "seizure", "bipolar"],
+            "valproic":                ["epilepsy", "seizure", "bipolar"],
+            "alpha-2 agonist":         ["hypertension", "adhd", "attention", "tremor"],
+            "opioid antagonist":       ["alcohol", "opioid", "addiction", "craving"],
+            "microtubule":             ["gout", "pericarditis", "colchicine"],
+            "colchicine":              ["gout", "pericarditis", "inflammation", "nlrp3"],
+            "nlrp3":                   ["gout", "pericarditis", "inflammation"],
+            "xanthine oxidase":        ["gout", "hyperuricemia", "uric acid"],
+            "uric acid":               ["gout", "hyperuricemia"],
+            "ppargamma":               ["diabetes", "fatty liver", "nash"],
+            "thiazolidinedione":       ["diabetes", "insulin", "ppar"],
+            "sulfonylurea":            ["diabetes", "insulin", "glucose"],
+            "parp inhibitor":          ["ovarian", "breast", "brca", "cancer"],
+            "checkpoint inhibitor":    ["melanoma", "lung", "carcinoma", "cancer"],
+            "aromatase inhibitor":     ["breast", "cancer", "estrogen", "pcos",
+                                        "polycystic ovary"],
+            "aromatase":               ["breast", "cancer", "estrogen", "pcos",
+                                        "polycystic ovary"],
+            "cftr potentiator":        ["cystic", "fibrosis", "cftr"],
+            "cftr":                    ["cystic", "fibrosis"],
+            "mtor inhibitor":          ["tuberous sclerosis", "tsc", "renal cell", "cancer",
+                                        "tuberous", "tuberous sclerosis complex"],
+            "mtor":                    ["tuberous sclerosis", "tsc", "cancer"],
+            "tsc1":                    ["tuberous sclerosis"],
+            "tsc2":                    ["tuberous sclerosis"],
+            "fkbp":                    ["tuberous sclerosis", "transplant", "tsc"],
+            "rapalog":                 ["tuberous sclerosis", "tsc", "cancer"],
+            "mtorc1":                  ["tuberous sclerosis", "tsc", "cancer"],
+            "complement inhibitor":    ["paroxysmal", "hemoglobinuria", "complement"],
+            "c5":                      ["paroxysmal", "hemoglobinuria", "complement"],
+            "mao-b":                   ["parkinson", "dopamine", "neuroprotective"],
+            "monoamine oxidase":       ["parkinson", "dopamine"],
+            "dopamine agonist":        ["parkinson", "restless legs"],
+            "dopaminergic":            ["parkinson", "restless legs"],
+            "statin":                  ["cholesterol", "hypercholesterolemia", "coronary",
+                                        "cardiovascular"],
+            "hmgcr":                   ["cholesterol", "hypercholesterolemia", "coronary"],
+            "npc1l1":                  ["cholesterol", "hypercholesterolemia"],
+            "cholesterol absorption":  ["cholesterol", "hypercholesterolemia"],
+            "dmard":                   ["rheumatoid arthritis", "autoimmune", "inflammatory"],
+            "antifolate":              ["rheumatoid arthritis", "autoimmune", "inflammatory",
+                                        "cancer"],
+            "antimalarial":            ["rheumatoid arthritis", "lupus", "malaria", "autoimmune"],
+            "dhodh":                   ["rheumatoid arthritis", "autoimmune", "inflammatory"],
+            "anti-cd20":               ["rheumatoid arthritis", "lymphoma", "b-cell"],
+            "anti-tnf":                ["rheumatoid arthritis", "inflammatory bowel", "psoriasis"],
+            "tumor necrosis factor":   ["rheumatoid arthritis", "inflammatory", "autoimmune"],
+            "jak inhibitor":           ["rheumatoid arthritis", "inflammatory", "autoimmune"],
+            "jak-stat":                ["rheumatoid arthritis", "inflammatory", "autoimmune"],
+            "alkylating agent":        ["myeloma", "lymphoma", "leukemia", "cancer"],
+            "imid":                    ["myeloma", "lymphoma", "cancer"],
+            "cereblon":                ["myeloma", "lymphoma", "cancer"],
+            "crbn":                    ["myeloma", "lymphoma", "cancer"],
+            "dopamine precursor":      ["parkinson", "dopamine"],
+            "kinase inhibitor":        ["kinase", "signaling", "proliferation", "hypertension",
+                                        "pulmonary", "leukemia", "gastrointestinal stromal"],
+            "tyrosine kinase":         ["leukemia", "gastrointestinal stromal", "lung",
+                                        "pulmonary"],
         }
 
         def _pattern_score(mech_str: str) -> float:
@@ -828,30 +811,45 @@ class ProductionScorer:
             return 0.0
 
         score = _pattern_score(mechanism)
-
-        hint = _lookup_hint(raw_drug_name)
+        hint  = _lookup_hint(raw_drug_name)
         if hint:
             score = max(score, _pattern_score(hint))
-
         return score
 
     def _normalise_weights(
         self,
-        ppi_score: float,
-        similarity_score: float,
-        literature_score: float,
+        gene_score:        float,
+        pathway_score:     float,
+        ppi_score:         float,
+        similarity_score:  float,
+        mechanism_score:   float,
+        literature_score:  float,
     ) -> Dict[str, float]:
+        """
+        BUG 3 FIX: Re-normalise over *available* components only.
+
+        v9.3 only zeroed out similarity/literature/ppi when they were 0, but
+        always kept gene/pathway/mechanism in the denominator. When those are
+        also 0, the non-zero components (e.g. ppi) get their weight divided by
+        the full sum 1.0 instead of just their own weight. This suppressed PPI-
+        only scores by ~75%.
+
+        Fix: zero out the weight of ANY component whose score is 0, then
+        renormalise so the remaining weights sum to 1.0.
+        """
         base = {
-            "gene":       WEIGHT_GENE,
-            "pathway":    WEIGHT_PATHWAY,
-            "similarity": WEIGHT_SIMILARITY if similarity_score > 0 else 0.0,
-            "mechanism":  WEIGHT_MECHANISM,
-            "literature": WEIGHT_LITERATURE if literature_score > 0 else 0.0,
-            "ppi":        WEIGHT_PPI if ppi_score > 0 else 0.0,
+            "gene":       self._w_gene       if gene_score       > 0 else 0.0,
+            "pathway":    self._w_pathway    if pathway_score    > 0 else 0.0,
+            "ppi":        self._w_ppi        if ppi_score        > 0 else 0.0,
+            "similarity": self._w_similarity if similarity_score > 0 else 0.0,
+            "mechanism":  self._w_mechanism  if mechanism_score  > 0 else 0.0,
+            "literature": self._w_literature if literature_score > 0 else 0.0,
         }
         total = sum(base.values())
-        if total <= 0:
-            return {k: 1.0 / len(base) for k in base}
+        if total <= 1e-9:
+            # No signal at all; return equal weights (score will end up 0 anyway)
+            n = len(base)
+            return {k: 1.0 / n for k in base}
         return {k: v / total for k, v in base.items()}
 
     def _is_mtor_tsc_drug(self, drug_data: Dict) -> bool:
@@ -867,23 +865,19 @@ class ProductionScorer:
 
     def _compute_best_floor(
         self,
-        total: float,
-        gene_score: float,
+        total:          float,
+        gene_score:     float,
         mechanism_score: float,
-        disease_name: str,
-        drug_data: Dict,
+        disease_name:   str,
+        drug_data:      Dict,
     ) -> Tuple[float, str]:
         """
         Evaluate ALL applicable mechanism floors and return (best_floor, name).
         Max-value approach: all floors compete independently, highest wins.
 
-        Floors evaluated:
-          Primary   (mech≥0.90, gene≤0.10)           → 0.32
-          Secondary (mech≥0.55, gene 0.05–0.30)       → 0.27
-          Tertiary  (mech≥0.55, gene 0.10–0.18)       → 0.30
-          Quaternary mTOR/TSC rare disease             → 0.35
-          PCOS/AMPK                                    → 0.28
-          Sole mechanism (mech≥0.55, gene≤0.05)       → 0.25 [FIX 2]
+        Floor ranges deliberately overlap — tertiary (0.30) covers gene 0.10–0.18
+        which is a subset of secondary (0.27, gene 0.05–0.30). Because we always
+        take the max, tertiary's higher value wins when both fire.
         """
         best_value = 0.0
         best_name  = ""
@@ -894,89 +888,74 @@ class ProductionScorer:
                 best_value = candidate_value
                 best_name  = candidate_name
 
-        # ── Primary floor ─────────────────────────────────────────────────────
-        if (
-            mechanism_score >= MECHANISM_FLOOR_THRESHOLD      # ≥ 0.90
-            and gene_score   <= MECHANISM_FLOOR_GENE_MAX      # ≤ 0.10
-        ):
-            _update(MECHANISM_FLOOR_VALUE, "primary")         # 0.32
+        # Primary floor: mech ≥ 0.90, gene ≤ 0.10 → 0.32
+        if (mechanism_score >= MECHANISM_FLOOR_THRESHOLD
+                and gene_score <= MECHANISM_FLOOR_GENE_MAX):
+            _update(MECHANISM_FLOOR_VALUE, "primary")
 
-        # ── Secondary floor ───────────────────────────────────────────────────
-        if (
-            mechanism_score >= MECHANISM_FLOOR2_THRESHOLD     # ≥ 0.55
-            and MECHANISM_FLOOR2_GENE_MIN <= gene_score <= MECHANISM_FLOOR2_GENE_MAX
-        ):
-            _update(MECHANISM_FLOOR2_VALUE, "secondary")      # 0.27
+        # Secondary floor: mech ≥ 0.55, gene 0.05–0.30 → 0.27
+        if (mechanism_score >= MECHANISM_FLOOR2_THRESHOLD
+                and MECHANISM_FLOOR2_GENE_MIN <= gene_score <= MECHANISM_FLOOR2_GENE_MAX):
+            _update(MECHANISM_FLOOR2_VALUE, "secondary")
 
-        # ── Tertiary floor ────────────────────────────────────────────────────
-        if (
-            mechanism_score >= MECHANISM_FLOOR3_THRESHOLD     # ≥ 0.55
-            and MECHANISM_FLOOR3_GENE_MIN <= gene_score <= MECHANISM_FLOOR3_GENE_MAX
-        ):
-            _update(MECHANISM_FLOOR3_VALUE, "tertiary")       # 0.30
+        # Tertiary floor: mech ≥ 0.55, gene 0.10–0.18 → 0.30
+        # (subset of secondary range, but higher floor value — wins via max)
+        if (mechanism_score >= MECHANISM_FLOOR3_THRESHOLD
+                and MECHANISM_FLOOR3_GENE_MIN <= gene_score <= MECHANISM_FLOOR3_GENE_MAX):
+            _update(MECHANISM_FLOOR3_VALUE, "tertiary")
 
-        # ── Quaternary floor — mTOR/TSC in rare disease ───────────────────────
-        if (
-            mechanism_score >= MECHANISM_FLOOR4_THRESHOLD     # ≥ 0.55
-            and MECHANISM_FLOOR4_GENE_MIN <= gene_score <= MECHANISM_FLOOR4_GENE_MAX
-            and self._is_rare_disease(disease_name)
-            and self._is_mtor_tsc_drug(drug_data)
-        ):
-            _update(MECHANISM_FLOOR4_VALUE, "quaternary_mtor_tsc")  # 0.35
+        # Quaternary floor: mTOR/TSC in rare disease, mech ≥ 0.55, gene 0.10–0.25 → 0.35
+        if (mechanism_score >= MECHANISM_FLOOR4_THRESHOLD
+                and MECHANISM_FLOOR4_GENE_MIN <= gene_score <= MECHANISM_FLOOR4_GENE_MAX
+                and self._is_rare_disease(disease_name)
+                and self._is_mtor_tsc_drug(drug_data)):
+            _update(MECHANISM_FLOOR4_VALUE, "quaternary_mtor_tsc")
 
-        # ── PCOS / AMPK floor ─────────────────────────────────────────────────
+        # PCOS / AMPK floor
         if mechanism_score >= PCOS_FLOOR_MECH_MIN:
-            disease_lower   = disease_name.lower()
-            raw_drug_lower  = (drug_data.get("name", drug_data.get("drug_name", "")) or "").lower()
-            hint            = _lookup_hint(raw_drug_lower).lower()
-            is_pcos         = any(kw in disease_lower for kw in PCOS_KEYWORDS)
-            is_ampk_biguanide = any(kw in hint for kw in AMPK_BIGUANIDE_KEYWORDS)
-            if is_pcos and is_ampk_biguanide:
-                _update(PCOS_FLOOR_VALUE, "pcos_ampk_biguanide")    # 0.28
+            disease_lower  = disease_name.lower()
+            raw_drug_lower = (drug_data.get("name", drug_data.get("drug_name", "")) or "").lower()
+            hint           = _lookup_hint(raw_drug_lower).lower()
+            if any(kw in disease_lower for kw in PCOS_KEYWORDS) and any(
+                kw in hint for kw in AMPK_BIGUANIDE_KEYWORDS
+            ):
+                _update(PCOS_FLOOR_VALUE, "pcos_ampk_biguanide")
 
-        # ── FIX 2: Sole mechanism floor ───────────────────────────────────────
-        # For drugs with confirmed mechanism but zero gene annotation overlap.
-        # Prevents mechanism-confirmed drugs (e.g. metoprolol for HF) from
-        # scoring near-zero due to missing gene associations in OpenTargets.
-        # Clinical basis: MERIT-HF, CONSENSUS, RALES — all Class I/A for HFrEF.
-        # The floor (0.25) is conservative to avoid creating new FPs.
-        # Safety check: FP drugs all have mech_score=0.0 < 0.55 → not affected.
-        if (
-            mechanism_score >= MECHANISM_FLOOR_SOLE_MECH_THRESHOLD  # ≥ 0.55
-            and gene_score <= MECHANISM_FLOOR_SOLE_MECH_GENE_MAX    # ≤ 0.05
-        ):
-            _update(MECHANISM_FLOOR_SOLE_MECH_VALUE, "sole_mechanism")  # 0.25
+        # Sole-mechanism floor: mech ≥ 0.55, gene ≤ 0.05 → 0.25
+        if (mechanism_score >= MECHANISM_FLOOR_SOLE_MECH_THRESHOLD
+                and gene_score <= MECHANISM_FLOOR_SOLE_MECH_GENE_MAX):
+            _update(MECHANISM_FLOOR_SOLE_MECH_VALUE, "sole_mechanism")
 
         return best_value, best_name
 
     def score_drug_disease_match(
         self,
-        drug_name: str,
-        disease_name: str,
-        disease_data: Dict,
-        drug_data: Dict,
-        external_literature_score: float = 0.0,
-        ppi_score: float = 0.0,
-        similarity_score: float = 0.0,
+        drug_name:                  str,
+        disease_name:               str,
+        disease_data:               Dict,
+        drug_data:                  Dict,
+        external_literature_score:  float = 0.0,
+        ppi_score:                  float = 0.0,
+        similarity_score:           float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Score a drug-disease pair using all available evidence streams.
-        v9.3: FP dampening + sole mechanism floor + all v9.2 fixes.
+        v9.4: BUG 1-4 fixed + all v9.3 fixes retained.
         """
         evidence: Dict = {
-            "shared_genes": [],
-            "shared_pathways": [],
-            "gene_score": 0.0,
-            "pathway_score": 0.0,
-            "pathway_score_raw": 0.0,
+            "shared_genes":        [],
+            "shared_pathways":     [],
+            "gene_score":          0.0,
+            "pathway_score":       0.0,
+            "pathway_score_raw":   0.0,
             "pathway_score_capped": False,
-            "ppi_score": float(ppi_score),
-            "similarity_score": float(similarity_score),
-            "literature_score": 0.0,
-            "mechanism_score": 0.0,
-            "total_score": 0.0,
-            "confidence": "low",
-            "explanation": [],
+            "ppi_score":           float(ppi_score),
+            "similarity_score":    float(similarity_score),
+            "literature_score":    0.0,
+            "mechanism_score":     0.0,
+            "total_score":         0.0,
+            "confidence":          "low",
+            "explanation":         [],
         }
 
         if self._check_hard_contraindication(drug_name, disease_name):
@@ -987,16 +966,16 @@ class ProductionScorer:
             evidence["contraindicated"] = True
             return 0.0, evidence
 
-        drug_targets   = drug_data.get("targets", [])
-        drug_pathways  = drug_data.get("pathways", [])
-        disease_genes  = disease_data.get("genes", [])
-        disease_pathways = disease_data.get("pathways", [])
+        drug_targets      = drug_data.get("targets", [])
+        drug_pathways     = drug_data.get("pathways", [])
+        disease_genes     = disease_data.get("genes", [])
+        disease_pathways  = disease_data.get("pathways", [])
 
         gene_score, shared_genes = self._score_gene_overlap(
             drug_targets, disease_genes, disease_data.get("gene_scores", {})
         )
-        evidence["gene_score"]    = gene_score
-        evidence["shared_genes"]  = list(shared_genes)
+        evidence["gene_score"]   = gene_score
+        evidence["shared_genes"] = list(shared_genes)
 
         pathway_score, pathway_score_raw, shared_pathways = self._score_pathway_overlap(
             drug_pathways, disease_pathways
@@ -1006,18 +985,22 @@ class ProductionScorer:
         evidence["pathway_score_capped"] = pathway_score_raw > pathway_score
         evidence["shared_pathways"]      = list(shared_pathways)
 
-        mechanism_score          = self._score_mechanism_similarity(drug_data, disease_data)
-        evidence["mechanism_score"] = mechanism_score
+        mechanism_score              = self._score_mechanism_similarity(drug_data, disease_data)
+        evidence["mechanism_score"]  = mechanism_score
 
         effective_pathway_score = pathway_score
         if pathway_score == 0.0 and mechanism_score >= MECHANISM_PATHWAY_BOOST_THRESHOLD:
-            effective_pathway_score          = MECHANISM_PATHWAY_BOOST
-            evidence["pathway_boost_applied"] = True
+            effective_pathway_score            = MECHANISM_PATHWAY_BOOST
+            evidence["pathway_boost_applied"]  = True
 
-        lit_score                   = float(external_literature_score)
+        lit_score                    = float(external_literature_score)
         evidence["literature_score"] = lit_score
 
-        w = self._normalise_weights(ppi_score, similarity_score, lit_score)
+        # BUG 3 FIX: pass all six scores so zero-scored components get zeroed out
+        w = self._normalise_weights(
+            gene_score, effective_pathway_score, ppi_score,
+            similarity_score, mechanism_score, lit_score,
+        )
 
         total = (
             gene_score              * w["gene"]
@@ -1042,27 +1025,20 @@ class ProductionScorer:
 
         total = min(total, 1.0)
 
-        # ── FIX 1: False positive dampening ──────────────────────────────────
-        # When there is NO specific pharmacological signal for this drug-disease pair
-        # (mechanism=0, weak gene overlap, weak pathway overlap), the score is being
-        # inflated by indirect PPI network proximity. Apply a 40% reduction.
-        #
-        # Condition: mech_score==0 AND gene_score<0.25 AND effective_pathway<0.10
-        # This is safe: all 40 TP cases in validation have either mech>0 OR gene>=0.25.
-        # Effect: pushes 5 identified FPs below their respective TN thresholds.
+        # FP dampening: no specific pharmacological signal → 0.60 multiplier
         if (
             mechanism_score == 0.0
-            and gene_score < NO_SPECIFIC_SIGNAL_GENE_THRESHOLD        # < 0.25
-            and effective_pathway_score < NO_SPECIFIC_SIGNAL_PATH_THRESHOLD  # < 0.10
+            and gene_score < NO_SPECIFIC_SIGNAL_GENE_THRESHOLD
+            and effective_pathway_score < NO_SPECIFIC_SIGNAL_PATH_THRESHOLD
         ):
-            total *= NO_SPECIFIC_SIGNAL_MULTIPLIER                   # × 0.60
+            total *= NO_SPECIFIC_SIGNAL_MULTIPLIER
             evidence["fp_dampening_applied"] = True
             logger.debug(
-                "FP dampening applied: %s/%s (mech=0, gene=%.3f, path=%.3f) → %.3f",
+                "FP dampening: %s/%s (mech=0, gene=%.3f, path=%.3f) → %.3f",
                 drug_name, disease_name, gene_score, effective_pathway_score, total,
             )
 
-        # ── FIX 2 + legacy: Max-value floor approach ──────────────────────────
+        # Mechanism floors (max-value approach)
         best_floor, best_floor_name = self._compute_best_floor(
             total, gene_score, mechanism_score, disease_name, drug_data
         )
@@ -1076,29 +1052,25 @@ class ProductionScorer:
 
         evidence["total_score"] = total
         evidence["confidence"]  = self._determine_confidence(total, evidence)
-        evidence["explanation"] = self._generate_explanation(
-            evidence, drug_name, disease_name
-        )
+        evidence["explanation"] = self._generate_explanation(evidence, drug_name, disease_name)
 
         return round(total, 4), evidence
 
     def _apply_bonuses(
         self,
-        base: float,
-        drug_data: Dict,
+        base:        float,
+        drug_data:   Dict,
         disease_data: Dict,
-        evidence: Dict,
+        evidence:    Dict,
     ) -> float:
         score = base
 
         if disease_data.get("is_rare", False):
             score += 0.03
-            evidence["explanation"].append("Bonus: rare disease (+0.03)")
 
         n_genes = len(evidence["shared_genes"])
         if n_genes >= 1:
-            bonus  = min(n_genes * 0.015, 0.08)
-            score += bonus
+            score += min(n_genes * 0.015, 0.08)
 
         critical = {
             "Autophagy", "Lysosomal function", "Mitophagy",
@@ -1122,13 +1094,11 @@ class ProductionScorer:
             "GABA signaling", "GABA pathway",
             "Insulin resistance", "Ovarian function", "Polycystic ovary",
             "PCOS pathway",
-            # Heart failure specific
             "Cardiac function", "Cardiac fibrosis",
             "Neurohormonal activation", "Cardiac remodeling",
         }
         if any(p in evidence["shared_pathways"] for p in critical):
             score += 0.05
-            evidence["explanation"].append("Bonus: critical pathway (+0.05)")
 
         n_paths = len(evidence["shared_pathways"])
         if n_paths >= 1:
@@ -1165,11 +1135,9 @@ class ProductionScorer:
         if evidence["ppi_score"] > 0:
             out.append(f"PPI network proximity: {evidence['ppi_score']:.3f}")
         if evidence["similarity_score"] > 0:
-            out.append(
-                f"Chemical similarity to known drugs: {evidence['similarity_score']:.3f}"
-            )
-        floor      = evidence.get("mechanism_floor_applied", "")
-        floor_note = f" [floor:{floor}]" if floor else ""
+            out.append(f"Chemical similarity to known drugs: {evidence['similarity_score']:.3f}")
+        floor       = evidence.get("mechanism_floor_applied", "")
+        floor_note  = f" [floor:{floor}]" if floor else ""
         dampen_note = " [FP-dampened]" if evidence.get("fp_dampening_applied") else ""
         out.append(
             f"Gene: {evidence['gene_score']:.3f}  "
@@ -1180,20 +1148,42 @@ class ProductionScorer:
         return out
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Sensitivity analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
 def sensitivity_analysis(
     candidates: List[Dict],
     perturbation: float = 0.10,
 ) -> Dict:
-    """Spearman rank correlation across ±perturbation weight perturbations."""
+    """
+    Spearman rank correlation across ±perturbation weight perturbations.
+
+    BUG 4 FIX: In v9.3, candidates' sub-scores were read as:
+        c.get("gene_score", 0)
+    but generate_candidates() stores them nested as:
+        c["score_components"]["gene_score"]
+    All lookups returned None → 0, so every perturbed ranking was identical
+    to baseline and ρ was always 1.0. Fixed by reading from score_components
+    with a fallback to the top-level key for backward compatibility.
+    """
+
+    def _get_score(c: Dict, key: str) -> float:
+        # Try score_components first (current generate_candidates format)
+        sc = c.get("score_components")
+        if sc and key in sc:
+            return float(sc[key] or 0)
+        # Fallback to top-level key (backward compat)
+        return float(c.get(key, 0) or 0)
 
     def _score_with_weights(c, wg, wp, wppi, wsim, wm, wl):
         return (
-            c.get("gene_score", 0) * wg
-            + c.get("pathway_score", 0) * wp
-            + c.get("ppi_score", 0) * wppi
-            + c.get("similarity_score", 0) * wsim
-            + c.get("mechanism_score", 0) * wm
-            + c.get("literature_score", 0) * wl
+            _get_score(c, "gene_score")        * wg
+            + _get_score(c, "pathway_score")   * wp
+            + _get_score(c, "ppi_score")       * wppi
+            + _get_score(c, "similarity_score") * wsim
+            + _get_score(c, "mechanism_score") * wm
+            + _get_score(c, "literature_score") * wl
         )
 
     def _spearman(rank_a, rank_b):
@@ -1213,9 +1203,9 @@ def sensitivity_analysis(
     if not candidates:
         return {
             "stable": True,
-            "rank_correlation_min": 1.0,
+            "rank_correlation_min":  1.0,
             "rank_correlation_mean": 1.0,
-            "perturbation_results": [],
+            "perturbation_results":  [],
         }
 
     baseline_scores = [
@@ -1236,10 +1226,10 @@ def sensitivity_analysis(
     results = []
     for i, w_name in enumerate(weight_names):
         for direction in [+1, -1]:
-            delta   = perturbation * direction
-            new_ws  = list(weight_vals)
+            delta  = perturbation * direction
+            new_ws = list(weight_vals)
             new_ws[i] += delta
-            total   = sum(new_ws)
+            total  = sum(new_ws)
             if total <= 0:
                 continue
             new_ws = [w / total for w in new_ws]
@@ -1271,4 +1261,5 @@ def sensitivity_analysis(
     }
 
 
+# Backward-compat alias
 Scorer = ProductionScorer
