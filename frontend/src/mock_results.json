@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "disease": "pulmonary arterial hypertension",
+  "header": {
+    "title": "TwinTrial Treatment Plan",
+    "disease": "pulmonary arterial hypertension",
+    "disease_id": "EFO_0000677",
+    "built_at": "2026-04-10T02:15:00Z",
+    "pipeline_version": "v4.1",
+    "drug_pool": {
+      "total_drugs": 3003,
+      "off_patent_only": true
+    },
+    "disease_genes_count": 42,
+    "disease_pathways_count": 12,
+    "data_sources": ["ChEMBL", "OpenTargets", "DGIdb", "STRING PPI"]
+  },
+  "ranked_regimens": [
+    {
+      "rank": 1,
+      "regimen": "BOSENTAN + SILDENAFIL",
+      "n_drugs": 2,
+      "combo_score": 1.0,
+      "orr_estimate": 0.63,
+      "pfs6_estimate": 0.88,
+      "p2_probability": 0.92,
+      "priority": "HIGH",
+      "is_synergistic": true,
+      "is_antagonistic": false,
+      "mechanism_a": "Endothelin receptor antagonist",
+      "mechanism_b": "PDE5 inhibitor",
+      "combined_gene_coverage": 6,
+      "shared_genes": ["EDNRA", "EDNRB", "PDE5A", "NOS3"],
+      "wet_lab_targets": ["EDNRA", "PDE5A"],
+      "score_breakdown": {
+        "base_score": 0.85,
+        "synergy_bonus": 0.15,
+        "antagonism_penalty": 0.0,
+        "coverage_bonus": 0.1,
+        "redundancy_penalty": 0.0
+      },
+      "pag_one_liner": "Combines two proven therapies that open blood vessels through different pathways.",
+      "trial_detail": {
+        "dcr": 0.85,
+        "median_pfs_weeks": 48.5,
+        "n_patients": 250,
+        "orr_ci_90": [0.58, 0.68],
+        "network_effect": 0.76,
+        "recommendation": "Strongly recommended for newly diagnosed patients."
+      }
+    },
+    {
+      "rank": 2,
+      "regimen": "BOSENTAN + SILDENAFIL + ILOPROST",
+      "n_drugs": 3,
+      "combo_score": 0.94,
+      "orr_estimate": 0.71,
+      "pfs6_estimate": 0.91,
+      "p2_probability": 0.85,
+      "priority": "HIGH",
+      "is_synergistic": true,
+      "is_antagonistic": false,
+      "mechanism_a": "ERA",
+      "mechanism_b": "PDE5i",
+      "mechanism_c": "Prostacyclin analogue",
+      "combined_gene_coverage": 9,
+      "shared_genes": ["EDNRA", "PDE5A", "PTGIR"],
+      "pag_one_liner": "A powerful triple-therapy approach targeting all three major disease pathways."
+    }
+  ],
+  "top_single_drugs": [
+    { "drug_name": "bosentan", "score": 0.9144 },
+    { "drug_name": "sildenafil", "score": 0.7843 }
+  ],
+  "wet_lab_brief": {
+    "priority_targets": ["EDNRA", "PDE5A", "NOS3"],
+    "rationale": "Targeting both cGMP and Endothelin pathways shows maximum reversal of remodeling in current models.",
+    "suggested_assays": ["Cell proliferation assay", "Vasoconstriction imaging"],
+    "university_partner_note": "Potential collaboration with Harvard Medical School vascular labs."
+  },
+  "pag_brief": "This plan focuses on generic drugs that are already widely available. It combines different types of medicines to ensure the heart doesn't have to work as hard to pump blood to the lungs.",
+  "biotech_brief": "Synergy identified between PDE5 inhibition and ET-1 blockade. Predicted 15% increase in ORR compared to monotherapy.",
+  "limitations": [
+    "In-silico simulation only",
+    "Requires clinical validation for triple therapy"
+  ],
+  "summary": {
+    "top_disease": "pulmonary arterial hypertension",
+    "total_regimens_generated": 15
+  }
+}
